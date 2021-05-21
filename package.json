@@ -1,0 +1,45 @@
+{
+  "name": "@codeday/labs-gql",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "author": "Tyler Menezes <tylermenezes@codeday.org>",
+  "license": "Artistic-2.0",
+  "scripts": {
+    "start": "node dist",
+    "clean": "rm -rf dist",
+    "build": "npm -s run clean && npm -s run prisma && npx tsc",
+    "prisma": "prisma format && prisma generate",
+    "dev": "ts-node-dev --no-notify --respawn --transpile-only src",
+    "debug": "ts-node-dev --no-notify --respawn src"
+  },
+  "dependencies": {
+    "@prisma/client": "^2.23.0",
+    "@types/redis": "^2.8.28",
+    "apollo-server": "^2.24.1",
+    "apollo-server-express": "^2.24.1",
+    "class-validator": "^0.13.1",
+    "dotenv": "^9.0.2",
+    "express": "^4.17.1",
+    "graphql": "^15.5.0",
+    "graphql-type-json": "^0.3.2",
+    "graphql-upload": "^12.0.0",
+    "graphql-ws": "^4.5.1",
+    "jsonwebtoken": "^8.5.1",
+    "redis": "^3.1.2",
+    "reflect-metadata": "^0.1.13",
+    "type-graphql": "^1.1.1",
+    "typedi": "^0.10.0",
+    "ws": "^7.4.5"
+  },
+  "devDependencies": {
+    "@codeday/eslint-typescript-config": "^2.1.5",
+    "@types/graphql-upload": "^8.0.4",
+    "@types/jsonwebtoken": "^8.5.1",
+    "@types/node": "^15.3.0",
+    "eslint": "^7.26.0",
+    "prisma": "^2.23.0",
+    "ts-node": "^9.1.1",
+    "ts-node-dev": "^1.1.6",
+    "typescript": "^4.2.4"
+  }
+}

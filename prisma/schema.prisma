@@ -1,0 +1,176 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Track {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum MentorStatus {
+  APPLIED
+  SCHEDULED
+  ACCEPTED
+  REJECTED
+  CANCELED
+}
+
+enum StudentStatus {
+  APPLIED
+  TRACK_INTERVIEW
+  TRACK_CHALLENGE
+  ACCEPTED
+  REJECTED
+}
+
+enum RejectionReason {
+  EXPERIENCE_HIGH
+  EXPERIENCE_LOW
+  OTHER
+}
+
+enum TagType {
+  INTEREST
+  TECHNOLOGY
+}
+
+model Mentor {
+  // Metadata
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  // Data
+  givenName       String
+  surname         String
+  username        String?      @unique
+  email           String
+  profile         Json
+  status          MentorStatus
+  managerUsername String?
+  maxWeeks        Int          @default(6)
+
+  // Relations
+  projects   Project[]
+  emailsSent EmailSent[]
+}
+
+model Student {
+  // Metadata
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  // Data
+  givenName       String
+  surname         String
+  username        String           @unique
+  email           String
+  profile         Json
+  track           Track
+  status          StudentStatus
+  rejectionReason RejectionReason?
+  weeks           Int              @default(6)
+
+  // Relations
+  projects          Project[]
+  admissionRatings  AdmissionRating[]
+  tags              Tag[]
+  emailsSent        EmailSent[]
+  ProjectPreference ProjectPreference[]
+}
+
+model Project {
+  // Metadata
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  // Data
+  description  String?
+  deliverables String?
+  track        Track
+  maxStudents  Int     @default(4)
+  approved     Boolean @default(false)
+
+  // Relations
+  tags               Tag[]
+  mentors            Mentor[]
+  students           Student[]
+  emailsSent         EmailSent[]
+  projectPreferences ProjectPreference[]
+}
+
+model AdmissionRating {
+  // Metadata
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  // Data
+  ratedBy String
+  score   Int
+
+  // Relations
+  student   Student @relation(fields: [studentId], references: [id])
+  studentId String
+}
+
+model ProjectPreference {
+  // Metadata
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  // Data
+  ranking Int
+
+  // Relations
+  student   Student @relation(fields: [studentId], references: [id])
+  studentId String
+
+  project   Project @relation(fields: [projectId], references: [id])
+  projectId String
+}
+
+model Tag {
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  // Data
+  id                 String  @id
+  mentorDisplayName  String
+  studentDisplayName String
+  type               TagType
+
+  // Relations
+  students Student[]
+  projects Project[]
+}
+
+model EmailSent {
+  // Metadata
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  // Data
+  emailId String
+
+  // Relations
+  mentor   Mentor? @relation(fields: [mentorId], references: [id])
+  mentorId String?
+
+  student   Student? @relation(fields: [studentId], references: [id])
+  studentId String?
+
+  project   Project? @relation(fields: [projectId], references: [id])
+  projectId String?
+}
