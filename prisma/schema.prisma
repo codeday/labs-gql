@@ -29,6 +29,12 @@ enum StudentStatus {
   REJECTED
 }
 
+enum ProjectStatus {
+  PROPOSED
+  ACCEPTED
+  MATCHED
+}
+
 enum RejectionReason {
   EXPERIENCE_HIGH
   EXPERIENCE_LOW
@@ -52,7 +58,7 @@ model Mentor {
   username        String?      @unique
   email           String
   profile         Json
-  status          MentorStatus
+  status          MentorStatus @default(APPLIED)
   managerUsername String?
   maxWeeks        Int          @default(6)
 
@@ -74,7 +80,7 @@ model Student {
   email           String
   profile         Json
   track           Track
-  status          StudentStatus
+  status          StudentStatus    @default(APPLIED)
   rejectionReason RejectionReason?
   weeks           Int              @default(6)
 
@@ -96,8 +102,8 @@ model Project {
   description  String?
   deliverables String?
   track        Track
-  maxStudents  Int     @default(4)
-  approved     Boolean @default(false)
+  maxStudents  Int           @default(4)
+  status       ProjectStatus @default(PROPOSED)
 
   // Relations
   tags               Tag[]

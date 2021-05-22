@@ -4,6 +4,10 @@ import { registerDi } from './di';
 
 registerDi();
 
+import emailHandler from './email';
+
+emailHandler();
+
 import server from './server';
 
 server();

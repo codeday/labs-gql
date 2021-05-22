@@ -1,7 +1,6 @@
 import { InputType, Field } from 'type-graphql';
 import { Prisma } from '@prisma/client';
 import { GraphQLJSONObject } from 'graphql-type-json';
-import { MentorStatus } from '../enums';
 
 @InputType()
 export class MentorCreateInput {
@@ -27,7 +26,6 @@ export class MentorCreateInput {
       surname: this.surname,
       username: this.username,
       email: this.email,
-      status: MentorStatus.APPLIED,
       profile: this.profile || {},
     };
   }

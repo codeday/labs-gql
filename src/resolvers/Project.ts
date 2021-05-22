@@ -34,16 +34,16 @@ export class ProjectResolver {
     @Arg('project', () => String) project: string,
     @Arg('data', () => ProjectEditInput) data: ProjectEditInput,
   ): Promise<PrismaProject> {
-    if ((data.approved || data.maxStudents) && !(auth.isAdmin || auth.isManager)) {
+    if ((data.status || data.maxStudents) && !(auth.isAdmin || auth.isManager)) {
       throw Error('You do not have permission to edit restricted fields.');
     }
     const dbProject = await this.prisma.project.findUnique({
       where: { id: project },
-      select: { approved: true, mentors: { select: { id: true, username: true } } },
+      select: { status: true, mentors: { select: { id: true, username: true } } },
     });
     if (!dbProject) throw Error('Project not found.');
     if (auth.isMentor && !this.projectIncludesMentors(auth, dbProject.mentors)) throw Error('No permission to edit.');
-    if (auth.isMentor && dbProject.approved) throw Error('Approved projects cannot be edited.');
+    if (auth.isMentor && dbProject.status !== 'PROPOSED') throw Error('Approved projects cannot be edited.');
     return this.prisma.project.update({ where: { id: project }, data });
   }
 

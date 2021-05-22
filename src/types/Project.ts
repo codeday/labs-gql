@@ -1,4 +1,6 @@
-import { Mentor as PrismaMentor, Project as PrismaProject, PrismaClient } from '@prisma/client';
+import {
+  Mentor as PrismaMentor, Project as PrismaProject, PrismaClient, ProjectStatus,
+} from '@prisma/client';
 import { Container } from 'typedi';
 import {
   ObjectType, Field,
@@ -31,8 +33,8 @@ export class Project implements PrismaProject {
   @Field(() => Number)
   maxStudents: number
 
-  @Field(() => Boolean)
-  approved: boolean
+  @Field(() => ProjectStatus)
+  status: ProjectStatus
 
   mentors: PrismaMentor[]
 

@@ -1,6 +1,6 @@
 import { InputType, Field } from 'type-graphql';
 import { Prisma } from '@prisma/client';
-import { Track } from '../enums';
+import { ProjectStatus, Track } from '../enums';
 
 @InputType()
 export class ProjectEditInput {
@@ -13,8 +13,8 @@ export class ProjectEditInput {
   @Field(() => Track, { nullable: true })
   track?: Track
 
-  @Field(() => Boolean, { nullable: true })
-  approved?: boolean
+  @Field(() => ProjectStatus, { nullable: true })
+  status: ProjectStatus
 
   @Field(() => Number, { nullable: true })
   maxStudents?: number
@@ -27,7 +27,7 @@ export class ProjectEditInput {
       description: this.description,
       deliverables: this.deliverables,
       track: this.track,
-      approved: this.approved,
+      status: this.status,
       maxStudents: this.maxStudents,
       tags: this.tags ? { set: this.tags.map((id): Prisma.TagWhereUniqueInput => ({ id })) } : undefined,
     };
