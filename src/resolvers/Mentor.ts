@@ -6,7 +6,7 @@ import { Inject, Service } from 'typedi';
 import { Context, AuthRole } from '../context';
 import { Mentor } from '../types';
 import {
-  IdOrUsernameInput, MentorCreateInput, MentorEditInput, MentorFilterInput,
+  IdOrUsernameInput, MentorApplyInput, MentorCreateInput, MentorEditInput, MentorFilterInput,
 } from '../inputs';
 import { MentorOnlySelf } from './decorators';
 
@@ -40,6 +40,20 @@ export class MentorResolver {
     @Arg('data', () => MentorCreateInput) data: MentorCreateInput,
   ): Promise<PrismaMentor> {
     return this.prisma.mentor.create({ data: data.toQuery() });
+  }
+
+  @Authorized(AuthRole.APPLICANT_MENTOR)
+  @Mutation(() => Mentor)
+  async applyMentor(
+    @Ctx() { auth }: Context,
+    @Arg('data', () => MentorApplyInput) data: MentorApplyInput,
+  ): Promise<PrismaMentor> {
+    return this.prisma.mentor.create({
+      data: {
+        ...data.toQuery(),
+        username: auth.username,
+      },
+    });
   }
 
   @Authorized(AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.MENTOR)

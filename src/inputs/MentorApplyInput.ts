@@ -2,9 +2,10 @@ import { InputType, Field } from 'type-graphql';
 import { Prisma } from '@prisma/client';
 import { GraphQLJSONObject } from 'graphql-type-json';
 import { MentorStatus } from '../enums';
+import { ProjectCreateInput } from './ProjectCreateInput';
 
 @InputType()
-export class MentorCreateInput {
+export class MentorApplyInput {
   @Field(() => String)
   givenName: string
 
@@ -14,24 +15,21 @@ export class MentorCreateInput {
   @Field(() => String)
   email: string
 
-  @Field(() => String, { nullable: true })
-  username?: string
-
-  @Field(() => MentorStatus, { nullable: true })
-  status?: MentorStatus
-
   @Field(() => GraphQLJSONObject, { nullable: true })
   // eslint-disable-next-line @typescript-eslint/ban-types
   profile?: object
 
-  toQuery(): Prisma.MentorCreateInput {
+  @Field(() => [ProjectCreateInput])
+  projects: ProjectCreateInput[]
+
+  toQuery(): Omit<Prisma.MentorCreateInput, 'username'> {
     return {
       givenName: this.givenName,
       surname: this.surname,
-      username: this.username,
       email: this.email,
       profile: this.profile || {},
-      status: this.status,
+      status: MentorStatus.APPLIED,
+      projects: { create: this.projects.map((p) => p.toQuery()) },
     };
   }
 }

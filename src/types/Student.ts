@@ -42,4 +42,7 @@ export class Student implements PrismaStudent {
 
   @Field(() => Number)
   weeks: number
+
+  @Field(() => Date, { nullable: true })
+  offerDate: Date | null
 }
