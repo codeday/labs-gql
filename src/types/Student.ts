@@ -46,6 +46,10 @@ export class Student implements PrismaStudent {
   @Field(() => Number)
   weeks: number
 
+  @Authorized(AuthRole.ADMIN)
+  @Field(() => String)
+  partnerCode: string
+
   @Field(() => Boolean)
   hasValidAdmissionOffer(): boolean {
     return this.status === 'OFFERED' && (!this.offerDate || DateTime.fromJSDate(this.offerDate).diffNow().days <= 3);

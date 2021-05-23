@@ -27,6 +27,9 @@ export class StudentCreateInput {
   @Field(() => Track)
   track: Track
 
+  @Field(() => String, { nullable: true })
+  partnerCode?: string
+
   toQuery(): Prisma.StudentCreateInput {
     return {
       givenName: this.givenName,
@@ -36,6 +39,7 @@ export class StudentCreateInput {
       profile: this.profile || {},
       status: this.status,
       track: this.track,
+      partnerCode: this.partnerCode,
     };
   }
 }

@@ -23,12 +23,12 @@ export class StudentEditInput {
   @Field(() => Track, { nullable: true })
   track?: Track
 
-  @Field(() => String, { nullable: true })
-  managerUsername?: string
-
   @Field(() => GraphQLJSONObject, { nullable: true })
   // eslint-disable-next-line @typescript-eslint/ban-types
   profile?: object
+
+  @Field(() => String, { nullable: true })
+  partnerCode?: string
 
   toQuery(): Prisma.StudentUpdateInput {
     return {
@@ -39,6 +39,7 @@ export class StudentEditInput {
       status: this.status,
       track: this.track,
       profile: this.profile,
+      partnerCode: this.partnerCode,
     };
   }
 }

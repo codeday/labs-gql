@@ -65,7 +65,7 @@ export class StudentResolver {
     @Arg('data', () => StudentEditInput) data: StudentEditInput,
     @Arg('where', () => IdOrUsernameInput, { nullable: true }) where?: IdOrUsernameInput,
   ): Promise<PrismaStudent> {
-    if ((data.username || data.managerUsername || data.status) && !(auth.isAdmin || auth.isManager)) {
+    if ((data.username || data.partnerCode || data.status) && !auth.isAdmin) {
       throw Error('You do not have permission to edit restricted fields.');
     }
 

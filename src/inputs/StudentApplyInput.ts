@@ -21,6 +21,9 @@ export class StudentApplyInput {
   @Field(() => Track)
   track: Track
 
+  @Field(() => String, { nullable: true })
+  partnerCode?: string
+
   toQuery(): Omit<Prisma.StudentCreateInput, 'username'> {
     return {
       givenName: this.givenName,
@@ -29,6 +32,7 @@ export class StudentApplyInput {
       profile: this.profile || {},
       status: StudentStatus.APPLIED,
       track: this.track,
+      partnerCode: this.partnerCode,
     };
   }
 }

@@ -10,9 +10,13 @@ export class StudentFilterInput {
   @Field(() => Boolean, { nullable: true })
   withProjects?: boolean
 
+  @Field(() => String, { nullable: true })
+  partnerCode?: string
+
   toQuery(): Prisma.StudentWhereInput {
     return {
       status: this.inStatus,
+      partnerCode: this.partnerCode,
       projects: this.withProjects ? { some: {} } : undefined,
     };
   }
