@@ -1,7 +1,9 @@
 import { Prisma, Student as PrismaStudent } from '@prisma/client';
-import { ObjectType, Field } from 'type-graphql';
+import { ObjectType, Field, Authorized } from 'type-graphql';
 import GraphQLJSON from 'graphql-type-json';
+import { DateTime } from 'luxon';
 import { StudentStatus, RejectionReason, Track } from '../enums';
+import { AuthRole } from '../context';
 
 @ObjectType()
 export class Student implements PrismaStudent {
@@ -34,6 +36,7 @@ export class Student implements PrismaStudent {
   @Field(() => Track)
   track: Track
 
+  @Authorized(AuthRole.ADMIN)
   @Field(() => RejectionReason, { nullable: true })
   rejectionReason: RejectionReason | null
 
@@ -43,6 +46,16 @@ export class Student implements PrismaStudent {
   @Field(() => Number)
   weeks: number
 
+  @Field(() => Boolean)
+  hasValidAdmissionOffer(): boolean {
+    return this.status === 'OFFERED' && (!this.offerDate || DateTime.fromJSDate(this.offerDate).diffNow().days <= 3);
+  }
+
+  @Authorized(AuthRole.ADMIN)
   @Field(() => Date, { nullable: true })
   offerDate: Date | null
+
+  @Authorized(AuthRole.ADMIN)
+  @Field(() => Number, { nullable: true })
+  admissionAverageRating: number | null;
 }

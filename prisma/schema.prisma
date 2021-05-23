@@ -4,7 +4,8 @@ datasource db {
 }
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["orderByAggregateGroup"]
 }
 
 enum Track {
@@ -88,11 +89,11 @@ model Student {
   weeks           Int              @default(6)
 
   // Relations
-  projects          Project[]
-  admissionRatings  AdmissionRating[]
-  tags              Tag[]
-  emailsSent        EmailSent[]
-  ProjectPreference ProjectPreference[]
+  projects           Project[]
+  admissionRatings   AdmissionRating[]
+  tags               Tag[]
+  emailsSent         EmailSent[]
+  projectPreferences ProjectPreference[]
 }
 
 model Project {
@@ -124,7 +125,7 @@ model AdmissionRating {
 
   // Data
   ratedBy String
-  score   Int
+  rating  Int
 
   // Relations
   student   Student @relation(fields: [studentId], references: [id])

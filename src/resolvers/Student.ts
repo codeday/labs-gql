@@ -1,7 +1,7 @@
 import {
   Resolver, Authorized, Query, Mutation, Arg, Ctx,
 } from 'type-graphql';
-import { PrismaClient, Student as PrismaStudent } from '@prisma/client';
+import { PrismaClient, Student as PrismaStudent, StudentStatus } from '@prisma/client';
 import { Inject, Service } from 'typedi';
 import { Context, AuthRole } from '../context';
 import { Student } from '../types';
@@ -82,5 +82,16 @@ export class StudentResolver {
   ): Promise<boolean> {
     await this.prisma.student.delete({ where });
     return true;
+  }
+
+  @Authorized(AuthRole.STUDENT)
+  @Mutation(() => Student)
+  async cancelStudentApplication(
+    @Ctx() { auth }: Context,
+  ): Promise<PrismaStudent> {
+    return this.prisma.student.update({
+      where: auth.toWhere(),
+      data: { status: StudentStatus.CANCELED },
+    });
   }
 }

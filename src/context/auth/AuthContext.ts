@@ -95,6 +95,6 @@ export class AuthContext {
     const { username, id } = this;
     if (username) return { username };
     if (id) return { id };
-    throw new Error('Not logged in.');
+    throw new Error('Token did not include username or id.');
   }
 }
