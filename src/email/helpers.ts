@@ -14,7 +14,7 @@ function tokenFor(sub: Mentor | Student) {
   if (isMentor(sub)) payload.typ = AuthRole.MENTOR;
   else payload.typ = AuthRole.STUDENT;
 
-  return sign(payload, config.auth.secret, { audience: config.auth.audience, expiresIn: '1m' });
+  return sign(payload, config.auth.secret, { audience: config.auth.audience, expiresIn: '6 months' });
 }
 
 function fallback(value: any, safeValue: any) {
