@@ -30,11 +30,14 @@ export async function getEmailGenerators(): Promise<EmailGenerator[]> {
     .map((fileName) => fileName.replace(/\.[^/.]+$/, ''))
     .map((fileBaseName) => ({
       ts: `${path.join(EMAIL_DIR, fileBaseName)}.ts`,
+      js: `${path.join(EMAIL_DIR, fileBaseName)}.js`,
       md: `${path.join(EMAIL_DIR, fileBaseName)}.md`,
     }))
-    .filter((paths) => fs.existsSync(paths.md))
     .map(async (paths): Promise<EmailGenerator | undefined> => {
-      const ts = maybeRequire(paths.ts);
+      const jsExists = fs.existsSync(paths.js);
+      const tsExists = fs.existsSync(paths.ts);
+      if (!jsExists && !tsExists) return undefined;
+      const ts = maybeRequire(tsExists ? paths.ts : paths.js);
       if (!isEmailTs(ts)) return undefined;
 
       const md = await fs.promises.readFile(paths.md);
