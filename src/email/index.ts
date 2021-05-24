@@ -5,6 +5,7 @@ import { Transporter } from 'nodemailer';
 import { getEmailGenerators, EmailGenerator } from './loader';
 import { registerHandlebarsHelpers } from './helpers';
 import { EmailContext } from './spec';
+import config from '../config';
 
 registerHandlebarsHelpers();
 
@@ -12,15 +13,22 @@ async function sendEmailForContext(emailId: string, generator: EmailGenerator, c
   const prisma = Container.get(PrismaClient);
   const email = await Container.get<Transporter>('email');
   const { frontMatter, html, text } = await generator.template(context);
-  await email.sendMail({ ...frontMatter, html, text });
-  await prisma.emailSent.create({
-    data: {
-      emailId,
-      mentor: context.mentor ? { connect: { id: context.mentor.id } } : undefined,
-      student: context.student ? { connect: { id: context.student.id } } : undefined,
-      project: context.project ? { connect: { id: context.project.id } } : undefined,
-    },
-  });
+  try {
+    // eslint-disable-next-line no-console
+    console.log(`Sending email "${frontMatter.subject}" to ${frontMatter.to}.`);
+    await email.sendMail({ ...frontMatter, html, text });
+    await prisma.emailSent.create({
+      data: {
+        emailId,
+        mentor: context.mentor ? { connect: { id: context.mentor.id } } : undefined,
+        student: context.student ? { connect: { id: context.student.id } } : undefined,
+        project: context.project ? { connect: { id: context.project.id } } : undefined,
+      },
+    });
+  } catch (ex) {
+    // eslint-disable-next-line no-console
+    console.error(ex);
+  }
 }
 
 async function sendEmailsForGenerator(generator: EmailGenerator): Promise<void> {
@@ -52,6 +60,6 @@ export async function sendEmails(): Promise<void> {
 }
 
 export default function emailHandler(): void {
-  setInterval(sendEmails, 300000);
+  setInterval(sendEmails, 1000 * 60 * (config.debug ? 0.5 : 5));
   sendEmails();
 }

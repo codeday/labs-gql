@@ -1,8 +1,8 @@
 ---
 to: "{{ mentor.email }}"
-{{#if mentor.managerUsername }}cc: {{ mentor.managerUsername }}@codeday.org{{/if}}
+{{#if mentor.managerUsername }}cc: "{{ mentor.managerUsername }}@codeday.org"{{/if}}
 from: "labs@codeday.org"
-subject: Your Mentees - {{ join (mapToKey project.students 'givenName') ', ' }}
+subject: "Your Mentees - {{ join (mapToKey project.students 'givenName') ', ' }}"
 ---
 
 Hi {{ mentor.givenName }}, we're excited to say we've found you matches for the following project description:

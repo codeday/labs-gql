@@ -1,7 +1,7 @@
 ---
 to: "{{ mentor.email }}"
 from: "labs@codeday.org"
-subject: Reminder - Labs Onboarding
+subject: "Reminder: Labs Onboarding"
 ---
 
 Thank you for applying to mentor at CodeDay Labs.

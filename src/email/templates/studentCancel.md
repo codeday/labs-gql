@@ -1,7 +1,7 @@
 ---
 to: "{{ student.email }}"
 from: "labs@codeday.org"
-subject: Withdrawn From CodeDay Labs
+subject: "Withdrawn From CodeDay Labs"
 ---
 
 Hi {{ student.givenName }},

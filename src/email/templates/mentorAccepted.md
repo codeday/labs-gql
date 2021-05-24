@@ -1,7 +1,7 @@
 ---
 to: "{{ mentor.email }}"
 from: "labs@codeday.org"
-subject: Welcome to CodeDay Labs
+subject: "Welcome to CodeDay Labs"
 ---
 
 We're so excited to have you as a mentor at CodeDay Labs, {{ mentor.givenName }}!

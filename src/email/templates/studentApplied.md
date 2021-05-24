@@ -1,7 +1,7 @@
 ---
 to: "{{ student.email }}"
 from: "labs@codeday.org"
-subject: CodeDay Labs Application Received
+subject: "CodeDay Labs Application Received"
 ---
 
 Hi {{ student.givenName }},

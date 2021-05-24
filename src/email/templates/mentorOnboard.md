@@ -1,7 +1,7 @@
 ---
 to: "{{ mentor.email }}"
 from: "labs@codeday.org"
-subject: [Action Required] CodeDay Labs Next Steps
+subject: "[Action Required] CodeDay Labs Next Steps"
 ---
 
 Thank you for applying to mentor at CodeDay Labs. The next step is to schedule a call to finalize your project.
