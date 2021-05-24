@@ -58,6 +58,24 @@ export class ProjectResolver {
 
   @Authorized(AuthRole.ADMIN, AuthRole.MANAGER)
   @Mutation(() => Project)
+  async addProjectStudent(
+    @Arg('project', () => String) project: string,
+    @Arg('student', () => IdOrUsernameInput) student: IdOrUsernameInput,
+  ): Promise<PrismaProject> {
+    return this.prisma.project.update({ where: { id: project }, data: { students: { connect: [student] } } });
+  }
+
+  @Authorized(AuthRole.ADMIN, AuthRole.MANAGER)
+  @Mutation(() => Project)
+  removeProjectStudent(
+    @Arg('project', () => String) project: string,
+    @Arg('student', () => IdOrUsernameInput) student: IdOrUsernameInput,
+  ): Promise<PrismaProject> {
+    return this.prisma.project.update({ where: { id: project }, data: { students: { disconnect: [student] } } });
+  }
+
+  @Authorized(AuthRole.ADMIN, AuthRole.MANAGER)
+  @Mutation(() => Project)
   async addProjectMentor(
     @Arg('project', () => String) project: string,
     @Arg('mentor', () => IdOrUsernameInput) mentor: IdOrUsernameInput,

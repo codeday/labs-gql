@@ -22,7 +22,7 @@ function fallback(value: any, safeValue: any) {
   return new handlebars.SafeString(out);
 }
 
-function when(operandA: any, operator: string, operandB: any) {
+function when(this: any, operandA: any, operator: string, operandB: any, options: any) {
   const operators = {
     eq: (l: any, r: any) => l === r,
     neq: (l: any, r: any) => l !== r,
@@ -32,7 +32,8 @@ function when(operandA: any, operator: string, operandB: any) {
     '%': (l: any, r: any) => (l % r) === 0,
   };
   if (!(operator in operators)) throw Error(`${operator} is not a valid operator.`);
-  return operators[<keyof typeof operators>operator](operandA, operandB);
+  if (operators[<keyof typeof operators>operator](operandA, operandB)) return options.fn(this);
+  return options.inverse(this);
 }
 
 function add(value: number, toAdd: number): number {

@@ -9,15 +9,19 @@ Hi {{ mentor.givenName }}, we're excited to say we've found you matches for the 
 
 <blockquote>{{ project.description }}</blockquote>
 
-## Your Mentees
+# Your Mentees
 
 {{#each project.students}}
-#### {{ this.givenName }} {{ this.surname }}
+-----
+## {{ this.givenName }} {{ this.surname }}
+{{#when this.weeks 'gt' 6}}<span style="color: red">**Needs to meet at least once a week for an extra {{ add this.weeks -6}} weeks (total {{ add this.weeks -1}}) for school credit.**</span> This is within the extra time you mentioned you were able to spend, but contact us if this is a problem.{{/when}}
+
+Info:
 
 - **Email:** {{ this.email }}
-- **Mentorship weeks:** {{ add this.weeks -1 }}
-{{#when this.weeks gt 6}}- **(Needs to meet for an extra {{ add this.weeks -6}} weeks for school credit.)**{{/when}}
-{{#each this.profile}}- **{{ prettyCamel @key }}:** {{ this }}{{/each}}
+- **Mentorship weeks:** {{ add this.weeks -1 }}{{#each this.profile}}
+- **{{ prettyCamel @key }}:** {{ this }}{{/each}}
+
 {{/each}}
 
 
