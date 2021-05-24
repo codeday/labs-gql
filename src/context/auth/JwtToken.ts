@@ -1,6 +1,6 @@
 export enum AuthRole {
   ADMIN = 'a',
-  MANAGER = 'm',
+  MANAGER = 'mm',
   REVIEWER = 'r',
   STUDENT = 's',
   MENTOR = 'm',
