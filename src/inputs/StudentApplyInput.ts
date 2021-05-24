@@ -21,6 +21,9 @@ export class StudentApplyInput {
   @Field(() => Track)
   track: Track
 
+  @Field(() => Number)
+  minHours: number
+
   @Field(() => String, { nullable: true })
   partnerCode?: string
 
@@ -32,6 +35,7 @@ export class StudentApplyInput {
       profile: this.profile || {},
       status: StudentStatus.APPLIED,
       track: this.track,
+      minHours: this.minHours,
       partnerCode: this.partnerCode,
     };
   }

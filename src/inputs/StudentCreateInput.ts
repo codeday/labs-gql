@@ -27,6 +27,9 @@ export class StudentCreateInput {
   @Field(() => Track)
   track: Track
 
+  @Field(() => Number)
+  minHours: number
+
   @Field(() => String, { nullable: true })
   partnerCode?: string
 
@@ -39,6 +42,7 @@ export class StudentCreateInput {
       profile: this.profile || {},
       status: this.status,
       track: this.track,
+      minHours: this.minHours,
       partnerCode: this.partnerCode,
     };
   }

@@ -36,6 +36,9 @@ export class Student implements PrismaStudent {
   @Field(() => Track)
   track: Track
 
+  @Field(() => Number)
+  minHours: number
+
   @Authorized(AuthRole.ADMIN)
   @Field(() => RejectionReason, { nullable: true })
   rejectionReason: RejectionReason | null

@@ -87,6 +87,7 @@ model Student {
   rejectionReason RejectionReason?
   offerDate       DateTime?
   weeks           Int              @default(6)
+  minHours        Int
   partnerCode     String?
 
   // Relations

@@ -2,14 +2,11 @@
 import { Container } from 'typedi';
 import { PrismaClient } from '@prisma/client';
 import { Transporter } from 'nodemailer';
-import Handlebars from 'handlebars';
 import { getEmailGenerators, EmailGenerator } from './loader';
+import { registerHandlebarsHelpers } from './helpers';
 import { EmailContext } from './spec';
 
-Handlebars.registerHelper('fallback', (value, safeValue) => {
-  const out = value || safeValue;
-  return new Handlebars.SafeString(out);
-});
+registerHandlebarsHelpers();
 
 async function sendEmailForContext(emailId: string, generator: EmailGenerator, context: EmailContext): Promise<void> {
   const prisma = Container.get(PrismaClient);
