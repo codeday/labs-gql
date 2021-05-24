@@ -13,11 +13,15 @@ export class MentorFilterInput {
   @Field(() => Boolean, { nullable: true })
   withProjects?: boolean
 
+  @Field(() => Number, { nullable: true })
+  weeksGte?: number
+
   toQuery(): Prisma.MentorWhereInput {
     return {
       managerUsername: this.assignedToManager,
       status: this.inStatus,
       projects: this.withProjects ? { some: {} } : undefined,
+      maxWeeks: this.weeksGte ? { gte: this.weeksGte } : undefined,
     };
   }
 }

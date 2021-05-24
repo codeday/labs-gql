@@ -20,6 +20,9 @@ export class MentorCreateInput {
   @Field(() => MentorStatus, { nullable: true })
   status?: MentorStatus
 
+  @Field(() => Number, { nullable: true })
+  maxWeeks?: number
+
   @Field(() => GraphQLJSONObject, { nullable: true })
   // eslint-disable-next-line @typescript-eslint/ban-types
   profile?: object
@@ -30,6 +33,7 @@ export class MentorCreateInput {
       surname: this.surname,
       username: this.username,
       email: this.email,
+      maxWeeks: this.maxWeeks,
       profile: this.profile || {},
       status: this.status,
     };

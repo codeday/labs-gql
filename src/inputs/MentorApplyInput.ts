@@ -19,6 +19,9 @@ export class MentorApplyInput {
   // eslint-disable-next-line @typescript-eslint/ban-types
   profile?: object
 
+  @Field(() => Number, { nullable: true })
+  maxWeeks?: number
+
   @Field(() => [ProjectCreateInput])
   projects: ProjectCreateInput[]
 
@@ -29,6 +32,7 @@ export class MentorApplyInput {
       email: this.email,
       profile: this.profile || {},
       status: MentorStatus.APPLIED,
+      maxWeeks: this.maxWeeks,
       projects: { create: this.projects.map((p) => p.toQuery()) },
     };
   }

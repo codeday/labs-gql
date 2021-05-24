@@ -20,6 +20,9 @@ export class MentorEditInput {
   @Field(() => MentorStatus, { nullable: true })
   status?: MentorStatus
 
+  @Field(() => Number, { nullable: true })
+  maxWeeks?: number
+
   @Field(() => String, { nullable: true })
   managerUsername?: string
 
@@ -34,6 +37,7 @@ export class MentorEditInput {
       username: this.username,
       email: this.email,
       status: this.status,
+      maxWeeks: this.maxWeeks,
       profile: this.profile,
       managerUsername: this.managerUsername,
     };

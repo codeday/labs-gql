@@ -26,6 +26,9 @@ export class StudentEditInput {
   @Field(() => Number, { nullable: true })
   minHours?: number
 
+  @Field(() => Number, { nullable: true })
+  weeks?: number
+
   @Field(() => GraphQLJSONObject, { nullable: true })
   // eslint-disable-next-line @typescript-eslint/ban-types
   profile?: object
@@ -41,6 +44,7 @@ export class StudentEditInput {
       email: this.email,
       status: this.status,
       track: this.track,
+      weeks: this.weeks,
       minHours: this.minHours,
       profile: this.profile,
       partnerCode: this.partnerCode,
