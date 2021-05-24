@@ -11,8 +11,8 @@ export interface Context {
   auth: AuthContext,
 }
 
-export async function createContext({ req, connection }: ExpressContext): Promise<Context> {
-  const tokenHeader = ((connection ? connection.context.authorization : req.headers.authorization) || '').split(/\s+/);
+export async function createContext({ req }: ExpressContext): Promise<Context> {
+  const tokenHeader = (req.header('X-Labs-Authorization') || req.header('Authorization') || '').split(/\s+/);
   const token = tokenHeader[0] === 'Bearer' ? tokenHeader[1].trim() : undefined;
 
   return {
