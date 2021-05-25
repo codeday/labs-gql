@@ -1,7 +1,7 @@
 import {
   Resolver, Authorized, Mutation, Arg, Ctx,
 } from 'type-graphql';
-import { PrismaClient, Project as PrismaProject } from '@prisma/client';
+import { PrismaClient, Project as PrismaProject, ProjectStatus } from '@prisma/client';
 import { Inject, Service } from 'typedi';
 import { Context, AuthRole, AuthContext } from '../context';
 import { Project } from '../types';
@@ -34,7 +34,13 @@ export class ProjectResolver {
     @Arg('project', () => String) project: string,
     @Arg('data', () => ProjectEditInput) data: ProjectEditInput,
   ): Promise<PrismaProject> {
-    if ((data.status || data.maxStudents) && !(auth.isAdmin || auth.isManager)) {
+    if (
+      (
+        data.maxStudents
+        || (data.status && !(<ProjectStatus[]>[ProjectStatus.PROPOSED, ProjectStatus.DRAFT]).includes(data.status))
+      )
+      && !(auth.isAdmin || auth.isManager)
+    ) {
       throw Error('You do not have permission to edit restricted fields.');
     }
     const dbProject = await this.prisma.project.findUnique({
@@ -42,9 +48,13 @@ export class ProjectResolver {
       select: { status: true, mentors: { select: { id: true, username: true } } },
     });
     if (!dbProject) throw Error('Project not found.');
+    if (auth.isMentor && dbProject.status === ProjectStatus.MATCHED) throw Error('Matched projects cannot be edited.');
     if (auth.isMentor && !this.projectIncludesMentors(auth, dbProject.mentors)) throw Error('No permission to edit.');
-    if (auth.isMentor && dbProject.status !== 'PROPOSED') throw Error('Approved projects cannot be edited.');
-    return this.prisma.project.update({ where: { id: project }, data });
+
+    return this.prisma.project.update({
+      where: { id: project },
+      data: { ...data, ...(auth.isMentor && !data.status ? { status: ProjectStatus.DRAFT } : {}) },
+    });
   }
 
   @Authorized(AuthRole.ADMIN, AuthRole.MANAGER)

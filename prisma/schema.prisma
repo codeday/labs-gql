@@ -33,6 +33,7 @@ enum StudentStatus {
 }
 
 enum ProjectStatus {
+  DRAFT
   PROPOSED
   ACCEPTED
   MATCHED
@@ -109,7 +110,7 @@ model Project {
   deliverables String?
   track        Track
   maxStudents  Int           @default(4)
-  status       ProjectStatus @default(PROPOSED)
+  status       ProjectStatus @default(DRAFT)
 
   // Relations
   tags               Tag[]
