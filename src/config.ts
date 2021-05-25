@@ -21,7 +21,8 @@ const config = {
     secret: process.env.AUTH_SECRET!,
     audience: process.env.AUTH_AUDIENCE!,
   },
-  email: <SMTPConnection.Options> {
+  email: <SMTPConnection.Options & { disable: boolean }> {
+    disable: process.env.DISABLE_EMAIL === 'TRUE',
     host: process.env.EMAIL_HOST!,
     port: Number.parseInt(process.env.EMAIL_PORT!, 10),
     auth: {
