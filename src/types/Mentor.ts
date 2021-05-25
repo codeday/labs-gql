@@ -2,7 +2,7 @@ import {
   Prisma, Project as PrismaProject, Mentor as PrismaMentor, PrismaClient,
 } from '@prisma/client';
 import {
-  ObjectType, Field, Authorized, Arg,
+  ObjectType, Field, Authorized, Arg, Int,
 } from 'type-graphql';
 import GraphQLJSON from 'graphql-type-json';
 import Container from 'typedi';
@@ -51,7 +51,7 @@ export class Mentor implements PrismaMentor {
   managerUsername: string | null
 
   @Authorized(AuthRole.ADMIN, AuthRole.MANAGER)
-  @Field(() => Number)
+  @Field(() => Int)
   maxWeeks: number
 
   projects?: PrismaProject[] | null

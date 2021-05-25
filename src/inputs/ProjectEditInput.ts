@@ -1,4 +1,4 @@
-import { InputType, Field } from 'type-graphql';
+import { InputType, Field, Int } from 'type-graphql';
 import { Prisma } from '@prisma/client';
 import { ProjectStatus, Track } from '../enums';
 
@@ -16,7 +16,7 @@ export class ProjectEditInput {
   @Field(() => ProjectStatus, { nullable: true })
   status: ProjectStatus
 
-  @Field(() => Number, { nullable: true })
+  @Field(() => Int, { nullable: true })
   maxStudents?: number
 
   @Field(() => [String], { nullable: true })

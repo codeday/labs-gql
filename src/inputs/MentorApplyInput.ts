@@ -1,4 +1,4 @@
-import { InputType, Field } from 'type-graphql';
+import { InputType, Field, Int } from 'type-graphql';
 import { Prisma } from '@prisma/client';
 import { GraphQLJSONObject } from 'graphql-type-json';
 import { MentorStatus } from '../enums';
@@ -19,7 +19,7 @@ export class MentorApplyInput {
   // eslint-disable-next-line @typescript-eslint/ban-types
   profile?: object
 
-  @Field(() => Number, { nullable: true })
+  @Field(() => Int, { nullable: true })
   maxWeeks?: number
 
   @Field(() => [ProjectCreateInput])

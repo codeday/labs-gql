@@ -1,4 +1,4 @@
-import { InputType, Field } from 'type-graphql';
+import { InputType, Field, Int } from 'type-graphql';
 import { Prisma } from '@prisma/client';
 import { GraphQLJSONObject } from 'graphql-type-json';
 import { StudentStatus, Track } from '../enums';
@@ -21,7 +21,7 @@ export class StudentApplyInput {
   @Field(() => Track)
   track: Track
 
-  @Field(() => Number)
+  @Field(() => Int)
   minHours: number
 
   @Field(() => String, { nullable: true })

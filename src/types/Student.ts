@@ -1,5 +1,7 @@
 import { Prisma, Student as PrismaStudent } from '@prisma/client';
-import { ObjectType, Field, Authorized } from 'type-graphql';
+import {
+  ObjectType, Field, Authorized, Int,
+} from 'type-graphql';
 import GraphQLJSON from 'graphql-type-json';
 import { DateTime } from 'luxon';
 import { StudentStatus, RejectionReason, Track } from '../enums';
@@ -36,7 +38,7 @@ export class Student implements PrismaStudent {
   @Field(() => Track)
   track: Track
 
-  @Field(() => Number)
+  @Field(() => Int)
   minHours: number
 
   @Authorized(AuthRole.ADMIN)
@@ -46,7 +48,7 @@ export class Student implements PrismaStudent {
   @Field(() => GraphQLJSON)
   profile: Prisma.JsonValue
 
-  @Field(() => Number)
+  @Field(() => Int)
   weeks: number
 
   @Authorized(AuthRole.ADMIN)

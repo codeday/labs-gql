@@ -1,4 +1,4 @@
-import { InputType, Field } from 'type-graphql';
+import { InputType, Field, Int } from 'type-graphql';
 import { Prisma } from '@prisma/client';
 import { GraphQLJSONObject } from 'graphql-type-json';
 import { MentorStatus } from '../enums';
@@ -20,7 +20,7 @@ export class MentorEditInput {
   @Field(() => MentorStatus, { nullable: true })
   status?: MentorStatus
 
-  @Field(() => Number, { nullable: true })
+  @Field(() => Int, { nullable: true })
   maxWeeks?: number
 
   @Field(() => String, { nullable: true })

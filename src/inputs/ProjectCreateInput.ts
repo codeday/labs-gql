@@ -1,4 +1,4 @@
-import { InputType, Field } from 'type-graphql';
+import { InputType, Field, Int } from 'type-graphql';
 import { Prisma } from '@prisma/client';
 import { Track } from '../enums';
 
@@ -13,7 +13,7 @@ export class ProjectCreateInput {
   @Field(() => Track)
   track: Track
 
-  @Field(() => Number, { nullable: true })
+  @Field(() => Int, { nullable: true })
   maxStudents?: number
 
   @Field(() => [String], { nullable: true })

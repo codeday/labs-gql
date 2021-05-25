@@ -3,7 +3,7 @@ import {
 } from '@prisma/client';
 import { Container } from 'typedi';
 import {
-  ObjectType, Field,
+  ObjectType, Field, Int,
 } from 'type-graphql';
 import { Track } from '../enums';
 import { Mentor } from './Mentor';
@@ -30,7 +30,7 @@ export class Project implements PrismaProject {
   @Field(() => Track)
   track: Track
 
-  @Field(() => Number)
+  @Field(() => Int)
   maxStudents: number
 
   @Field(() => ProjectStatus)
