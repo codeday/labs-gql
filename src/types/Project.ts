@@ -1,11 +1,12 @@
 import {
-  Mentor as PrismaMentor, Project as PrismaProject, PrismaClient, ProjectStatus,
+  Mentor as PrismaMentor, Project as PrismaProject, Tag as PrismaTag, PrismaClient, ProjectStatus,
 } from '@prisma/client';
 import { Container } from 'typedi';
 import {
   ObjectType, Field, Int,
 } from 'type-graphql';
 import { Track } from '../enums';
+import { Tag } from './Tag';
 import { Mentor } from './Mentor';
 
 @ObjectType()
@@ -35,6 +36,14 @@ export class Project implements PrismaProject {
 
   @Field(() => ProjectStatus)
   status: ProjectStatus
+
+  tags: PrismaTag[]
+
+  @Field(() => [Tag], { name: 'tags' })
+  async fetchTags(): Promise<PrismaTag[]> {
+    if (this.tags) return this.tags;
+    return Container.get(PrismaClient).tag.findMany({ where: { projects: { some: { id: this.id } } } });
+  }
 
   mentors: PrismaMentor[]
 

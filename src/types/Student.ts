@@ -1,11 +1,16 @@
-import { Prisma, Student as PrismaStudent } from '@prisma/client';
+import {
+  Prisma, Student as PrismaStudent, Project as PrismaProject, Tag as PrismaTag, PrismaClient,
+} from '@prisma/client';
 import {
   ObjectType, Field, Authorized, Int,
 } from 'type-graphql';
+import { Container } from 'typedi';
 import GraphQLJSON from 'graphql-type-json';
 import { DateTime } from 'luxon';
 import { StudentStatus, RejectionReason, Track } from '../enums';
 import { AuthRole } from '../context';
+import { Project } from './Project';
+import { Tag } from './Tag';
 
 @ObjectType()
 export class Student implements PrismaStudent {
@@ -67,4 +72,20 @@ export class Student implements PrismaStudent {
   @Authorized(AuthRole.ADMIN)
   @Field(() => Number, { nullable: true })
   admissionAverageRating: number | null;
+
+  tags: PrismaTag[]
+
+  @Field(() => [Tag], { name: 'tags' })
+  async fetchTags(): Promise<PrismaTag[]> {
+    if (this.tags) return this.tags;
+    return Container.get(PrismaClient).tag.findMany({ where: { students: { some: { id: this.id } } } });
+  }
+
+  projects?: PrismaProject[] | null
+
+  @Field(() => [Project], { name: 'projects' })
+  async fetchProjects(): Promise<PrismaProject[]> {
+    if (this.projects) return this.projects;
+    return Container.get(PrismaClient).project.findMany({ where: { students: { some: { id: this.id } } } });
+  }
 }

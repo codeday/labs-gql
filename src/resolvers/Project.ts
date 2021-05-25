@@ -24,7 +24,7 @@ export class ProjectResolver {
     @Arg('data', () => ProjectCreateInput) data: ProjectCreateInput,
     @Arg('mentor', () => IdOrUsernameInput, { nullable: true }) mentor?: IdOrUsernameInput,
   ): Promise<PrismaProject> {
-    return this.prisma.project.create({ data: { ...data, mentors: { connect: mentor || auth.toWhere() } } });
+    return this.prisma.project.create({ data: { ...data.toQuery(), mentors: { connect: mentor || auth.toWhere() } } });
   }
 
   @Authorized(AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.MENTOR)
@@ -53,7 +53,7 @@ export class ProjectResolver {
 
     return this.prisma.project.update({
       where: { id: project },
-      data: { ...data, ...(auth.isMentor && !data.status ? { status: ProjectStatus.DRAFT } : {}) },
+      data: { ...data.toQuery(), ...(auth.isMentor && !data.status ? { status: ProjectStatus.DRAFT } : {}) },
     });
   }
 
