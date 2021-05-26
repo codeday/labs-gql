@@ -13,7 +13,7 @@ Some other next-steps to expect:
 
 - We'll provide you with some training information (including schedule, what resources your students have, and protips)
   a few weeks before the program starts.
-- You can expect to be introduced to your student one week before CodeDay Labs starts. (Student onboarding week.)
+- You can expect to be introduced to your students one week before CodeDay Labs starts. (Student onboarding week.)
 
 <div>
 <div style="color: #484848;">--<br />The CodeDay Labs Team</div>
