@@ -1,5 +1,5 @@
 import {
-  Resolver, Authorized, Query, Mutation, Arg, Ctx,
+  Resolver, Authorized, Query, Mutation, Arg, Ctx, Int,
 } from 'type-graphql';
 import {
   PrismaClient, RejectionReason, Student as PrismaStudent, StudentStatus, Track,
@@ -43,7 +43,7 @@ export class ReviewResolver {
   async submitStudentRating(
     @Ctx() { auth }: Context,
     @Arg('where', () => IdOrUsernameInput) where: IdOrUsernameInput,
-    @Arg('rating', () => Number) rating: number,
+    @Arg('rating', () => Int) rating: number,
     @Arg('track', () => Track) track: Track,
   ): Promise<boolean> {
     if (!auth.username) throw Error('Reviewers require username in token.');
