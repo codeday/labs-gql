@@ -71,7 +71,11 @@ export class Student implements PrismaStudent {
 
   @Authorized(AuthRole.ADMIN)
   @Field(() => Number, { nullable: true })
-  admissionAverageRating: number | null;
+  admissionRatingAverage: number | null;
+
+  @Authorized(AuthRole.ADMIN)
+  @Field(() => Number, { nullable: true })
+  admissionRatingCount: number | null;
 
   tags: PrismaTag[]
 

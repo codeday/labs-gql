@@ -71,6 +71,7 @@ export class ReviewResolver {
       take,
       by: ['studentId'],
       _avg: { rating: true },
+      _count: { rating: true },
       where: { student: { track } },
       orderBy: { _avg: { rating: 'desc' } },
     });
@@ -81,7 +82,11 @@ export class ReviewResolver {
     })).reduce((accum, student) => ({ ...accum, [student.id]: student }), {});
 
     return topRatings
-      .map(({ studentId, _avg: { rating } }) => ({ ...students[studentId], averageAdmissionRating: rating }));
+      .map(({ studentId, _avg, _count }) => ({
+        ...students[studentId],
+        admissionRatingAverage: _avg?.rating,
+        admissionRatingCount: _count?.rating,
+      }));
   }
 
   @Authorized(AuthRole.ADMIN)
