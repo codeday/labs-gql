@@ -30,6 +30,7 @@ export class ReviewResolver {
         track,
         admissionRatings: { none: { ratedBy: auth.username } },
         username: { not: auth.username },
+        status: StudentStatus.APPLIED,
       },
       orderBy: [{ createdAt: 'asc' }],
       take: 10,
