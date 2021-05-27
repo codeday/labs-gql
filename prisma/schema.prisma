@@ -129,6 +129,7 @@ model AdmissionRating {
   // Data
   ratedBy String
   rating  Int
+  track   Track
 
   // Relations
   student   Student @relation(fields: [studentId], references: [id])

@@ -5,6 +5,7 @@ import {
   PrismaClient, RejectionReason, Student as PrismaStudent, StudentStatus, Track,
 } from '@prisma/client';
 import { Inject, Service } from 'typedi';
+import { randInt } from '../utils';
 import { Context, AuthRole } from '../context';
 import { Student } from '../types';
 import {
@@ -24,10 +25,16 @@ export class ReviewResolver {
     @Arg('track', () => Track, { nullable: true }) track?: Track,
   ): Promise<PrismaStudent | null> {
     if (!auth.username) throw Error('Reviewers require username in token.');
-    return this.prisma.student.findFirst({
-      where: { track, admissionRatings: { none: { ratedBy: auth.username } } },
+    const results = await this.prisma.student.findMany({
+      where: {
+        track,
+        admissionRatings: { none: { ratedBy: auth.username } },
+        username: { not: auth.username },
+      },
       orderBy: [{ createdAt: 'asc' }],
+      take: 10,
     });
+    return results.length > 0 ? results[randInt(0, results.length)] : null;
   }
 
   @Authorized(AuthRole.REVIEWER)
@@ -36,6 +43,7 @@ export class ReviewResolver {
     @Ctx() { auth }: Context,
     @Arg('where', () => IdOrUsernameInput) where: IdOrUsernameInput,
     @Arg('rating', () => Number) rating: number,
+    @Arg('track', () => Track) track: Track,
   ): Promise<boolean> {
     if (!auth.username) throw Error('Reviewers require username in token.');
     if (rating > 10 || rating < 1 || Math.floor(rating) !== rating) throw Error('Rating must be an int from 1 - 10.');
@@ -43,6 +51,7 @@ export class ReviewResolver {
       data: {
         ratedBy: auth.username,
         rating,
+        track,
         student: { connect: where },
       },
     });
