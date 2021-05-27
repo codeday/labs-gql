@@ -27,6 +27,9 @@ export class StudentApplyInput {
   @Field(() => String, { nullable: true })
   partnerCode?: string
 
+  @Field(() => [String], { nullable: true })
+  tags?: string[]
+
   toQuery(): Omit<Prisma.StudentCreateInput, 'username'> {
     return {
       givenName: this.givenName,
@@ -37,6 +40,7 @@ export class StudentApplyInput {
       track: this.track,
       minHours: this.minHours,
       partnerCode: this.partnerCode,
+      tags: this.tags ? { connect: this.tags.map((id): Prisma.TagWhereUniqueInput => ({ id })) } : undefined,
     };
   }
 }

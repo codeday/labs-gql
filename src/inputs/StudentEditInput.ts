@@ -36,6 +36,9 @@ export class StudentEditInput {
   @Field(() => String, { nullable: true })
   partnerCode?: string
 
+  @Field(() => [String], { nullable: true })
+  tags?: string[]
+
   toQuery(): Prisma.StudentUpdateInput {
     return {
       givenName: this.givenName,
@@ -48,6 +51,7 @@ export class StudentEditInput {
       minHours: this.minHours,
       profile: this.profile,
       partnerCode: this.partnerCode,
+      tags: this.tags ? { set: this.tags.map((id): Prisma.TagWhereUniqueInput => ({ id })) } : undefined,
     };
   }
 }

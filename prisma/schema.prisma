@@ -106,8 +106,8 @@ model Project {
   updatedAt DateTime @default(now())
 
   // Data
-  description  String? @db.Text
-  deliverables String? @db.Text
+  description  String?       @db.Text
+  deliverables String?       @db.Text
   track        Track
   maxStudents  Int           @default(4)
   status       ProjectStatus @default(DRAFT)
