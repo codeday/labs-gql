@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { DateTime } from 'luxon';
-import { ProjectStatus } from '../../enums';
+import { ProjectStatus, MentorStatus } from '../../enums';
 import { EmailContext } from '../spec';
 
 export async function getId(): Promise<string | null> {
@@ -10,6 +10,7 @@ export async function getId(): Promise<string | null> {
 export async function getList(prisma: PrismaClient): Promise<EmailContext[]> {
   const mentors = await prisma.mentor.findMany({
     where: {
+      status: { notIn: [MentorStatus.REJECTED, MentorStatus.CANCELED] },
       projects: {
         some: {
           status: ProjectStatus.DRAFT,
