@@ -10,7 +10,7 @@ export async function getId(): Promise<string | null> {
 export async function getList(prisma: PrismaClient): Promise<EmailContext[]> {
   const mentors = await prisma.mentor.findMany({
     where: {
-      status: { notIn: [MentorStatus.REJECTED, MentorStatus.CANCELED] },
+      status: MentorStatus.ACCEPTED,
       projects: {
         some: {
           status: ProjectStatus.DRAFT,
