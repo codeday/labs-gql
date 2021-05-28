@@ -6,7 +6,7 @@ subject: "[Action Required] CodeDay Labs Admission Offer"
 
 Hi {{ student.givenName }},
 
-Congratulations, we're excited to offer you acceptance to CodeDay Labs!
+Congratulations, we're excited to offer you acceptance to CodeDay Labs ({{ student.weeks }}-week program)!
 
 You have been accepted in the {{ student.track }} track. This is the track we think is the best fit for you, but if you
 have any concerns please reply to this email.
@@ -22,7 +22,7 @@ If you accept this offer, you are committing to:
 
 1. Have enough time in your schedule to schedule meetings. (Most groups meet in the late afternoon or evening.)
 2. Work on your project outside of meetings, and stay in contact with your team.
-3. Put in at least {{ student.minHours }} of work each week, including meetings.
+3. Put in **at least {{ student.minHours }} of work each week,** including meetings.
 
 Participating in CodeDay Labs while you have a part-time job is very possible, but not if you have a full-time job.
 If you accept a full-time job or internship offer we request that you withdraw from the program.

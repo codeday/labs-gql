@@ -35,6 +35,11 @@ export class Student implements PrismaStudent {
   surname: string
 
   @Field(() => String)
+  name(): string {
+    return `${this.givenName} ${this.surname}`;
+  }
+
+  @Field(() => String)
   email: string
 
   @Field(() => StudentStatus)
