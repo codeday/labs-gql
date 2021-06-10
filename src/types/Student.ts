@@ -1,5 +1,5 @@
 import {
-  Prisma, Student as PrismaStudent, Project as PrismaProject, Tag as PrismaTag, PrismaClient,
+  Prisma, Student as PrismaStudent, Project as PrismaProject, Tag as PrismaTag, PrismaClient, AdmissionRating,
 } from '@prisma/client';
 import {
   ObjectType, Field, Authorized, Int,
@@ -10,6 +10,7 @@ import { DateTime } from 'luxon';
 import { StudentStatus, RejectionReason, Track } from '../enums';
 import { AuthRole } from '../context';
 import { Project } from './Project';
+import { TrackRecommendation } from './TrackRecommendation';
 import { Tag } from './Tag';
 
 @ObjectType()
@@ -81,6 +82,23 @@ export class Student implements PrismaStudent {
   @Authorized(AuthRole.ADMIN)
   @Field(() => Number, { nullable: true })
   admissionRatingCount: number | null;
+
+  admissionRatings?: AdmissionRating[];
+
+  @Field(() => [TrackRecommendation], { nullable: true })
+  async trackRecommendation(): Promise<TrackRecommendation[] | undefined> {
+    if (!this.admissionRatings) return undefined;
+
+    const ratingsSum = this.admissionRatings
+      .map(({ track }) => track)
+      .reduce((accum, k) => ({ ...accum, [k]: (k in accum ? accum[k as keyof typeof accum] : 0) + 1 }), {});
+
+    return Object.keys(ratingsSum)
+      .map((track): TrackRecommendation => ({
+        track: track as Track,
+        weight: ratingsSum[track as keyof typeof ratingsSum] / this.admissionRatings!.length,
+      }));
+  }
 
   tags: PrismaTag[]
 

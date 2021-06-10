@@ -79,6 +79,7 @@ export class ReviewResolver {
       skip,
       take,
       where: { id: { in: topRatings.map(({ studentId }) => studentId) } },
+      include: { admissionRatings: { select: { track: true } } },
     })).reduce((accum, student) => ({ ...accum, [student.id]: student }), {});
 
     return topRatings
