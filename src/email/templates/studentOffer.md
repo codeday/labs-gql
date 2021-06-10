@@ -11,6 +11,10 @@ Congratulations, we're excited to offer you acceptance to CodeDay Labs ({{ stude
 You have been accepted in the {{ student.track }} track. This is the track we think is the best fit for you, but if you
 have any concerns please reply to this email.
 
+{{# when student.track 'eq' 'BEGINNER' }}**IMPORTANT:** There is a $250 fee for the beginner track, but need based
+scholarships are available. [You can apply for a scholarship here.](https://labs.codeday.org/apply/beginner/scholarship) If you
+are applying for a scholarship, please do not accept your offer yet.{{/when}}
+
 As a participant in CodeDay Labs, you will work with a team of other students, under the guidance of a professional
 software engineer mentor, to create or add features to an open-source software project.
 
@@ -27,7 +31,7 @@ If you accept this offer, you are committing to:
 Participating in CodeDay Labs while you have a part-time job is very possible, but not if you have a full-time job.
 If you accept a full-time job or internship offer we request that you withdraw from the program.
 
-**Please choose an option within three days:**
+**Please choose an option within three days:{{#when student.track 'eq' 'BEGINNER'}} (unless requesting a scholarship){{/when}}**
 - [I accept this offer!](https://labs.codeday.org/dash/s/{{ tokenFor student }}/offer-accept)
 - [I do NOT accept, and want to cancel my application.](https://labs.codeday.org/dash/s/{{ tokenFor student }}/withdraw)
 
