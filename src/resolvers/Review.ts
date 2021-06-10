@@ -72,7 +72,12 @@ export class ReviewResolver {
       by: ['studentId'],
       _avg: { rating: true },
       _count: { rating: true },
-      where: { student: { track } },
+      where: {
+        student: {
+          track,
+          status: { in: [StudentStatus.APPLIED, StudentStatus.TRACK_CHALLENGE, StudentStatus.TRACK_INTERVIEW] },
+        },
+      },
       orderBy: { _avg: { rating: 'desc' } },
     });
     const students = <Record<string, PrismaStudent>>(await this.prisma.student.findMany({
