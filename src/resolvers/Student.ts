@@ -20,8 +20,10 @@ export class StudentResolver {
   @Query(() => [Student])
   async students(
     @Arg('where', () => StudentFilterInput, { nullable: true }) where?: StudentFilterInput,
+    @Arg('skip', () => Number, { nullable: true }) skip?: number,
+    @Arg('take', () => Number, { nullable: true }) take?: number,
   ): Promise<PrismaStudent[]> {
-    return this.prisma.student.findMany({ where: where?.toQuery() });
+    return this.prisma.student.findMany({ where: where?.toQuery(), skip, take });
   }
 
   @Authorized(AuthRole.ADMIN, AuthRole.STUDENT)

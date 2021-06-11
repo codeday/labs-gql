@@ -20,8 +20,10 @@ export class MentorResolver {
   @Query(() => [Mentor])
   async mentors(
     @Arg('where', () => MentorFilterInput, { nullable: true }) where?: MentorFilterInput,
+    @Arg('skip', () => Number, { nullable: true }) skip?: number,
+    @Arg('take', () => Number, { nullable: true }) take?: number,
   ): Promise<PrismaMentor[]> {
-    return this.prisma.mentor.findMany({ where: where?.toQuery() });
+    return this.prisma.mentor.findMany({ where: where?.toQuery(), skip, take });
   }
 
   @Authorized(AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.MENTOR)
