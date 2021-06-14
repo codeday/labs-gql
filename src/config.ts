@@ -6,6 +6,7 @@ loadEnv();
 
 [
   'DATABASE_URL',
+  'ELASTIC_URL',
   'AUTH_SECRET',
   'AUTH_AUDIENCE',
   'EMAIL_HOST',
@@ -17,6 +18,11 @@ loadEnv();
 const config = {
   debug: process.env.NODE_ENV !== 'production',
   port: process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 5000,
+  elastic: {
+    disable: process.env.DISABLE_SEARCH === 'TRUE',
+    url: process.env.ELASTIC_URL!,
+    index: process.env.ELASTIC_INDEX!,
+  },
   auth: {
     secret: process.env.AUTH_SECRET!,
     audience: process.env.AUTH_AUDIENCE!,

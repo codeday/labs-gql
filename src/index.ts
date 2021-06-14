@@ -16,3 +16,9 @@ if (!config.email.disable) {
 import server from './server';
 
 server();
+
+import searchSyncHandler from './search';
+
+if (!config.elastic.disable) {
+  searchSyncHandler();
+}
