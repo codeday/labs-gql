@@ -26,7 +26,11 @@ export class StatsResolver {
     });
 
     const expiredStudents = await this.prisma.student.count({
-      where: { status: StudentStatus.OFFERED, offerDate: { lt: DateTime.now().plus({ days: -3 }).toJSDate() } },
+      where: {
+        track,
+        status: StudentStatus.OFFERED,
+        offerDate: { lt: DateTime.now().plus({ days: -3 }).toJSDate() },
+      },
     });
 
     return [
