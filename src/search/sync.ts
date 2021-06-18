@@ -4,10 +4,10 @@ import Container from 'typedi';
 import config from '../config';
 import { projectToElasticEntry, ElasticEntrySchema, ElasticEntry } from './ElasticEntry';
 
-const prisma = Container.get(PrismaClient);
-const elastic = Container.get(Client);
-
 export async function syncElastic(): Promise<void> {
+  const prisma = Container.get(PrismaClient);
+  const elastic = Container.get(Client);
+
   const allProjects = await prisma.project.findMany({
     include: {
       mentors: true,

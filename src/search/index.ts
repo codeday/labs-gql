@@ -7,3 +7,4 @@ export default function searchSyncHandler(): void {
 
 export * from './ElasticEntry';
 export * from './sync';
+export * from './getProjectMatches';

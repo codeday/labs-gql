@@ -21,6 +21,7 @@
     "apollo-server-express": "^2.24.1",
     "class-validator": "^0.13.1",
     "dotenv": "^9.0.2",
+    "elastic-builder": "^2.16.0",
     "express": "^4.17.1",
     "front-matter": "^4.0.2",
     "graphql": "^15.5.0",

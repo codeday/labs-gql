@@ -37,6 +37,29 @@ export const ElasticEntrySchema: Record<string, FieldType> = {
   prefSimilarUpbringing: 'integer',
 };
 
+export enum ElasticEntryProperties {
+  id = 'id',
+  studentsSelected = 'studentsSelected',
+  interestTags = 'interestTags',
+  stackTags = 'stackTags',
+  available = 'available',
+  maxWeeks = 'maxWeeks',
+  track = 'track',
+  timezoneOffset = 'timezoneOffset',
+  mentorSchools = 'mentorSchools',
+  mentorDegrees = 'mentorDegrees',
+  mentorCompanies = 'mentorCompanies',
+  mentorRoles = 'mentorRoles',
+  mentorIndustries = 'mentorIndustries',
+  mentorUnderrepresented = 'mentorUnderrepresented',
+  mentorUnderrepresentedGender = 'mentorUnderrepresentedGender',
+  mentorUnderrepresentedEthnicity = 'mentorUnderrepresentedEthnicity',
+  prefUnderrepresented = 'prefUnderrepresented',
+  prefCompanyMatch = 'prefCompanyMatch',
+  prefSchoolMatch = 'prefSchoolMatch',
+  prefSimilarUpbringing = 'prefSimilarUpbringing',
+}
+
 export interface ElasticEntry {
   id: string
   studentsSelected: number
