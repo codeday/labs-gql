@@ -62,6 +62,7 @@ export class ReviewResolver {
   @Authorized(AuthRole.ADMIN)
   @Query(() => [Student])
   async studentsTopRated(
+    @Arg('includeRejected', () => Boolean, { nullable: true }) includeRejected?: boolean,
     @Arg('skip', () => Number, { nullable: true }) skip?: number,
     @Arg('take', () => Number, { nullable: true }) take?: number,
     @Arg('track', () => Track, { nullable: true }) track?: Track,
@@ -75,7 +76,14 @@ export class ReviewResolver {
       where: {
         student: {
           track,
-          status: { in: [StudentStatus.APPLIED, StudentStatus.TRACK_CHALLENGE, StudentStatus.TRACK_INTERVIEW] },
+          status: {
+            in: [
+              StudentStatus.APPLIED,
+              StudentStatus.TRACK_CHALLENGE,
+              StudentStatus.TRACK_INTERVIEW,
+              ...(includeRejected ? [StudentStatus.REJECTED] : []),
+            ],
+          },
         },
       },
       orderBy: { _avg: { rating: 'desc' } },
