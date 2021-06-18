@@ -5,7 +5,7 @@ import {
   PrismaClient,
 } from '@prisma/client';
 import { Inject, Service } from 'typedi';
-import { Track } from '../enums';
+import { Track, StudentStatus } from '../enums';
 import { Context, AuthRole } from '../context';
 import {
   Student, Tag, Match, Preference, Project,
@@ -27,6 +27,7 @@ export class MatchResolver {
     const student = await this.prisma.student.findUnique({ where: auth.toWhere() });
     const tags = await this.prisma.tag.findMany({ where: { id: { in: tagIds } } });
 
+    if (!student || student.status !== StudentStatus.ACCEPTED) throw Error('You have not been accepted.');
     return getProjectMatches(<Student>student, <Tag[]>tags);
   }
 
@@ -51,6 +52,7 @@ export class MatchResolver {
     const student = await this.prisma.student.findUnique({ where: auth.toWhere() });
     const projects = await this.prisma.project.findMany({ where: { id: { in: projectIds } } });
 
+    if (!student || student.status !== StudentStatus.ACCEPTED) throw Error('You have not been accepted.');
     if (projectIds.length < 3) throw Error('You must select at least 3 project preferences.');
     if (projects.length !== projectIds.length) throw Error('You selected a project which does not exist.');
     projects.forEach(({ id, track }) => {
