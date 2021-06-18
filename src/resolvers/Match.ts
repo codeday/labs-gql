@@ -38,7 +38,7 @@ export class MatchResolver {
   ): Promise<Preference[]> {
     return <Preference[]><unknown> this.prisma.projectPreference.findMany({
       where: { student: auth.toWhere() },
-      include: { project: true },
+      include: { project: { include: { tags: true, mentors: true } } },
     });
   }
 
@@ -50,7 +50,10 @@ export class MatchResolver {
   ): Promise<Preference[]> {
     const projectIds = [...new Set(projectIdsArg)];
     const student = await this.prisma.student.findUnique({ where: auth.toWhere() });
-    const projects = await this.prisma.project.findMany({ where: { id: { in: projectIds } } });
+    const projects = await this.prisma.project.findMany({
+      where: { id: { in: projectIds } },
+      include: { tags: true, mentors: true },
+    });
 
     if (!student || student.status !== StudentStatus.ACCEPTED) throw Error('You have not been accepted.');
     if (projectIds.length < 3) throw Error('You must select at least 3 project preferences.');

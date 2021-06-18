@@ -112,6 +112,7 @@ export async function getProjectMatches(student: Student, tags: Tag[]): Promise<
         in: hits.map((r) => r._id),
       },
     },
+    include: { tags: true, mentors: true },
   });
 
   return projects
