@@ -1,5 +1,4 @@
 /* eslint-disable no-underscore-dangle */
-import util from 'util';
 import esb, {
   FunctionScoreQuery, RangeQuery, ScoreFunction, TermQuery,
 } from 'elastic-builder';

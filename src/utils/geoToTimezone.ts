@@ -1,5 +1,6 @@
 /* eslint-disable camelcase */
 import fetch from 'node-fetch';
+import URLSearchParams from 'url-search-params';
 import config from '../config';
 
 const API_BASE = 'https://api.geocod.io/v1.6/geocode';
@@ -12,7 +13,7 @@ export async function geoToTimezone(postal: string, country: string): Promise<nu
     api_key: config.geocodio.apiKey,
     q: postal,
     country,
-    limit: 1,
+    limit: '1',
     fields: 'timezone',
   })).toString();
   const url = `${API_BASE}?${query}`;
