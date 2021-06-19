@@ -24,7 +24,7 @@ const SCORE_WEIGHTS = {
   PREF_UNDERREPRESENTED_MATCH: 5.0,
   POPULARITY_DECAY_SCALE: 3.0,
   POPULARITY_DECAY_OFFSET: 3.0,
-  POPULARITY_DECAY: 0.4,
+  POPULARITY_DECAY: 0.3,
 };
 
 function buildTagsScore(tags: Tag[]): ScoreFunction[] {
