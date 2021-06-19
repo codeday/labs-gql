@@ -1,3 +1,5 @@
+/* eslint-disable no-underscore-dangle */
+import util from 'util';
 import esb, {
   FunctionScoreQuery, RangeQuery, ScoreFunction, TermQuery,
 } from 'elastic-builder';
@@ -9,18 +11,21 @@ import {
   Student, Match, Project, Tag,
 } from '../types';
 import { Track, TagType } from '../enums';
+import { geoToTimezone } from '../utils';
 import { ElasticEntryProperties as Entry } from './ElasticEntry';
 
 const SCORE_WEIGHTS = {
   BASE: 1.0,
   COMPANY_MATCH: 1.0,
-  URBAN_DENSITY_MATCH: 2.0,
-  TRACK_MATCH: 6.0,
-  TAG_TECHNOLOGY_MATCH: 1.5,
-  TAG_INTEREST_MATCH: 1.5,
-  PREF_UNDERREPRESENTED_MATCH: 2.0,
+  URBAN_DENSITY_MATCH: 1.0,
+  TIMEZONE_MATCH: 7.0,
+  TRACK_MATCH: 5.0,
+  TAG_TECHNOLOGY_MATCH: 3.0,
+  TAG_INTEREST_MATCH: 3.0,
+  PREF_UNDERREPRESENTED_MATCH: 5.0,
+  POPULARITY_DECAY_SCALE: 3.0,
   POPULARITY_DECAY_OFFSET: 3.0,
-  POPULARITY_DECAY: 0.5,
+  POPULARITY_DECAY: 0.4,
 };
 
 function buildTagsScore(tags: Tag[]): ScoreFunction[] {
@@ -30,7 +35,9 @@ function buildTagsScore(tags: Tag[]): ScoreFunction[] {
   }), {});
 
   return tags.map(({ id, type }) => esb.weightScoreFunction()
-    .filter(esb.termQuery(type === TagType.INTEREST ? Entry.interestTags : Entry.stackTags, id))
+    .filter(
+      esb.matchQuery(type === TagType.INTEREST ? Entry.interestTags : Entry.stackTags, id),
+    )
     .weight(
       (type === TagType.INTEREST ? SCORE_WEIGHTS.TAG_INTEREST_MATCH : SCORE_WEIGHTS.TAG_TECHNOLOGY_MATCH)
       / tagCount[type as keyof typeof tagCount],
@@ -44,7 +51,12 @@ function isStudentUnderrepresented(student: Student): boolean {
   return false;
 }
 
-function buildQueryFor(student: Student, tags: Tag[]): FunctionScoreQuery {
+async function buildQueryFor(student: Student, tags: Tag[]): Promise<FunctionScoreQuery> {
+  const profile = <{ location?: { postal?: string, country?: string } } | undefined>student?.profile;
+  const timezone = profile?.location?.postal && profile?.location?.country
+    ? await geoToTimezone(profile.location.postal, profile.location.country)
+    : -7;
+
   const scoreTagsMatching = buildTagsScore(tags);
 
   const queryStudentRequiresLength = esb.rangeQuery(Entry.maxWeeks).gte(student.weeks);
@@ -67,12 +79,18 @@ function buildQueryFor(student: Student, tags: Tag[]): FunctionScoreQuery {
       esb.matchQuery(Entry.track, Track.ADVANCED),
     ]).minimumShouldMatch(1);
   const scoreTrack = esb.weightScoreFunction()
-    .filter(esb.termQuery(Entry.track, student.track))
+    .filter(esb.matchQuery(Entry.track, student.track))
     .weight(SCORE_WEIGHTS.TRACK_MATCH);
+
+  const scoreTimezone = esb.weightScoreFunction()
+    .filter(
+      esb.rangeQuery().gte(timezone - 4).lte(timezone + 4),
+    )
+    .weight(SCORE_WEIGHTS.TIMEZONE_MATCH);
 
   const scorePopularity = esb.decayScoreFunction('gauss', Entry.studentsSelected)
     .origin(0)
-    .scale(3)
+    .scale(SCORE_WEIGHTS.POPULARITY_DECAY_SCALE)
     .offset(SCORE_WEIGHTS.POPULARITY_DECAY_OFFSET)
     .decay(SCORE_WEIGHTS.POPULARITY_DECAY);
 
@@ -81,37 +99,37 @@ function buildQueryFor(student: Student, tags: Tag[]): FunctionScoreQuery {
       queryStudentRequiresLength,
       queryTrack,
       queryStudentIsUnderrepresented,
-    ].filter(Boolean))).functions([
+    ].filter(Boolean)))
+    .functions([
       ...scoreTagsMatching,
       scoreTrack,
       scoreStudentUnderrepresented,
       scorePopularity,
-    ].filter(Boolean))
-    .scoreMode('sum');
+      scoreTimezone,
+    ])
+    .scoreMode('multiply')
+    .boostMode('replace');
 }
 
 export async function getProjectMatches(student: Student, tags: Tag[]): Promise<Match[]> {
   const prisma = Container.get(PrismaClient);
   const elastic = Container.get(Client);
 
-  const query = esb.requestBodySearch().query(buildQueryFor(student, tags)).toJSON();
+  const query = esb.requestBodySearch().query(await buildQueryFor(student, tags)).toJSON();
 
   const { body } = await elastic.search({
     index: config.elastic.index,
     type: '_doc',
     body: query,
-    size: 25,
+    explain: config.debug,
+    size: 15,
   });
 
   if (!body?.hits?.hits) return [];
-  const hits = <{ _id: string, _score: number }[]>body.hits.hits;
+  const hits = <{ _id: string, _score: number, _explanation: Record<string, unknown> | undefined }[]>body.hits.hits;
+
   const projects = await prisma.project.findMany({
-    where: {
-      id: {
-        // eslint-disable-next-line no-underscore-dangle
-        in: hits.map((r) => r._id),
-      },
-    },
+    where: { id: { in: hits.map((r) => r._id) } },
     include: { tags: true, mentors: true },
   });
 

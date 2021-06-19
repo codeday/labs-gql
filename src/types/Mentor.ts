@@ -50,7 +50,6 @@ export class Mentor implements PrismaMentor {
   @Field(() => String, { nullable: true })
   managerUsername: string | null
 
-  @Authorized(AuthRole.ADMIN, AuthRole.MANAGER)
   @Field(() => Int)
   maxWeeks: number
 

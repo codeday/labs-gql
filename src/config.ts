@@ -7,17 +7,22 @@ loadEnv();
 [
   'DATABASE_URL',
   'ELASTIC_URL',
+  'ELASTIC_INDEX',
   'AUTH_SECRET',
   'AUTH_AUDIENCE',
   'EMAIL_HOST',
   'EMAIL_PORT',
   'EMAIL_USER',
   'EMAIL_PASS',
+  'GEOCODIO_API_KEY',
 ].forEach((req) => { if (!process.env[req]) throw Error(`The ${req} environment variable is required.`); });
 
 const config = {
   debug: process.env.NODE_ENV !== 'production',
   port: process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 5000,
+  geocodio: {
+    apiKey: process.env.GEOCODIO_API_KEY!,
+  },
   elastic: {
     disable: process.env.DISABLE_SEARCH === 'TRUE',
     url: process.env.ELASTIC_URL!,
