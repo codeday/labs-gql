@@ -39,15 +39,17 @@ export class MatchResolver {
     return <Preference[]><unknown> this.prisma.projectPreference.findMany({
       where: { student: auth.toWhere() },
       include: { project: { include: { tags: true, mentors: true } } },
+      orderBy: [{ ranking: 'asc' }],
     });
   }
 
   @Authorized(AuthRole.STUDENT)
   @Mutation(() => [Preference], { nullable: true })
   async expressProjectPreferences(
-    @Ctx() { auth }: Context,
+    @Ctx() ctx: Context,
     @Arg('projects', () => [String]) projectIdsArg: string[],
   ): Promise<Preference[]> {
+    const { auth } = ctx;
     const projectIds = [...new Set(projectIdsArg)];
     const student = await this.prisma.student.findUnique({ where: auth.toWhere() });
     const projects = await this.prisma.project.findMany({
@@ -75,9 +77,6 @@ export class MatchResolver {
       })),
     });
 
-    return projects.map((project) => ({
-      ranking: projectIds.indexOf(project.id),
-      project: <Project>project,
-    })).sort((a, b) => (a.ranking > b.ranking ? 1 : -1));
+    return this.projectPreferences(ctx);
   }
 }
