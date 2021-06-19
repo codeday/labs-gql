@@ -17,7 +17,7 @@ const SCORE_WEIGHTS = {
   BASE: 1.0,
   COMPANY_MATCH: 1.0,
   URBAN_DENSITY_MATCH: 1.0,
-  TIMEZONE_MATCH: 7.0,
+  TIMEZONE_MATCH: 15.0,
   TRACK_MATCH: 5.0,
   TAG_TECHNOLOGY_MATCH: 3.0,
   TAG_INTEREST_MATCH: 3.0,
@@ -81,9 +81,21 @@ async function buildQueryFor(student: Student, tags: Tag[]): Promise<FunctionSco
     .filter(esb.matchQuery(Entry.track, student.track))
     .weight(SCORE_WEIGHTS.TRACK_MATCH);
 
+  // Range query is broken for weight score_function
   const scoreTimezone = esb.weightScoreFunction()
     .filter(
-      esb.rangeQuery().gte(timezone - 4).lte(timezone + 4),
+      esb.boolQuery()
+        .should([
+          esb.matchQuery(Entry.timezoneOffset, (timezone - 4).toString()),
+          esb.matchQuery(Entry.timezoneOffset, (timezone - 3).toString()),
+          esb.matchQuery(Entry.timezoneOffset, (timezone - 2).toString()),
+          esb.matchQuery(Entry.timezoneOffset, (timezone - 1).toString()),
+          esb.matchQuery(Entry.timezoneOffset, timezone.toString()),
+          esb.matchQuery(Entry.timezoneOffset, (timezone + 1).toString()),
+          esb.matchQuery(Entry.timezoneOffset, (timezone + 2).toString()),
+          esb.matchQuery(Entry.timezoneOffset, (timezone + 3).toString()),
+          esb.matchQuery(Entry.timezoneOffset, (timezone + 4).toString()),
+        ]),
     )
     .weight(SCORE_WEIGHTS.TIMEZONE_MATCH);
 
@@ -121,7 +133,7 @@ export async function getProjectMatches(student: Student, tags: Tag[]): Promise<
     type: '_doc',
     body: query,
     explain: config.debug,
-    size: 15,
+    size: 150,
   });
 
   if (!body?.hits?.hits) return [];
