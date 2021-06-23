@@ -1,5 +1,12 @@
 import {
-  Prisma, Student as PrismaStudent, Project as PrismaProject, Tag as PrismaTag, PrismaClient, AdmissionRating,
+  Prisma,
+  Student as PrismaStudent,
+  Project as PrismaProject,
+  Tag as PrismaTag,
+  TagTrainingSubmission as PrismaTagTrainingSubmission,
+  PrismaClient,
+  AdmissionRating,
+  ProjectPreference as PrismaProjectPreference,
 } from '@prisma/client';
 import {
   ObjectType, Field, Authorized, Int,
@@ -11,7 +18,9 @@ import { StudentStatus, RejectionReason, Track } from '../enums';
 import { AuthRole } from '../context';
 import { Project } from './Project';
 import { TrackRecommendation } from './TrackRecommendation';
+import { Preference } from './Preference';
 import { Tag } from './Tag';
+import { TagTrainingSubmission } from './TagTrainingSubmission';
 
 @ObjectType()
 export class Student implements PrismaStudent {
@@ -63,8 +72,8 @@ export class Student implements PrismaStudent {
   weeks: number
 
   @Authorized(AuthRole.ADMIN)
-  @Field(() => String)
-  partnerCode: string
+  @Field(() => String, { nullable: true })
+  partnerCode: string | null
 
   @Field(() => Boolean)
   hasValidAdmissionOffer(): boolean {
@@ -96,7 +105,7 @@ export class Student implements PrismaStudent {
     return Object.keys(ratingsSum)
       .map((track): TrackRecommendation => ({
         track: track as Track,
-        weight: ratingsSum[track as keyof typeof ratingsSum] / this.admissionRatings!.length,
+        weight: ratingsSum[track as keyof typeof ratingsSum] / (this.admissionRatings?.length || 1),
       }));
   }
 
@@ -114,5 +123,36 @@ export class Student implements PrismaStudent {
   async fetchProjects(): Promise<PrismaProject[]> {
     if (this.projects) return this.projects;
     return Container.get(PrismaClient).project.findMany({ where: { students: { some: { id: this.id } } } });
+  }
+
+  projectPreferences?: PrismaProjectPreference[] | null
+
+  @Authorized(AuthRole.ADMIN)
+  @Field(() => [Preference], { name: 'projectPreferences' })
+  async fetchProjectPreferences(): Promise<PrismaProjectPreference[]> {
+    if (this.projectPreferences) return this.projectPreferences;
+    return Container.get(PrismaClient).projectPreference.findMany({ where: { student: { id: this.id } } });
+  }
+
+  tagTrainingSubmissions?: PrismaTagTrainingSubmission[] | null
+
+  @Field(() => [TagTrainingSubmission], { name: 'tagTrainingSubmissions' })
+  async fetchTagTrainingSubmissions(): Promise<PrismaTagTrainingSubmission[]> {
+    if (this.tagTrainingSubmissions) return this.tagTrainingSubmissions;
+    return Container.get(PrismaClient).tagTrainingSubmission.findMany({ where: { student: { id: this.id } } });
+  }
+
+  @Field(() => [Tag], { name: 'requiredTagTraining' })
+  async fetchRequiredTagTraining(): Promise<PrismaTag[]> {
+    const projects = await Container.get(PrismaClient).project.findMany({
+      where: { students: { some: { id: this.id } } },
+      include: { tags: { where: { trainingLink: { not: null } } } },
+    });
+    const tags: Record<string, Tag> = projects
+      .map((p) => p.tags)
+      .flat()
+      .reduce((accum, tag) => ({ ...accum, [tag.id]: tag }), {});
+
+    return Object.values(tags);
   }
 }

@@ -92,11 +92,12 @@ model Student {
   partnerCode     String?
 
   // Relations
-  projects           Project[]
-  admissionRatings   AdmissionRating[]
-  tags               Tag[]
-  emailsSent         EmailSent[]
-  projectPreferences ProjectPreference[]
+  projects               Project[]
+  admissionRatings       AdmissionRating[]
+  tags                   Tag[]
+  emailsSent             EmailSent[]
+  projectPreferences     ProjectPreference[]
+  tagTrainingSubmissions TagTrainingSubmission[]
 }
 
 model Project {
@@ -162,11 +163,30 @@ model Tag {
   id                 String  @id
   mentorDisplayName  String
   studentDisplayName String
+  trainingLink       String?
   type               TagType
 
   // Relations
-  students Student[]
-  projects Project[]
+  students               Student[]
+  projects               Project[]
+  tagTrainingSubmissions TagTrainingSubmission[]
+}
+
+model TagTrainingSubmission {
+  // Metadata
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  // Data
+  url String
+
+  // Relations
+  student   Student @relation(fields: [studentId], references: [id])
+  studentId String
+
+  tag   Tag    @relation(fields: [tagId], references: [id])
+  tagId String
 }
 
 model EmailSent {

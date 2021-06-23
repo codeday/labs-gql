@@ -21,6 +21,9 @@ export class Tag implements PrismaTag {
   @Field(() => String)
   studentDisplayName: string
 
+  @Field(() => String, { nullable: true })
+  trainingLink: string | null
+
   @Field(() => TagType)
   type: TagType
 }

@@ -13,6 +13,9 @@ export class TagCreateInput {
   @Field(() => String)
   studentDisplayName: string
 
+  @Field(() => String, { nullable: true })
+  trainingLink?: string
+
   @Field(() => TagType)
   type: TagType
 
@@ -21,6 +24,7 @@ export class TagCreateInput {
       id: this.id,
       mentorDisplayName: this.mentorDisplayName,
       studentDisplayName: this.studentDisplayName,
+      trainingLink: this.trainingLink,
       type: this.type,
     };
   }

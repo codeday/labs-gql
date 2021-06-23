@@ -10,6 +10,9 @@ export class TagEditInput {
   @Field(() => String, { nullable: true })
   studentDisplayName?: string
 
+  @Field(() => String, { nullable: true })
+  trainingLink?: string
+
   @Field(() => TagType, { nullable: true })
   type?: TagType
 
@@ -17,6 +20,7 @@ export class TagEditInput {
     return {
       mentorDisplayName: this.mentorDisplayName,
       studentDisplayName: this.studentDisplayName,
+      trainingLink: this.trainingLink,
       type: this.type,
     };
   }
