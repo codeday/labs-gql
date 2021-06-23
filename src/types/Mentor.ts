@@ -37,7 +37,6 @@ export class Mentor implements PrismaMentor {
     return `${this.givenName} ${this.surname}`;
   }
 
-  @Authorized(AuthRole.ADMIN, AuthRole.MANAGER)
   @Field(() => String)
   email: string
 
