@@ -14,7 +14,9 @@ import {
 import { Container } from 'typedi';
 import GraphQLJSON from 'graphql-type-json';
 import { DateTime } from 'luxon';
-import { StudentStatus, RejectionReason, Track } from '../enums';
+import {
+  StudentStatus, RejectionReason, Track, ProjectStatus, MentorStatus,
+} from '../enums';
 import { AuthRole } from '../context';
 import { Project } from './Project';
 import { TrackRecommendation } from './TrackRecommendation';
@@ -131,7 +133,18 @@ export class Student implements PrismaStudent {
   @Field(() => [Preference], { name: 'projectPreferences' })
   async fetchProjectPreferences(): Promise<PrismaProjectPreference[]> {
     if (this.projectPreferences) return this.projectPreferences;
-    return Container.get(PrismaClient).projectPreference.findMany({ where: { student: { id: this.id } } });
+    return Container.get(PrismaClient).projectPreference.findMany({
+      where: {
+        student: { id: this.id },
+        project: {
+          status: ProjectStatus.ACCEPTED,
+          mentors: { some: { status: MentorStatus.ACCEPTED } },
+        },
+      },
+      include: {
+        project: { include: { mentors: true } },
+      },
+    });
   }
 
   tagTrainingSubmissions?: PrismaTagTrainingSubmission[] | null
