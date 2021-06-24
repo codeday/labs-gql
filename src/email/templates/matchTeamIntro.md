@@ -9,11 +9,14 @@ subject: "Team Intro: {{{ join (mapToKey project.students 'givenName') ' <> ' }}
 
 {{ join (names project.students) '/' }} (students), and {{ join (names project.mentors) '/'}} (mentors) --
 
-Welcome to CodeDay Labs! We have placed you in a team, working on this project:
+Welcome to CodeDay Labs! We have placed you together in a team, working on this project:
 
 <blockquote>{{ project.description }}</blockquote>
 
-**Your next step is to set up your first meeting. Mentors, can you please send a calendar schedule link.**
+**NEXT STEPS:**
+
+- **Mentors:** Can you please send a When2meet (or other calendar scheduling link) for the first meeting?
+- **Students:** Introduce yourself, and then [log into your dashboard](https://labs.codeday.org/dash) to view your assignments for onboarding week.
 
 <div>
 <div style="color: #484848;">--<br />The CodeDay Labs Team</div>

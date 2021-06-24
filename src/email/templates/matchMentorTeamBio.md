@@ -19,7 +19,8 @@ Hi {{ mentor.givenName }}, we're excited to say we've found you matches for the 
 Info:
 
 - **Email:** {{ this.email }}
-- **Mentorship weeks:** {{ add this.weeks -1 }}{{#each this.profile}}
+- **Mentorship weeks:** {{ add this.weeks -1 }}
+- **Track:** {{ this.track }}{{#each this.profile}}
 - **{{ prettyCamel @key }}:** {{ this }}{{/each}}
 
 {{/each}}
