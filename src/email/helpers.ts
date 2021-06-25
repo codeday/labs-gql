@@ -52,7 +52,7 @@ function prettyCamel(value: string): string {
 }
 
 function prettyObj(value: unknown): string {
-  if (typeof value === 'string' || typeof value === 'number') return value;
+  if (typeof value === 'string' || typeof value === 'number') return <string>value;
   if (Array.isArray(value)) return value.map((v) => prettyObj(v)).join(', ');
   return JSON.stringify(value);
 }
