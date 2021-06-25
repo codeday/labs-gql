@@ -22,7 +22,7 @@ Info:
 - **Email:** {{ this.email }}
 - **Mentorship weeks:** {{ add this.weeks -1 }}
 - **Track:** {{ this.track }}{{#each this.profile}}
-- **{{ prettyCamel @key }}:** {{ this }}{{/each}}
+- **{{ prettyCamel @key }}:** {{ prettyObj this }}{{/each}}
 
 {{/each}}
 

@@ -51,6 +51,12 @@ function prettyCamel(value: string): string {
     .join(' ');
 }
 
+function prettyObj(value: unknown): string {
+  if (typeof value === 'string' || typeof value === 'number') return value;
+  if (Array.isArray(value)) return value.map((v) => prettyObj(v)).join(', ');
+  return JSON.stringify(value);
+}
+
 // eslint-disable-next-line @typescript-eslint/ban-types
 function mapToKey(value: object[], key: string): string[] {
   return value.map((e) => e[<keyof typeof e>key]);
@@ -83,6 +89,7 @@ export function registerHandlebarsHelpers(): void {
   handlebars.registerHelper('when', when);
   handlebars.registerHelper('add', add);
   handlebars.registerHelper('prettyCamel', prettyCamel);
+  handlebars.registerHelper('prettyObj', prettyObj);
   handlebars.registerHelper('mapToKey', mapToKey);
   handlebars.registerHelper('names', names);
   handlebars.registerHelper('join', join);
