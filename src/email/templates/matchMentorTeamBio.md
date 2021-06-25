@@ -1,6 +1,7 @@
 ---
 to: "{{ mentor.email }}"
 {{#if mentor.managerUsername }}cc: "{{ mentor.managerUsername }}@codeday.org"{{/if}}
+bcc: "labs@codeday.org"
 from: "labs@codeday.org"
 subject: "Your Mentees - {{ join (mapToKey project.students 'givenName') ', ' }}"
 ---

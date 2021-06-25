@@ -1,6 +1,7 @@
 import { InputType, Field } from 'type-graphql';
 import { Prisma } from '@prisma/client';
 import { StudentStatus } from '../enums';
+import { someNoneUndefined } from '../utils';
 
 @InputType()
 export class StudentFilterInput {
@@ -26,7 +27,7 @@ export class StudentFilterInput {
     return {
       status: this.inStatus,
       partnerCode: this.partnerCode,
-      projects: this.withProjects ? { some: {} } : undefined,
+      projects: someNoneUndefined(this.withProjects),
       givenName: this.givenName,
       surname: this.surname,
       email: this.email,

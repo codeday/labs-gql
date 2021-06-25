@@ -127,6 +127,11 @@ export class Student implements PrismaStudent {
     return Container.get(PrismaClient).project.findMany({ where: { students: { some: { id: this.id } } } });
   }
 
+  @Field(() => Number)
+  async projectCount(): Promise<number> {
+    return (await this.fetchProjects()).length;
+  }
+
   projectPreferences?: PrismaProjectPreference[] | null
 
   @Authorized(AuthRole.ADMIN)
