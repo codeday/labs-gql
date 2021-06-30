@@ -73,7 +73,7 @@ export class Student implements PrismaStudent {
   @Field(() => Int)
   weeks: number
 
-  @Authorized(AuthRole.ADMIN)
+  @Authorized(AuthRole.ADMIN, AuthRole.MANAGER)
   @Field(() => String, { nullable: true })
   partnerCode: string | null
 
