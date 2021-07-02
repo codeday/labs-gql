@@ -10,7 +10,8 @@
     "build": "npm -s run clean && npm -s run prisma && npx tsc && cpy '**/*' '!**/*.ts' ../dist/ --cwd=src/ --no-overwrite --parents",
     "prisma": "prisma format && prisma generate",
     "dev": "ts-node-dev --no-notify --respawn --transpile-only src",
-    "debug": "ts-node-dev --no-notify --respawn src"
+    "debug": "ts-node-dev --no-notify --respawn src",
+    "send-event-recommendations": "ts-node scripts/sendEventRecommendations.ts"
   },
   "dependencies": {
     "@elastic/elasticsearch": "^7.13.0",
