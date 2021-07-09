@@ -3,11 +3,8 @@ import { Container } from 'typedi';
 import { PrismaClient } from '@prisma/client';
 import { Transporter } from 'nodemailer';
 import { getEmailGenerators, EmailGenerator } from './loader';
-import { registerHandlebarsHelpers } from './helpers';
 import { EmailContext } from './spec';
 import config from '../config';
-
-registerHandlebarsHelpers();
 
 async function sendEmailForContext(emailId: string, generator: EmailGenerator, context: EmailContext): Promise<void> {
   const prisma = Container.get(PrismaClient);
