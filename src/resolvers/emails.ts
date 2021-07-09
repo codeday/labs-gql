@@ -63,8 +63,8 @@ export class Emails {
             to: to.email,
             from: `"CodeDay Labs" <labs@codeday.org>`,
             subject: subject(to),
-            html: Marked.parse(body(body)),
-            text: body(body),
+            html: Marked.parse(body(to)),
+            text: body(to),
           });
         // eslint-disable-next-line no-console
         } catch (err) { console.error(err); }
