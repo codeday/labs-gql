@@ -5,4 +5,4 @@ export * from './geoToTimezone';
 export * from './countries';
 export * from './someNoneUndefined';
 export * from './sanitizeSurveyResponse';
-export * from './surveyResponseType';
+export * from './getSurveyResponseType';

@@ -27,9 +27,9 @@ export class SurveyOccurence {
   @Field(() => Survey, { name: 'survey' })
   async fetchSurvey(): Promise<PrismaSurvey> {
     if (!this.survey) {
-      this.survey = await Container.get(PrismaClient).survey.findUnique({
+      this.survey = (await Container.get(PrismaClient).survey.findUnique({
         where: { id: this.surveyId },
-      });
+      })) || undefined;
     }
     return this.survey;
   }

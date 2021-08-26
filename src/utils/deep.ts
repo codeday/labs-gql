@@ -26,7 +26,7 @@ export function deepKvFilter<T extends Record<string, unknown>>(
   Object.keys(obj).forEach((key) => {
     const val = obj[key];
     if (isObj(val)) {
-      result[key] = deepKvFilter(val as Record<string, unknown>, filter);
+      result[key as keyof typeof obj] = deepKvFilter(val as Record<string, unknown>, filter);
     } else if (filter(key, val)) {
       result[key] = val;
     }
