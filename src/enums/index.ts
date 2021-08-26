@@ -1,5 +1,11 @@
 import {
-  Track, MentorStatus, StudentStatus, ProjectStatus, RejectionReason, TagType,
+  Track,
+  MentorStatus,
+  StudentStatus,
+  ProjectStatus,
+  RejectionReason,
+  TagType,
+  PersonType,
 } from '@prisma/client';
 import { registerEnumType } from 'type-graphql';
 
@@ -9,7 +15,14 @@ registerEnumType(StudentStatus, { name: 'StudentStatus' });
 registerEnumType(ProjectStatus, { name: 'ProjectStatus' });
 registerEnumType(RejectionReason, { name: 'RejectionReason' });
 registerEnumType(TagType, { name: 'TagType' });
+registerEnumType(PersonType, { name: 'PersonType' });
 
 export {
-  Track, MentorStatus, StudentStatus, ProjectStatus, RejectionReason, TagType,
+  Track,
+  MentorStatus,
+  StudentStatus,
+  ProjectStatus,
+  RejectionReason,
+  TagType,
+  PersonType,
 };

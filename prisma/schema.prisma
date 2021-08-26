@@ -8,6 +8,11 @@ generator client {
   previewFeatures = ["orderByAggregateGroup"]
 }
 
+enum PersonType {
+  MENTOR
+  STUDENT
+}
+
 enum Track {
   BEGINNER
   INTERMEDIATE
@@ -50,11 +55,129 @@ enum TagType {
   TECHNOLOGY
 }
 
+enum QuestionType {
+  TEXT
+  NUMBER
+  AGREE
+  CHECKBOXES
+  RADIOS
+  DROPDOWN
+  CONTENT
+}
+
+model Event {
+  // Metadata
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Data
+  name     String
+  startsAt DateTime
+
+  studentApplicationsStartAt    DateTime?
+  studentApplicationsEndAt      DateTime?
+  studentApplicationSchema      Json?
+  studentApplicationUi          Json?
+  studentApplicationPostprocess Json?
+
+  mentorApplicationsStartAt    DateTime?
+  mentorApplicationsEndAt      DateTime?
+  mentorApplicationSchema      Json?
+  mentorApplicationUi          Json?
+  mentorApplicationPostprocess Json?
+
+  surveys Survey[]
+}
+
+model Survey {
+  // Metadata
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Data
+  slug       String
+  name       String
+  personType PersonType
+
+  selfSchema  Json?
+  selfUi      Json?
+  selfCaution String?
+
+  peerSchema  Json?
+  peerUi      Json?
+  peerShare   Json?
+  peerCaution String?
+
+  menteeSchema  Json?
+  menteeUi      Json?
+  menteeShare   Json?
+  menteeCaution String?
+
+  mentorSchema  Json?
+  mentorUi      Json?
+  mentorShare   Json?
+  mentorCaution String?
+
+  projectSchema  Json?
+  projectUi      Json?
+  projectShare   Json?
+  projectCaution String?
+
+  // Relations
+  event            Event             @relation(fields: [eventId], references: [id])
+  eventId          String
+  surveyOccurences SurveyOccurence[]
+}
+
+model SurveyOccurence {
+  // Metadata
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  survey   Survey @relation(fields: [surveyId], references: [id])
+  surveyId String
+
+  surveyResponses SurveyResponse[]
+}
+
+model SurveyResponse {
+  // Metadata
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Data
+  response Json
+  caution  Float
+
+  // Relations
+  surveyOccurence   SurveyOccurence @relation(fields: [surveyOccurenceId], references: [id])
+  surveyOccurenceId String
+
+  authorStudent   Student? @relation(name: "AuthorStudent", fields: [authorStudentId], references: [id])
+  authorStudentId String?
+
+  authorMentor   Mentor? @relation(name: "AuthorMentor", fields: [authorMentorId], references: [id])
+  authorMentorId String?
+
+  student   Student? @relation(name: "TargetStudent", fields: [studentId], references: [id])
+  studentId String?
+
+  mentor   Mentor? @relation(name: "TargetMentor", fields: [mentorId], references: [id])
+  mentorId String?
+
+  project   Project? @relation(fields: [projectId], references: [id])
+  projectId String?
+}
+
 model Mentor {
   // Metadata
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Data
   givenName       String
@@ -67,15 +190,20 @@ model Mentor {
   maxWeeks        Int          @default(6)
 
   // Relations
-  projects   Project[]
-  emailsSent EmailSent[]
+  projects                Project[]
+  emailsSent              EmailSent[]
+  authoredSurveyResponses SurveyResponse[] @relation("AuthorMentor")
+  targetSurveyResponses   SurveyResponse[] @relation("TargetMentor")
+
+  // event      Event @relation(fields: [eventId], references: [id])
+  // eventId    String
 }
 
 model Student {
   // Metadata
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Data
   givenName       String
@@ -92,19 +220,24 @@ model Student {
   partnerCode     String?
 
   // Relations
-  projects               Project[]
-  admissionRatings       AdmissionRating[]
-  tags                   Tag[]
-  emailsSent             EmailSent[]
-  projectPreferences     ProjectPreference[]
-  tagTrainingSubmissions TagTrainingSubmission[]
+  projects                Project[]
+  admissionRatings        AdmissionRating[]
+  tags                    Tag[]
+  emailsSent              EmailSent[]
+  projectPreferences      ProjectPreference[]
+  tagTrainingSubmissions  TagTrainingSubmission[]
+  authoredSurveyResponses SurveyResponse[]        @relation("AuthorStudent")
+  targetSurveyResponses   SurveyResponse[]        @relation("TargetStudent")
+
+  // event      Event @relation(fields: [eventId], references: [id])
+  // eventId    String
 }
 
 model Project {
   // Metadata
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Data
   description  String?       @db.Text
@@ -114,18 +247,19 @@ model Project {
   status       ProjectStatus @default(DRAFT)
 
   // Relations
-  tags               Tag[]
-  mentors            Mentor[]
-  students           Student[]
-  emailsSent         EmailSent[]
-  projectPreferences ProjectPreference[]
+  tags                  Tag[]
+  mentors               Mentor[]
+  students              Student[]
+  emailsSent            EmailSent[]
+  projectPreferences    ProjectPreference[]
+  targetSurveyResponses SurveyResponse[]
 }
 
 model AdmissionRating {
   // Metadata
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Data
   ratedBy String
@@ -141,7 +275,7 @@ model ProjectPreference {
   // Metadata
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Data
   ranking Int
@@ -157,7 +291,7 @@ model ProjectPreference {
 model Tag {
   // Metadata
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Data
   id                 String  @id
@@ -176,7 +310,7 @@ model TagTrainingSubmission {
   // Metadata
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Data
   url String
@@ -193,7 +327,7 @@ model EmailSent {
   // Metadata
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Data
   emailId String
