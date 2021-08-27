@@ -1,7 +1,8 @@
 import { InputType, Field } from 'type-graphql';
 import { Prisma } from '@prisma/client';
-import { StudentStatus } from '../enums';
+import { StudentStatus, Track } from '../enums';
 import { someNoneUndefined } from '../utils';
+import { GtLtEq } from './GtLtEq';
 
 @InputType()
 export class StudentFilterInput {
@@ -23,6 +24,12 @@ export class StudentFilterInput {
   @Field(() => String, { nullable: true })
   email?: string
 
+  @Field(() => GtLtEq, { nullable: true })
+  weeks?: GtLtEq
+
+  @Field(() => Track, { nullable: true })
+  track?: Track
+
   toQuery(): Prisma.StudentWhereInput {
     return {
       status: this.inStatus,
@@ -31,6 +38,8 @@ export class StudentFilterInput {
       givenName: this.givenName,
       surname: this.surname,
       email: this.email,
+      weeks: this.weeks,
+      track: this.track,
     };
   }
 }
