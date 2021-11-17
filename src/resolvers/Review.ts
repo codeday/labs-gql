@@ -24,6 +24,7 @@ export class ReviewResolver {
     @Ctx() { auth }: Context,
     @Arg('track', () => Track, { nullable: true }) track?: Track,
   ): Promise<PrismaStudent | null> {
+    // TODO(@tylermenezes) validate event id
     if (!auth.username) throw Error('Reviewers require username in token.');
     const results = await this.prisma.student.findMany({
       where: {
@@ -46,6 +47,7 @@ export class ReviewResolver {
     @Arg('rating', () => Int) rating: number,
     @Arg('track', () => Track) track: Track,
   ): Promise<boolean> {
+    // TODO(@tylermenezes) validate event id
     if (!auth.username) throw Error('Reviewers require username in token.');
     if (rating > 10 || rating < 1 || Math.floor(rating) !== rating) throw Error('Rating must be an int from 1 - 10.');
     await this.prisma.admissionRating.create({
@@ -67,6 +69,7 @@ export class ReviewResolver {
     @Arg('take', () => Number, { nullable: true }) take?: number,
     @Arg('track', () => Track, { nullable: true }) track?: Track,
   ): Promise<PrismaStudent[]> {
+    // TODO(@tylermenezes) validate event id
     const topRatings = await this.prisma.admissionRating.groupBy({
       skip,
       take,
@@ -108,6 +111,7 @@ export class ReviewResolver {
   offerStudentAdmission(
     @Arg('where', () => IdOrUsernameInput) where: IdOrUsernameInput,
   ): Promise<PrismaStudent> {
+    // TODO(@tylermenezes) validate event id
     return this.prisma.student.update({ where, data: { status: StudentStatus.OFFERED, offerDate: new Date() } });
   }
 
@@ -116,6 +120,7 @@ export class ReviewResolver {
   resetStudentAdmissionOffer(
     @Arg('where', () => IdOrUsernameInput) where: IdOrUsernameInput,
   ): Promise<PrismaStudent> {
+    // TODO(@tylermenezes) validate event id
     return this.prisma.student.update({ where, data: { offerDate: new Date() } });
   }
 
@@ -145,6 +150,7 @@ export class ReviewResolver {
     @Arg('where', () => IdOrUsernameInput) where: IdOrUsernameInput,
     @Arg('reason', () => RejectionReason, { nullable: true }) reason?: RejectionReason,
   ): Promise<PrismaStudent> {
+    // TODO(@tylermenezes) validate event id
     return this.prisma.student.update({
       where,
       data: {

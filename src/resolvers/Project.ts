@@ -24,7 +24,14 @@ export class ProjectResolver {
     @Arg('data', () => ProjectCreateInput) data: ProjectCreateInput,
     @Arg('mentor', () => IdOrUsernameInput, { nullable: true }) mentor?: IdOrUsernameInput,
   ): Promise<PrismaProject> {
-    return this.prisma.project.create({ data: { ...data.toQuery(), mentors: { connect: mentor || auth.toWhere() } } });
+    // TODO(@tylermenezes): Validate the project eventId matches the mentor eventId
+    return this.prisma.project.create({
+      data: {
+        ...data.toQuery(),
+        event: { connect: { id: auth.id } },
+        mentors: { connect: mentor || auth.toWhere() },
+      },
+    });
   }
 
   @Authorized(AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.MENTOR)
@@ -45,9 +52,10 @@ export class ProjectResolver {
     }
     const dbProject = await this.prisma.project.findUnique({
       where: { id: project },
-      select: { status: true, mentors: { select: { id: true, username: true } } },
+      select: { status: true, mentors: { select: { id: true, username: true } }, eventId: true },
     });
     if (!dbProject) throw Error('Project not found.');
+    if (!auth.isMentor && dbProject.eventId !== auth.eventId) throw Error('Cannot edit this project.');
     if (auth.isMentor && dbProject.status === ProjectStatus.MATCHED) throw Error('Matched projects cannot be edited.');
     if (auth.isMentor && !this.projectIncludesMentors(auth, dbProject.mentors)) throw Error('No permission to edit.');
 
@@ -62,6 +70,7 @@ export class ProjectResolver {
   async deleteProject(
     @Arg('project', () => String) project: string,
   ): Promise<boolean> {
+    // TODO(@tylermenezes) validate event id
     await this.prisma.project.delete({ where: { id: project } });
     return true;
   }
@@ -72,6 +81,7 @@ export class ProjectResolver {
     @Arg('project', () => String) project: string,
     @Arg('student', () => IdOrUsernameInput) student: IdOrUsernameInput,
   ): Promise<PrismaProject> {
+    // TODO(@tylermenezes) validate event id
     return this.prisma.project.update({ where: { id: project }, data: { students: { connect: [student] } } });
   }
 
@@ -81,6 +91,7 @@ export class ProjectResolver {
     @Arg('project', () => String) project: string,
     @Arg('student', () => IdOrUsernameInput) student: IdOrUsernameInput,
   ): Promise<PrismaProject> {
+    // TODO(@tylermenezes) validate event id
     return this.prisma.project.update({ where: { id: project }, data: { students: { disconnect: [student] } } });
   }
 
@@ -90,6 +101,7 @@ export class ProjectResolver {
     @Arg('project', () => String) project: string,
     @Arg('mentor', () => IdOrUsernameInput) mentor: IdOrUsernameInput,
   ): Promise<PrismaProject> {
+    // TODO(@tylermenezes) validate event id
     return this.prisma.project.update({ where: { id: project }, data: { mentors: { connect: [mentor] } } });
   }
 
@@ -99,10 +111,12 @@ export class ProjectResolver {
     @Arg('project', () => String) project: string,
     @Arg('mentor', () => IdOrUsernameInput) mentor: IdOrUsernameInput,
   ): Promise<PrismaProject> {
+    // TODO(@tylermenezes) validate event id
     return this.prisma.project.update({ where: { id: project }, data: { mentors: { disconnect: [mentor] } } });
   }
 
   private projectIncludesMentors(auth: AuthContext, mentors: {id: string, username: string | null }[]): boolean {
+    // TODO(@tylermenezes) validate event id
     // BUG(@tylermenezes): Workaround for Typescript bug with reducers
     return <boolean><unknown> mentors.reduce((accum, { id, username }): boolean => (
       accum

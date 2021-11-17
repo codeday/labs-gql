@@ -1,10 +1,10 @@
 import {
-  Resolver, Authorized, Query, Arg,
+  Resolver, Authorized, Query, Arg, Ctx,
 } from 'type-graphql';
 import { PrismaClient } from '@prisma/client';
 import { Inject, Service } from 'typedi';
 import { DateTime } from 'luxon';
-import { AuthRole } from '../context';
+import { Context, AuthRole } from '../context';
 import { Track, StudentStatus } from '../enums';
 import { Stat } from '../types/Stat';
 
@@ -17,17 +17,19 @@ export class StatsResolver {
   @Authorized(AuthRole.ADMIN)
   @Query(() => [Stat])
   async statAdmissionsStatus(
+    @Ctx() { auth }: Context,
     @Arg('track', () => Track, { nullable: true }) track?: Track,
   ): Promise<Stat[]> {
     const allStudents = await this.prisma.student.groupBy({
       by: ['status'],
       _count: { status: true },
-      where: { track },
+      where: { track, event: { id: auth.eventId } },
     });
 
     const expiredStudents = await this.prisma.student.count({
       where: {
         track,
+        event: { id: auth.eventId },
         status: StudentStatus.OFFERED,
         offerDate: { lt: DateTime.now().plus({ days: -3 }).toJSDate() },
       },

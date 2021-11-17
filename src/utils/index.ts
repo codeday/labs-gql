@@ -6,3 +6,4 @@ export * from './countries';
 export * from './someNoneUndefined';
 export * from './sanitizeSurveyResponse';
 export * from './getSurveyResponseType';
+export * from './eventAllowsApplication';

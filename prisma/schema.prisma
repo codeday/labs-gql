@@ -88,6 +88,9 @@ model Event {
   mentorApplicationPostprocess Json?
 
   surveys Survey[]
+  mentors Mentor[]
+  students Student[]
+  projects Project[]
 }
 
 model Survey {
@@ -195,8 +198,8 @@ model Mentor {
   authoredSurveyResponses SurveyResponse[] @relation("AuthorMentor")
   targetSurveyResponses   SurveyResponse[] @relation("TargetMentor")
 
-  // event      Event @relation(fields: [eventId], references: [id])
-  // eventId    String
+  event      Event @relation(fields: [eventId], references: [id])
+  eventId    String
 }
 
 model Student {
@@ -229,8 +232,8 @@ model Student {
   authoredSurveyResponses SurveyResponse[]        @relation("AuthorStudent")
   targetSurveyResponses   SurveyResponse[]        @relation("TargetStudent")
 
-  // event      Event @relation(fields: [eventId], references: [id])
-  // eventId    String
+  event      Event @relation(fields: [eventId], references: [id])
+  eventId    String
 }
 
 model Project {
@@ -253,6 +256,9 @@ model Project {
   emailsSent            EmailSent[]
   projectPreferences    ProjectPreference[]
   targetSurveyResponses SurveyResponse[]
+
+  event      Event @relation(fields: [eventId], references: [id])
+  eventId    String
 }
 
 model AdmissionRating {

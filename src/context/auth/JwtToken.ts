@@ -15,6 +15,7 @@ export enum AuthByTarget {
 
 export interface JwtToken {
   typ: AuthRole
+  evt?: string
   sid?: string
   tgt?: AuthByTarget
 }

@@ -52,6 +52,7 @@ export class MatchResolver {
     const { auth } = ctx;
     const projectIds = [...new Set(projectIdsArg)];
     const student = await this.prisma.student.findUnique({ where: auth.toWhere() });
+    // TODO(@tylermenezes) validate event id
     const projects = await this.prisma.project.findMany({
       where: { id: { in: projectIds } },
       include: { tags: true, mentors: true },
