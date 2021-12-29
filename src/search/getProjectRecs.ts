@@ -122,7 +122,7 @@ async function buildQueryFor(student: Student, tags: Tag[]): Promise<FunctionSco
     .boostMode('replace');
 }
 
-export async function getProjectMatches(student: Student, tags: Tag[]): Promise<Match[]> {
+export async function getProjectRecs(student: Student, tags: Tag[]): Promise<Match[]> {
   const prisma = Container.get(PrismaClient);
   const elastic = Container.get(Client);
 
