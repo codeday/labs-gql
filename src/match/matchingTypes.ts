@@ -2,8 +2,23 @@ export interface ProjectData {
   [projectId: string]: ProjectDataDictElement
 }
 
-export interface ProjectDataDictElement {
-  projectId: string
+export interface ProjectDetails {
+  projTags: string[];
+  timezone: number;
+  backgroundRural: boolean;
+  bio: string;
+  projDescription: string;
+  preferStudentUnderRep: boolean;
+  okExtended: boolean;
+  okTimezoneDifference: boolean;
+  preferToolExistingKnowledge: boolean;
+  name: string;
+  company?: string;
+  track: string;
+}
+
+export interface ProjectDataDictElement extends ProjectDetails {
+  projectId: string;
   studentsSelected: StudentChoices;
   studentsMatched: StudentChoices;
   projSizeRemaining: number;
