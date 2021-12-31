@@ -1,54 +1,67 @@
-import { ProjectData } from './matchingTypes';
+import { Matching, MatchingStats, ProjectData } from './matchingTypes';
 import {
-  countStudentsOfChoices,
-  placeStudentsOfChoice,
+  matchingStats,
   placeStudentsOfChoicesBalanced,
-  range
+  range,
 } from './matchingHelpers';
+import { sampleData } from './matchingData';
 
 /**
- * Matches all first place students on projects with the same number of (or less) first choices as their size.
- * If a project has 5 spaces and 5 or less students who have that project as their first choice, then match all
- * those students.
+ * Assigns students of choice starting from start going to limit in batches of size batch using the balanced
+ * algorithm to break ties. Examples of use:
+ *   step3(sampleData, 1, 1, 1) - Matches all first choice students it can
+ *   step3(sampleData, 2, 2, 1) - Matches all second choice students it can
+ *   step3(sampleData, 3, 20, 3) - Matches 3,4,5 then 5,6,7 then 8,9,10... etc until 20.
  *
- * Formally, this is steps 1 and 2 from the python implementation
- * @param allProjectData  The project data, edited in place to add matches
- */
-export function step1(allProjectData: ProjectData): void {
-  Object.values(allProjectData)
-    .forEach((project) => {
-      placeStudentsOfChoicesBalanced(allProjectData, project.projectId, 1, project.projSizeRemaining);
-    });
-}
-
-/**
- * Assigns second places on projects, preferring to do it simply if possible otherwise doing it balanced.
  * @param allProjectData
- */
-export function step2(allProjectData: ProjectData): void {
-  Object.values(allProjectData)
-    .forEach((project) => {
-      placeStudentsOfChoicesBalanced(allProjectData, project.projectId, 2, project.projSizeRemaining)
-    });
-}
-
-/**
- * Assigns remaining spots (choices >= 3) in groups of size batch, up to limit
- * @param allProjectData
- * @param start
+ * @param start - Starting number, inclusive
+ * @param end - The number to process until, inclusive
  * @param batch - The size of the batches of choices to work on at once.
- * @param limit - The upper limit of choices to process until
  */
-export function step3(allProjectData: ProjectData, start: number, batch: number, limit: number) {
-  for (let startChoice = start; startChoice < limit; startChoice += batch) {
+function matchChoices(allProjectData: ProjectData, start: number, end: number, batch: number): void {
+  for (let startChoice = start; startChoice <= end; startChoice += batch) {
     // Avoid going over the limit in the last iteration
-    const choices = startChoice + batch < limit
+    const choices = startChoice + batch < end
       ? range(startChoice, startChoice + batch)
-      : range(startChoice, limit + 1);
-
+      : range(startChoice, end + 1);
     Object.values(allProjectData)
       .forEach((project) => {
         placeStudentsOfChoicesBalanced(allProjectData, project.projectId, choices, project.projSizeRemaining);
       });
   }
+}
+
+/**
+ * Generates a single match of all students to projects. May have missing students.
+ * @param data
+ */
+function generateMatch(data: ProjectData): Matching {
+  matchChoices(data, 1, 1, 2);
+  matchChoices(data, 3, 20, 1);
+  return {
+    match: data,
+    stats: matchingStats(data),
+  };
+}
+
+/**
+ * Generates a match that probably has no unassigned students (very likely but not guaranteed, call again if it fails)
+ * @param {ProjectData} data - The project information to create a match for. Will not be mutated.
+ */
+export function generateReliableMatch(data: ProjectData): Matching {
+  const startTime = process.hrtime();
+  let copyOfData = JSON.parse(JSON.stringify(data));
+  let bestMatch: Matching = generateMatch(copyOfData);
+  for (let i = 0; i < 50; i += 1) {
+    copyOfData = JSON.parse(JSON.stringify(data));
+    const match = generateMatch(copyOfData);
+    if (match.stats.unassignedStudents < bestMatch.stats.unassignedStudents
+      || (match.stats.unassignedStudents === bestMatch.stats.unassignedStudents
+        && match.stats.matchingScore < bestMatch.stats.matchingScore)) {
+      bestMatch = match;
+    }
+  }
+  const endTime = process.hrtime(startTime);
+  bestMatch.stats.runtimeMs = endTime[0] * 1000 + endTime[1] / 1000000;
+  return bestMatch;
 }

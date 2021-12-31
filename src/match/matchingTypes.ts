@@ -1,5 +1,5 @@
 export interface ProjectData {
-  [projectId: string]: ProjectDataDictElement
+  [projectId: string]: ProjectDataDictElement;
 }
 
 export interface ProjectDetails {
@@ -26,7 +26,7 @@ export interface ProjectDataDictElement extends ProjectDetails {
 }
 
 export interface StudentChoices {
-  [studentId: string]: StudentChoice
+  [studentId: string]: StudentChoice;
 }
 
 export interface Student {
@@ -35,5 +35,19 @@ export interface Student {
 
 export interface StudentChoice extends Student {
   choice: number;
-  matched?: true | undefined // This works as a kind of default
+  matched?: true | undefined; // This works as a kind of default
+}
+
+export interface MatchingStats {
+  totalProjects: number;
+  totalStudents: number;
+  unassignedStudents: number;
+  unfilledSlots: number;
+  matchingScore: number;
+  runtimeMs?: number
+}
+
+export interface Matching {
+  match: ProjectData;
+  stats: MatchingStats;
 }

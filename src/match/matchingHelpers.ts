@@ -1,15 +1,15 @@
-import { ProjectData, ProjectDataDictElement, StudentChoice } from './matchingTypes';
+import assert from 'assert';
+import {
+  MatchingStats, ProjectData, ProjectDataDictElement, StudentChoice,
+} from './matchingTypes';
 
-function indexOfMatch<T>(array: Array<T>, fn: (element: T) => boolean) {
-  let result = -1;
-  array.some((e, i) => {
-    if (fn(e)) {
-      result = i;
-      return true;
-    }
-    return false;
-  });
-  return result;
+/* Randomize array in-place using Durstenfeld shuffle algorithm https://stackoverflow.com/a/12646864 */
+function shuffleArray<T>(array: Array<T>): void {
+  for (let i = array.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    // eslint-disable-next-line no-param-reassign
+    [array[i], array[j]] = [array[j], array[i]];
+  }
 }
 
 /**
@@ -38,25 +38,6 @@ function compareChoice(choice: number[] | number, studentChoice: StudentChoice):
 }
 
 /**
- * Counts the number of unmarked students on a project who voted for it with a given choice.
- * @param project
- * @param choice
- */
-export function countStudentsOfChoices(project: ProjectDataDictElement, choice: number[] | number): number {
-  return Object.values(project.studentsSelected)
-    .filter(
-      (student) => student.matched !== true,
-      // eslint-disable-next-line arrow-body-style
-    )
-    .reduce((secondChoiceCounter, student) => {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      // eslint-disable-next-line no-bitwise
-      return secondChoiceCounter + ((compareChoice(choice, student)) | 0);
-    }, 0);
-}
-
-/**
  * Marks a student in all project's `studentsSelected` as having been matched somewhere already
  * @param projectData - The project data, mutated in place
  * @param studentId - Student to mark
@@ -82,38 +63,16 @@ function placeStudent(projectData: ProjectData, projectId: string, studentId: st
   const project = projectData[projectId];
   const student = project.studentsSelected[studentId];
   const firstChoice: boolean = student.choice === 1;
+  // We should never try to match a student that's already been matched
+  assert(
+    student.matched !== true,
+    `Tried to place a student that's already been matched ${JSON.stringify(student)}`,
+  );
   // eslint-disable-next-line no-param-reassign
   projectData[projectId].studentsMatched[student.studentId] = student;
   markStudent(projectData, studentId);
   project.projSizeRemaining -= 1;
   if (firstChoice) project.numFirstChoice -= 1;
-}
-
-/**
- * Places num students of choice on a project or until all students of choice have been placed. NOT balanced by
- * anything, only use when you do not expect to have more students to match than num
- * @param projectData The project data
- * @param projectId The project to match
- * @param choice The choice number(s) to look at
- * @param count The number of students to match
- */
-export function placeStudentsOfChoice(
-  projectData: ProjectData,
-  projectId: string,
-  choice: number[] | number,
-  count: number,
-): void {
-  // Handle the options for choice
-  let counter = 0;
-  // Iterate over only unmatched students to avoid duplicates
-  for (const studentChoice of Object.values(projectData[projectId].studentsSelected)
-    .filter((value) => value.matched !== true)) {
-    if (compareChoice(choice, studentChoice)) {
-      placeStudent(projectData, projectId, studentChoice.studentId);
-      counter += 1;
-    }
-    if (counter >= count) break;
-  }
 }
 
 /**
@@ -123,8 +82,11 @@ export function placeStudentsOfChoice(
  */
 function countStudentVotes(projectData: ProjectData, studentId: string): number {
   return Object.values(projectData)
+    // Only look at non-filled projects
     .filter((project) => project.projSizeRemaining > 0)
+    // Sum the number of these projects that contain the given studentId
     .reduce((previousCount, project) => {
+      // Check if the student exists in the studentSelected
       const doesStudentExist = Object.keys(
         project.studentsSelected,
       )
@@ -152,18 +114,44 @@ export function placeStudentsOfChoicesBalanced(
   choice: number[] | number,
   count: number,
 ): void {
-  // A list of all unmarked students matching the choice
-  const students: StudentChoice[] = Object.values(projectData[projectId].studentsSelected)
-    .filter((student) => compareChoice(choice, student) && student.matched !== true);
-  // An array of mappings from student IDs to the number of votes they have on non-filled projects
-  const studentFrequency: [string, number][] = students.map(
-    (student) => [student.studentId, countStudentVotes(projectData, student.studentId)],
-  );
-  // Sort with least occurrences at the start
-  studentFrequency.sort((a, b) => a[1] - b[1]);
+  // An array of students on this project who have only one remaining project
+  const singleStudents: [string, number][] = Object.values(projectData[projectId].studentsSelected)
+    .filter((student) => student.matched !== true)
+    .map(
+      (student): [string, number] => [student.studentId, countStudentVotes(projectData, student.studentId)],
+    )
+    .filter(
+      (studentVotes) => studentVotes[1] === 1,
+    );
 
-  // Get the first few count students and apply them
-  studentFrequency.slice(0, count)
+  // Randomize the array and then match as many single students as possible.
+  let counter = 0;
+  shuffleArray(singleStudents);
+  singleStudents.slice(0, count)
+    .forEach((student) => {
+      placeStudent(projectData, projectId, student[0]);
+      counter += 1;
+    });
+
+  // An array of mappings from student IDs to the number of votes they have on non-filled projects for unmarked
+  // students matching the choice
+  const studentFrequency: [string, number][] = Object.values(projectData[projectId].studentsSelected)
+    .filter((student) => compareChoice(choice, student) && student.matched !== true)
+    .map(
+      (student) => [student.studentId, countStudentVotes(projectData, student.studentId)],
+    );
+  // Sort with least occurrences at the start and randomize the order within blocks of the same number of occurrences
+  studentFrequency.sort((a, b) => {
+    let value = a[1] - b[1];
+    if (value === 0) {
+      value = 0.5 - Math.random();
+    }
+    return value;
+  });
+
+  // Get the first few count students and apply them to any remaining slots. This count and counter thing will always
+  // work, slice handles all this very nicely.
+  studentFrequency.slice(0, count - counter)
     .forEach((student) => placeStudent(projectData, projectId, student[0]));
 }
 
@@ -194,32 +182,6 @@ function unassignedStudentsCount(projectData: ProjectData): number {
 }
 
 /**
- * Returns the set of all unmatched student IDs
- * @param projectData
- */
-export function unassignedStudentProjects(projectData: ProjectData): { [key: string]: ProjectDataDictElement[] } {
-  const countedStudentIds: { [key: string]: ProjectDataDictElement[] } = {};
-  Object.values(projectData)
-    .forEach((project) => {
-      const unmatchedStudents = Object.values(
-        project.studentsSelected,
-      )
-        .filter((student) => student.matched !== true);
-      // For each unmatched student, go through and add the project we found it in to the return
-      unmatchedStudents.forEach((student) => {
-        if (countedStudentIds[student.studentId] === undefined) countedStudentIds[student.studentId] = [project];
-        countedStudentIds[student.studentId].push(project);
-      });
-    }, 0);
-  Object.keys(countedStudentIds).forEach((studentId) => {
-    countedStudentIds[studentId].sort(
-      (a, b) => a.studentsSelected[studentId].choice - b.studentsSelected[studentId].choice,
-    );
-  });
-  return countedStudentIds;
-}
-
-/**
  * Measures the effectiveness of a match, or the choice rank number that all students got divided by the number of
  * students
  * @param projectData
@@ -238,7 +200,7 @@ function measureMatchEffectiveness(projectData: ProjectData, totalStudents: numb
  * @param projectData
  * @constructor
  */
-export function MatchingStats(projectData: ProjectData): Record<string, number> {
+export function matchingStats(projectData: ProjectData): MatchingStats {
   // eslint-disable-next-line func-names
   const totalStudents = (function () {
     const totalStudentsSet = new Set<string>();
@@ -259,11 +221,3 @@ export function MatchingStats(projectData: ProjectData): Record<string, number> 
     matchingScore: measureMatchEffectiveness(projectData, totalStudents),
   };
 }
-
-//
-//
-// placeStudentsOfChoice(testProjectData, 'zzz', 1, 1);
-// placeStudentsOfChoice(testProjectData, 'yyy', 1, 1);
-// import { inspect } from 'util';
-//
-// console.log(inspect(testProjectData, {showHidden: true, depth: 3, colors: true}));
