@@ -1,10 +1,9 @@
-import { Matching, MatchingStats, ProjectData } from './matchingTypes';
+import { Matching, ProjectData } from './matchingTypes';
 import {
   matchingStats,
   placeStudentsOfChoicesBalanced,
   range,
 } from './matchingHelpers';
-import { sampleData } from './matchingData';
 
 /**
  * Assigns students of choice starting from start going to limit in batches of size batch using the balanced
