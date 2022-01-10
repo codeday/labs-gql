@@ -2,27 +2,13 @@ export interface ProjectData {
   [projectId: string]: ProjectDataDictElement;
 }
 
-export interface ProjectDetails {
-  projTags: string[];
-  timezone: number;
-  backgroundRural: boolean;
-  bio: string;
-  projDescription: string;
-  preferStudentUnderRep: boolean;
-  okExtended: boolean;
-  okTimezoneDifference: boolean;
-  preferToolExistingKnowledge: boolean;
-  name: string;
-  company?: string;
-  track: string;
-}
-
-export interface ProjectDataDictElement extends ProjectDetails {
+export interface ProjectDataDictElement {
   projectId: string;
   studentsSelected: StudentChoices;
   studentsMatched: StudentChoices;
   projSizeRemaining: number;
   numFirstChoice: number;
+  [x: string]: any; // Patch for testing data having too much going on, TODO: remove once postgres data arrives
 }
 
 export interface StudentChoices {

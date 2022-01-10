@@ -1,6 +1,7 @@
 import assert from 'assert';
+import { Project, ProjectPreference } from '@prisma/client';
 import {
-  MatchingStats, ProjectData, ProjectDataDictElement, StudentChoice,
+  MatchingStats, ProjectData, StudentChoice, StudentChoices,
 } from './matchingTypes';
 
 /* Randomize array in-place using Durstenfeld shuffle algorithm https://stackoverflow.com/a/12646864 */
@@ -96,6 +97,25 @@ function countStudentVotes(projectData: ProjectData, studentId: string): number 
       // eslint-disable-next-line no-bitwise
       return previousCount + (doesStudentExist | 0);
       // Prev line casts a bool to an int very fast (2 orders of mag faster than other methods)
+    }, 0);
+}
+
+/**
+ * Counts the number of unmarked students on a project who voted for it with a given choice.
+ * @param studentsSelected
+ * @param choice
+ */
+export function countStudentsOfChoices(studentsSelected: StudentChoices, choice: number[] | number): number {
+  return Object.values(studentsSelected)
+    .filter(
+      (student) => student.matched !== true,
+      // eslint-disable-next-line arrow-body-style
+    )
+    .reduce((secondChoiceCounter, student) => {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      // eslint-disable-next-line no-bitwise
+      return secondChoiceCounter + ((compareChoice(choice, student)) | 0);
     }, 0);
 }
 
@@ -220,4 +240,27 @@ export function matchingStats(projectData: ProjectData): MatchingStats {
     unfilledSlots: countUnfilled(projectData),
     matchingScore: measureMatchEffectiveness(projectData, totalStudents),
   };
+}
+
+export function parsePrismaData(prismaData: (Project & {projectPreferences: ProjectPreference[]})[]): ProjectData {
+  const projectData: ProjectData = {};
+  prismaData.forEach((prismaProject) => {
+    // Generate the student choices
+    const studentsSelected: StudentChoices = {};
+    prismaProject.projectPreferences.forEach((prismaStudentChoice) => {
+      studentsSelected[prismaStudentChoice.studentId] = {
+        studentId: prismaStudentChoice.studentId,
+        choice: prismaStudentChoice.ranking,
+      };
+    });
+    // Fill in the rest of the data
+    projectData[prismaProject.id] = {
+      studentsSelected,
+      projectId: prismaProject.id,
+      numFirstChoice: countStudentsOfChoices(studentsSelected, 1),
+      projSizeRemaining: Object.keys(studentsSelected).length,
+      studentsMatched: {},
+    };
+  });
+  return projectData;
 }

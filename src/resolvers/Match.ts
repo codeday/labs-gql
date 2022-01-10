@@ -1,10 +1,12 @@
 import { Arg, Authorized, Ctx, Mutation, Query, Resolver, } from 'type-graphql';
-import { PrismaClient, } from '@prisma/client';
+import { PrismaClient, Project, ProjectPreference } from '@prisma/client';
 import { Inject, Service } from 'typedi';
 import { StudentStatus, Track } from '../enums';
 import { AuthRole, Context } from '../context';
 import { Match, Preference, Student, Tag, } from '../types';
 import { getProjectRecs } from '../search';
+import { parsePrismaData } from '../match/matchingHelpers';
+import { generateReliableMatch } from '../match/findMatching';
 
 @Service()
 @Resolver(Match)
@@ -12,10 +14,19 @@ export class MatchResolver {
   @Inject(() => PrismaClient)
   private readonly prisma: PrismaClient;
 
+  // TODO: Figure out what auth role this should have
+  @Query(() => [Match], { nullable: true })
   async matchStudents(
     @Ctx() { auth }: Context,
-  ) {
-    
+  ): Promise<void> {
+    const prismaProjectData: (Project & { projectPreferences: ProjectPreference[] })[] = await this.prisma.project.findMany({
+      include: {
+        projectPreferences: true,
+      },
+    });
+    const projectData = parsePrismaData(prismaProjectData);
+    const matching = generateReliableMatch(projectData);
+    console.log(matching);
   }
 
   @Authorized(AuthRole.STUDENT)
