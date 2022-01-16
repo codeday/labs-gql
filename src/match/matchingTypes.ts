@@ -2,13 +2,17 @@ export interface ProjectData {
   [projectId: string]: ProjectDataDictElement;
 }
 
-export interface ProjectDataDictElement {
+export interface ProjectDataDictElementCore {
   projectId: string;
   studentsSelected: StudentChoices;
   studentsMatched: StudentChoices;
   projSizeRemaining: number;
   numFirstChoice: number;
-  [x: string]: any; // Patch for testing data having too much going on, TODO: remove once postgres data arrives
+}
+
+/// This gross thing is a match for having too many unnecessary fields in my testing data.
+export interface ProjectDataDictElement extends ProjectDataDictElementCore {
+  [x: string]: any;
 }
 
 export interface StudentChoices {
@@ -24,16 +28,24 @@ export interface StudentChoice extends Student {
   matched?: true | undefined; // This works as a kind of default
 }
 
-export interface MatchingStats {
+export interface MatchingStatsInternal {
   totalProjects: number;
   totalStudents: number;
   unassignedStudents: number;
   unfilledSlots: number;
   matchingScore: number;
-  runtimeMs?: number
 }
 
-export interface Matching {
+export interface MatchingStatsExternal extends MatchingStatsInternal {
+  runtimeMs: number;
+}
+
+export interface MatchingInternal {
   match: ProjectData;
-  stats: MatchingStats;
+  stats: MatchingStatsInternal;
+}
+
+export interface MatchingExternal {
+  match: ProjectData;
+  stats: MatchingStatsExternal;
 }

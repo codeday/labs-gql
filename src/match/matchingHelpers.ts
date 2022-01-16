@@ -1,8 +1,13 @@
 import assert from 'assert';
 import { Project, ProjectPreference } from '@prisma/client';
 import {
-  MatchingStats, ProjectData, StudentChoice, StudentChoices,
+  MatchingExternal,
+  MatchingStatsInternal,
+  ProjectData,
+  StudentChoice,
+  StudentChoices,
 } from './matchingTypes';
+import { MatchingProjectDatum, MatchingResult } from '../types/Matching';
 
 /* Randomize array in-place using Durstenfeld shuffle algorithm https://stackoverflow.com/a/12646864 */
 function shuffleArray<T>(array: Array<T>): void {
@@ -220,7 +225,7 @@ function measureMatchEffectiveness(projectData: ProjectData, totalStudents: numb
  * @param projectData
  * @constructor
  */
-export function matchingStats(projectData: ProjectData): MatchingStats {
+export function matchingStats(projectData: ProjectData): MatchingStatsInternal {
   // eslint-disable-next-line func-names
   const totalStudents = (function () {
     const totalStudentsSet = new Set<string>();
@@ -242,7 +247,7 @@ export function matchingStats(projectData: ProjectData): MatchingStats {
   };
 }
 
-export function parsePrismaData(prismaData: (Project & {projectPreferences: ProjectPreference[]})[]): ProjectData {
+export function parsePrismaData(prismaData: (Project & { projectPreferences: ProjectPreference[] })[]): ProjectData {
   const projectData: ProjectData = {};
   prismaData.forEach((prismaProject) => {
     // Generate the student choices
@@ -263,4 +268,25 @@ export function parsePrismaData(prismaData: (Project & {projectPreferences: Proj
     };
   });
   return projectData;
+}
+
+/**
+ * Marshals data from internal structure to datatype required for export
+ */
+export function prepareDataForExport(matchingData: MatchingExternal): MatchingResult {
+  const matchingProjectData: MatchingProjectDatum[] = Object
+    .values(matchingData.match)
+    .map((value) => ({
+      projectId: value.projectId,
+      studentsSelected: Object.values(value.studentsSelected)
+        .map((student) => student.studentId),
+      studentsMatched: Object.values(value.studentsMatched)
+        .map((student) => student.studentId),
+      projSizeRemaining: value.projSizeRemaining,
+      numFirstChoice: value.numFirstChoice,
+    }));
+  return {
+    stats: matchingData.stats,
+    match: matchingProjectData,
+  };
 }

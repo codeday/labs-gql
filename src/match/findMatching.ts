@@ -1,4 +1,4 @@
-import { Matching, ProjectData } from './matchingTypes';
+import { MatchingExternal, MatchingInternal, ProjectData } from './matchingTypes';
 import {
   matchingStats,
   placeStudentsOfChoicesBalanced,
@@ -34,7 +34,7 @@ function matchChoices(allProjectData: ProjectData, start: number, end: number, b
  * Generates a single match of all students to projects. May have missing students.
  * @param data
  */
-function generateMatch(data: ProjectData): Matching {
+function generateMatch(data: ProjectData): MatchingInternal {
   matchChoices(data, 1, 1, 2);
   matchChoices(data, 3, 20, 1);
   return {
@@ -47,10 +47,10 @@ function generateMatch(data: ProjectData): Matching {
  * Generates a match that probably has no unassigned students (very likely but not guaranteed, call again if it fails)
  * @param {ProjectData} data - The project information to create a match for. Will not be mutated.
  */
-export function generateReliableMatch(data: ProjectData): Matching {
+export function generateReliableMatch(data: ProjectData): MatchingExternal {
   const startTime = process.hrtime();
   let copyOfData = JSON.parse(JSON.stringify(data));
-  let bestMatch: Matching = generateMatch(copyOfData);
+  let bestMatch: MatchingInternal = generateMatch(copyOfData);
   for (let i = 0; i < 50; i += 1) {
     copyOfData = JSON.parse(JSON.stringify(data));
     const match = generateMatch(copyOfData);
@@ -61,6 +61,11 @@ export function generateReliableMatch(data: ProjectData): Matching {
     }
   }
   const endTime = process.hrtime(startTime);
-  bestMatch.stats.runtimeMs = endTime[0] * 1000 + endTime[1] / 1000000;
-  return bestMatch;
+  return {
+    match: bestMatch.match,
+    stats: {
+      ...bestMatch.stats,
+      runtimeMs: endTime[0] * 1000 + endTime[1] / 1000000,
+    },
+  };
 }

@@ -1,41 +1,50 @@
 import { Arg, Authorized, Ctx, Mutation, Query, Resolver, } from 'type-graphql';
-import { PrismaClient, Project, ProjectPreference } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { Inject, Service } from 'typedi';
-import { StudentStatus, Track } from '../enums';
+import { ProjectStatus, StudentStatus, Track } from '../enums';
 import { AuthRole, Context } from '../context';
-import { Match, Preference, Student, Tag, } from '../types';
+import {
+  Preference,
+  Recommendation,
+  Student,
+  Tag,
+} from '../types';
 import { getProjectRecs } from '../search';
-import { parsePrismaData } from '../match/matchingHelpers';
+import { parsePrismaData, prepareDataForExport } from '../match/matchingHelpers';
 import { generateReliableMatch } from '../match/findMatching';
+import { MatchingResult } from '../types/Matching';
 
 @Service()
-@Resolver(Match)
+@Resolver(Recommendation)
 export class MatchResolver {
   @Inject(() => PrismaClient)
   private readonly prisma: PrismaClient;
 
-  // TODO: Figure out what auth role this should have
-  @Query(() => [Match], { nullable: true })
-  async matchStudents(
-    @Ctx() { auth }: Context,
-  ): Promise<void> {
-    const prismaProjectData: (Project & { projectPreferences: ProjectPreference[] })[] = await this.prisma.project.findMany({
+  @Authorized(AuthRole.ADMIN)
+  @Query(() => [MatchingResult])
+  async matchStudents(): Promise<MatchingResult> {
+    const prismaProjectData = await this.prisma.project.findMany({
+      where: {
+        status: {
+          not: ProjectStatus.DRAFT,
+        },
+      },
       include: {
         projectPreferences: true,
       },
     });
     const projectData = parsePrismaData(prismaProjectData);
     const matching = generateReliableMatch(projectData);
-    console.log(matching);
+    return prepareDataForExport(matching);
   }
 
   @Authorized(AuthRole.STUDENT)
-  @Query(() => [Match], { nullable: true })
+  @Query(() => [Recommendation], { nullable: true })
   // TODO: Check how to rename endpoints like this. This is really getting recs not matches.
   async projectRecs(
     @Ctx() { auth }: Context,
     @Arg('tags', () => [String]) tagIds: string[],
-  ): Promise<Match[]> {
+  ): Promise<Recommendation[]> {
     const student = await this.prisma.student.findUnique({ where: auth.toWhere() });
     const tags = await this.prisma.tag.findMany({ where: { id: { in: tagIds } } });
 
