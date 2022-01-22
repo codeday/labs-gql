@@ -7,7 +7,7 @@ import { PrismaClient } from '@prisma/client';
 import Container from 'typedi';
 import config from '../config';
 import {
-  Student, Match, Project, Tag,
+  Student, Recommendation, Project, Tag,
 } from '../types';
 import { Track, TagType } from '../enums';
 import { geoToTimezone } from '../utils';
@@ -122,7 +122,7 @@ async function buildQueryFor(student: Student, tags: Tag[]): Promise<FunctionSco
     .boostMode('replace');
 }
 
-export async function getProjectMatches(student: Student, tags: Tag[]): Promise<Match[]> {
+export async function getProjectRecs(student: Student, tags: Tag[]): Promise<Recommendation[]> {
   const prisma = Container.get(PrismaClient);
   const elastic = Container.get(Client);
 
