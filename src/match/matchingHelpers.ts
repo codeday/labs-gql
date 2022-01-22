@@ -7,7 +7,7 @@ import {
   StudentChoice,
   StudentChoices,
 } from './matchingTypes';
-import { MatchingProjectDatum, MatchingResult } from '../types/Matching';
+import { MatchTuple, MatchingResult } from '../types/Matching';
 
 /* Randomize array in-place using Durstenfeld shuffle algorithm https://stackoverflow.com/a/12646864 */
 function shuffleArray<T>(array: Array<T>): void {
@@ -116,6 +116,7 @@ export function countStudentsOfChoices(studentsSelected: StudentChoices, choice:
       (student) => student.matched !== true,
       // eslint-disable-next-line arrow-body-style
     )
+    // eslint-disable-next-line arrow-body-style
     .reduce((secondChoiceCounter, student) => {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
@@ -274,17 +275,12 @@ export function parsePrismaData(prismaData: (Project & { projectPreferences: Pro
  * Marshals data from internal structure to datatype required for export
  */
 export function prepareDataForExport(matchingData: MatchingExternal): MatchingResult {
-  const matchingProjectData: MatchingProjectDatum[] = Object
+  const matchingProjectData: MatchTuple[] = Object
     .values(matchingData.match)
-    .map((value) => ({
-      projectId: value.projectId,
-      studentsSelected: Object.values(value.studentsSelected)
-        .map((student) => student.studentId),
-      studentsMatched: Object.values(value.studentsMatched)
-        .map((student) => student.studentId),
-      projSizeRemaining: value.projSizeRemaining,
-      numFirstChoice: value.numFirstChoice,
-    }));
+    .flatMap((projectData) => Object.keys(projectData.studentsMatched).map((student) => ({
+      studentId: student,
+      projectId: projectData.projectId,
+    })));
   return {
     stats: matchingData.stats,
     match: matchingProjectData,

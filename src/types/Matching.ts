@@ -1,55 +1,42 @@
 // eslint-disable-next-line max-classes-per-file
-import { ObjectType, Field } from 'type-graphql';
-import {
-  MatchingStatsExternal,
-} from '../match/matchingTypes';
+import { Field, ObjectType } from 'type-graphql';
+import { MatchingStatsExternal } from '../match/matchingTypes';
 
 @ObjectType()
 export class MatchingStats implements MatchingStatsExternal {
   @Field(() => Number)
-  totalProjects: number
+  totalProjects: number;
 
   @Field(() => Number)
-  totalStudents: number
+  totalStudents: number;
 
   @Field(() => Number)
-  unassignedStudents: number
+  unassignedStudents: number;
 
   @Field(() => Number)
-  unfilledSlots: number
+  unfilledSlots: number;
 
   @Field(() => Number)
-  matchingScore: number
+  matchingScore: number;
 
   @Field(() => Number)
-  runtimeMs: number
+  runtimeMs: number;
 }
 
 @ObjectType()
-export class MatchingProjectDatum {
+export class MatchTuple {
   @Field(() => String)
-  projectId: string
+  studentId: string;
 
-  @Field(() => [String])
-  studentsMatched: string[]
-
-  // Below fields are pretty much just debugging data in case this is desired by the frontend.
-  // TODO: Confirm that this is desired on the frontend
-  @Field(() => Number)
-  numFirstChoice: number
-
-  @Field(() => Number)
-  projSizeRemaining: number;
-
-  @Field(() => [String])
-  studentsSelected: string[];
+  @Field(() => String)
+  projectId: string;
 }
 
 @ObjectType()
 export class MatchingResult {
-  @Field(() => [MatchingProjectDatum])
-  match: MatchingProjectDatum[]
+  @Field(() => [MatchTuple])
+  match: MatchTuple[];
 
   @Field(() => MatchingStats)
-  stats: MatchingStats
+  stats: MatchingStats;
 }
