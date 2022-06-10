@@ -12,6 +12,7 @@ export type FieldType = 'none' | 'geo_point' | 'geo_shape' | 'ip' | 'binary' | '
 
 export const ElasticEntrySchema: Record<string, FieldType> = {
   id: 'keyword',
+  eventId: 'keyword',
   studentsSelected: 'integer',
 
   interestTags: 'keyword',
@@ -39,6 +40,7 @@ export const ElasticEntrySchema: Record<string, FieldType> = {
 
 export enum ElasticEntryProperties {
   id = 'id',
+  eventId = 'eventId',
   studentsSelected = 'studentsSelected',
   interestTags = 'interestTags',
   stackTags = 'stackTags',
@@ -62,6 +64,7 @@ export enum ElasticEntryProperties {
 
 export interface ElasticEntry {
   id: string
+  eventId: string
   studentsSelected: number
 
   interestTags: string[]
@@ -129,6 +132,7 @@ export function projectToElasticEntry({
   const hasAvailableMentor = mentors.reduce((accum, { status }) => accum || status === MentorStatus.ACCEPTED, false);
   return {
     id: project.id,
+    eventId: project.eventId,
     studentsSelected: projectPreferences.length,
 
     interestTags: tags.filter(({ type }) => type === TagType.INTEREST).map(({ id }) => id),

@@ -39,12 +39,14 @@ export async function syncElastic(): Promise<void> {
   // eslint-disable-next-line no-console
   console.log(`Synchronized ${dataset.length} entires with elastic (${datasetAvailable.length} available).`);
 
-  const { body: resp } = await elastic.bulk({ refresh: true, body });
+  if (body.length > 0) {
+    const { body: resp } = await elastic.bulk({ refresh: true, body });
 
-  if (resp.errors) {
-    resp.items
-      .filter((action: Record<string, Record<string, unknown>>) => action[Object.keys(action)[0]].error)
-      // eslint-disable-next-line no-console
-      .forEach(console.error);
+    if (resp.errors) {
+      resp.items
+        .filter((action: Record<string, Record<string, unknown>>) => action[Object.keys(action)[0]].error)
+        // eslint-disable-next-line no-console
+        .forEach(console.error);
+    }
   }
 }

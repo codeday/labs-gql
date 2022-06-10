@@ -5,7 +5,6 @@ datasource db {
 
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["orderByAggregateGroup"]
 }
 
 enum PersonType {
@@ -88,9 +87,9 @@ model Event {
   mentorApplicationPostprocess Json
 
   surveys  Survey[]
-  // mentors  Mentor[]
-  // students Student[]
-  // projects Project[]
+  mentors  Mentor[]
+  students Student[]
+  projects Project[]
 }
 
 model Survey {
@@ -185,7 +184,7 @@ model Mentor {
   // Data
   givenName       String
   surname         String
-  username        String? @unique
+  username        String?
   email           String
   profile         Json
   status          MentorStatus @default(APPLIED)
@@ -198,10 +197,10 @@ model Mentor {
   authoredSurveyResponses SurveyResponse[] @relation("AuthorMentor")
   targetSurveyResponses   SurveyResponse[] @relation("TargetMentor")
 
-  // event   Event  @relation(fields: [eventId], references: [id])
-  // eventId String @default("codeday-labs-2022")
+  event   Event  @relation(fields: [eventId], references: [id])
+  eventId String @default("codeday-labs-2022")
 
-  // @@unique([username, eventId])
+  @@unique([username, eventId])
 }
 
 model Student {
@@ -213,7 +212,7 @@ model Student {
   // Data
   givenName       String
   surname         String
-  username        String           @unique
+  username        String
   email           String
   profile         Json
   track           Track
@@ -234,10 +233,10 @@ model Student {
   authoredSurveyResponses SurveyResponse[]        @relation("AuthorStudent")
   targetSurveyResponses   SurveyResponse[]        @relation("TargetStudent")
 
-  // event   Event  @relation(fields: [eventId], references: [id])
-  // eventId String @default("codeday-labs-2022")
+  event   Event  @relation(fields: [eventId], references: [id])
+  eventId String @default("codeday-labs-2022")
 
-  // @@unique([username, eventId])
+  @@unique([username, eventId])
 }
 
 model Project {
@@ -261,8 +260,8 @@ model Project {
   projectPreferences    ProjectPreference[]
   targetSurveyResponses SurveyResponse[]
 
-  // event   Event  @relation(fields: [eventId], references: [id])
-  // eventId String @default("codeday-labs-2022")
+  event   Event  @relation(fields: [eventId], references: [id])
+  eventId String @default("codeday-labs-2022")
 }
 
 model AdmissionRating {

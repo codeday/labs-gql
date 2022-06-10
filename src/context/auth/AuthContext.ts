@@ -12,6 +12,10 @@ export class AuthContext {
     this.tokenString = token;
 
     this.token = <JwtToken> verify(token, config.auth.secret, { audience: config.auth.audience });
+    if (!this.token.evt) {
+      // TODO(@tylermenezes): After this season, throw an error instead of setting a default
+      this.token.evt = 'codeday-labs-2022';
+    }
     this.validate();
   }
 

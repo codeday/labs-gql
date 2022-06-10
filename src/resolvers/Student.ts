@@ -42,8 +42,10 @@ export class StudentResolver {
     @Ctx() { auth }: Context,
     @Arg('where', () => IdOrUsernameInput, { nullable: true }) where?: IdOrUsernameInput,
   ): Promise<PrismaStudent | null> {
+    if (where) await validateStudentEvent(auth, where);
+
     const student = await this.prisma.student.findUnique({
-      where: where?.toQuery() || auth.toWhere(),
+      where: idOrUsernameOrAuthToUniqueWhere(auth, where),
       include: { event: true },
     });
     if (!student) return null;

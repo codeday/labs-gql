@@ -56,6 +56,8 @@ async function buildQueryFor(student: Student, tags: Tag[]): Promise<FunctionSco
     ? await geoToTimezone(profile.location.postal, profile.location.country)
     : -7;
 
+  const queryEventId = esb.matchQuery(Entry.eventId, student.eventId);
+
   const scoreTagsMatching = buildTagsScore(tags);
 
   const queryStudentRequiresLength = esb.rangeQuery(Entry.maxWeeks).gte(student.weeks);
@@ -110,6 +112,7 @@ async function buildQueryFor(student: Student, tags: Tag[]): Promise<FunctionSco
       queryStudentRequiresLength,
       queryTrack,
       queryStudentIsUnderrepresented,
+      queryEventId,
     ].filter(Boolean)))
     .functions([
       ...scoreTagsMatching,
