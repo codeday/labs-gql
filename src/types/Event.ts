@@ -29,6 +29,9 @@ export class Event {
   @Field(() => Date)
   mentorApplicationsEndAt: Date;
 
+  @Field(() => Boolean)
+  matchPreferenceSubmissionOpen: boolean;
+
   @Field(() => Date)
   startsAt: Date;
 
