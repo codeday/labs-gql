@@ -9,6 +9,7 @@ import {
   IdOrUsernameInput, ProjectCreateInput, ProjectEditInput,
 } from '../inputs';
 import { MentorOnlySelf } from './decorators';
+import { idOrUsernameOrAuthToUniqueWhere, idOrUsernameToUniqueWhere, validateMentorEvent, validateProjectEvent, validateStudentEvent } from '../utils';
 
 @Service()
 @Resolver(Project)
@@ -24,12 +25,11 @@ export class ProjectResolver {
     @Arg('data', () => ProjectCreateInput) data: ProjectCreateInput,
     @Arg('mentor', () => IdOrUsernameInput, { nullable: true }) mentor?: IdOrUsernameInput,
   ): Promise<PrismaProject> {
-    // TODO(@tylermenezes): Validate the project eventId matches the mentor eventId
     return this.prisma.project.create({
       data: {
         ...data.toQuery(),
-        event: { connect: { id: auth.id } },
-        mentors: { connect: mentor || auth.toWhere() },
+        event: { connect: { id: auth.eventId } },
+        mentors: { connect: idOrUsernameOrAuthToUniqueWhere(auth, mentor) },
       },
     });
   }
@@ -68,55 +68,77 @@ export class ProjectResolver {
   @Authorized(AuthRole.ADMIN, AuthRole.MANAGER)
   @Mutation(() => Boolean)
   async deleteProject(
+    @Ctx() { auth }: Context,
     @Arg('project', () => String) project: string,
   ): Promise<boolean> {
-    // TODO(@tylermenezes) validate event id
-    await this.prisma.project.delete({ where: { id: project } });
+    await validateProjectEvent(auth, project);
+    await this.prisma.project.deleteMany({ where: { id: project, eventId: auth.eventId! } });
     return true;
   }
 
   @Authorized(AuthRole.ADMIN, AuthRole.MANAGER)
   @Mutation(() => Project)
   async addProjectStudent(
+    @Ctx() { auth }: Context,
     @Arg('project', () => String) project: string,
     @Arg('student', () => IdOrUsernameInput) student: IdOrUsernameInput,
   ): Promise<PrismaProject> {
-    // TODO(@tylermenezes) validate event id
-    return this.prisma.project.update({ where: { id: project }, data: { students: { connect: [student] } } });
+    await validateProjectEvent(auth, project);
+    await validateStudentEvent(auth, student);
+    return this.prisma.project.update({
+      where: { id: project },
+      data: {
+        students: { connect: [idOrUsernameToUniqueWhere(auth, student)] }
+      },
+    });
   }
 
   @Authorized(AuthRole.ADMIN, AuthRole.MANAGER)
   @Mutation(() => Project)
-  removeProjectStudent(
+  async removeProjectStudent(
+    @Ctx() { auth }: Context,
     @Arg('project', () => String) project: string,
     @Arg('student', () => IdOrUsernameInput) student: IdOrUsernameInput,
   ): Promise<PrismaProject> {
-    // TODO(@tylermenezes) validate event id
-    return this.prisma.project.update({ where: { id: project }, data: { students: { disconnect: [student] } } });
+    await validateProjectEvent(auth, project);
+    await validateStudentEvent(auth, student);
+    return this.prisma.project.update({
+      where: { id: project },
+      data: { students: { disconnect: [idOrUsernameToUniqueWhere(auth, student)] } }
+    });
   }
 
   @Authorized(AuthRole.ADMIN, AuthRole.MANAGER)
   @Mutation(() => Project)
   async addProjectMentor(
+    @Ctx() { auth }: Context,
     @Arg('project', () => String) project: string,
     @Arg('mentor', () => IdOrUsernameInput) mentor: IdOrUsernameInput,
   ): Promise<PrismaProject> {
-    // TODO(@tylermenezes) validate event id
-    return this.prisma.project.update({ where: { id: project }, data: { mentors: { connect: [mentor] } } });
+    await validateProjectEvent(auth, project);
+    await validateMentorEvent(auth, mentor);
+    return this.prisma.project.update({
+      where: { id: project },
+      data: { mentors: { connect: [idOrUsernameToUniqueWhere(auth, mentor)] } },
+    });
   }
 
   @Authorized(AuthRole.ADMIN, AuthRole.MANAGER)
   @Mutation(() => Project)
-  removeProjectMentor(
+  async removeProjectMentor(
+    @Ctx() { auth }: Context,
     @Arg('project', () => String) project: string,
     @Arg('mentor', () => IdOrUsernameInput) mentor: IdOrUsernameInput,
   ): Promise<PrismaProject> {
-    // TODO(@tylermenezes) validate event id
-    return this.prisma.project.update({ where: { id: project }, data: { mentors: { disconnect: [mentor] } } });
+    await validateProjectEvent(auth, project);
+    await validateMentorEvent(auth, mentor);
+    return this.prisma.project.update({
+      where: { id: project },
+      data: { mentors: { disconnect: [idOrUsernameToUniqueWhere(auth, mentor)] } },
+    });
   }
 
   private projectIncludesMentors(auth: AuthContext, mentors: {id: string, username: string | null }[]): boolean {
-    // TODO(@tylermenezes) validate event id
     // BUG(@tylermenezes): Workaround for Typescript bug with reducers
     return <boolean><unknown> mentors.reduce((accum, { id, username }): boolean => (
       accum

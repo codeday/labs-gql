@@ -18,8 +18,8 @@ export class AuthContext {
   // eslint-disable-next-line sonarjs/cognitive-complexity
   validate(): void {
     if (this.isAdmin && (this.username || this.id)) throw Error('Admin tokens may not specify a username or id.');
-    if ((this.isAdmin || this.isManager || this.isReviewer || this.isApplicant) && !this.eventId) {
-      throw Error('Non-participant tokens must specify event id.');
+    if (!this.eventId) {
+      throw Error('Tokens must specify event id.');
     }
     if ((this.isApplicant || this.isManager || this.isReviewer) && this.id) {
       throw Error('Non-participant tokens may only specify username, not id.');
@@ -98,9 +98,18 @@ export class AuthContext {
     return false;
   }
 
-  toWhere(): { username: string } | { id: string } {
-    const { username, id } = this;
-    if (username) return { username };
+  toWhere(): { username_eventId: { username: string, eventId: string } } | { id: string } {
+    const { username, id, eventId } = this;
+    if (!eventId) throw new Error('Token did not include event id.');
+    if (username) return { username_eventId: { username, eventId } };
+    if (id) return { id };
+    throw new Error('Token did not include username or id.');
+  }
+
+  toWhereMany(): { username: string, eventId: string } | { id: string } {
+    const { username, id, eventId } = this;
+    if (!eventId) throw new Error('Token did not include event id.');
+    if (username) return { username, eventId };
     if (id) return { id };
     throw new Error('Token did not include username or id.');
   }

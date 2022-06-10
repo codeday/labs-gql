@@ -7,6 +7,7 @@ import {
   PrismaClient,
   AdmissionRating,
   ProjectPreference as PrismaProjectPreference,
+  Event as PrismaEvent,
 } from '@prisma/client';
 import {
   ObjectType, Field, Authorized, Int,
@@ -23,6 +24,7 @@ import { TrackRecommendation } from './TrackRecommendation';
 import { Preference } from './Preference';
 import { Tag } from './Tag';
 import { TagTrainingSubmission } from './TagTrainingSubmission';
+import { Event } from './Event';
 
 @ObjectType()
 export class Student implements PrismaStudent {
@@ -171,5 +173,19 @@ export class Student implements PrismaStudent {
       .reduce((accum, tag) => ({ ...accum, [tag.id]: tag }), {});
 
     return Object.values(tags);
+  }
+
+  @Field(() => String)
+  eventId: string;
+
+  event?: PrismaEvent;
+
+  @Field(() => Event, { name: 'event' })
+  async fetchEvent(): Promise<PrismaEvent> {
+    if (!this.event) {
+      this.event = (await Container.get(PrismaClient).event.findUnique({ where: { id: this.id } }))!;
+    }
+
+    return this.event;
   }
 }

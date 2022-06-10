@@ -37,7 +37,7 @@ export class MatchResolver {
     @Ctx() { auth }: Context,
   ): Promise<Preference[]> {
     return <Preference[]><unknown> this.prisma.projectPreference.findMany({
-      where: { student: auth.toWhere() },
+      where: { student: auth.toWhereMany() },
       include: { project: { include: { tags: true, mentors: true } } },
       orderBy: [{ ranking: 'asc' }],
     });
@@ -52,9 +52,8 @@ export class MatchResolver {
     const { auth } = ctx;
     const projectIds = [...new Set(projectIdsArg)];
     const student = await this.prisma.student.findUnique({ where: auth.toWhere() });
-    // TODO(@tylermenezes) validate event id
     const projects = await this.prisma.project.findMany({
-      where: { id: { in: projectIds } },
+      where: { id: { in: projectIds }, eventId: auth.eventId },
       include: { tags: true, mentors: true },
     });
 
@@ -68,7 +67,7 @@ export class MatchResolver {
       ) throw Error(`You cannot select project ID ${id} because it is not in your track.`);
     });
 
-    await this.prisma.projectPreference.deleteMany({ where: { student: auth.toWhere() } });
+    await this.prisma.projectPreference.deleteMany({ where: { student: auth.toWhereMany() } });
 
     await this.prisma.projectPreference.createMany({
       data: projectIds.map((id, i) => ({

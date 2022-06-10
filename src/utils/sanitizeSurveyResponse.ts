@@ -2,7 +2,7 @@ import { Prisma, Survey, SurveyResponse } from '@prisma/client';
 import { PersonType } from '../enums';
 import { AuthContext } from '../context';
 import { getSurveyResponseType } from './getSurveyResponseType';
-import { deepIntersection } from './deep';
+import { deepIntersection, deepKvFilter } from './deep';
 
 enum SurveyShareWith {
   MENTOR = 'mentor',
@@ -12,6 +12,16 @@ enum SurveyShareWith {
 
 interface SurveyShareConfig {
   [key: string]: SurveyShareWith | SurveyShareConfig
+}
+
+function filterResponse(response: Prisma.JsonValue, shareConfig: SurveyShareConfig | null, personType: PersonType):
+  Prisma.JsonValue {
+  if (!shareConfig) return {};
+  const personShareConfig = deepKvFilter(shareConfig, (_, el) => (
+    el === SurveyShareWith.ALL
+    || el === (personType === PersonType.STUDENT ? SurveyShareWith.STUDENT : SurveyShareWith.MENTOR)
+  ));
+  return deepIntersection(response, personShareConfig) as unknown as Prisma.JsonValue;
 }
 
 export function sanitizeSurveyResponse(

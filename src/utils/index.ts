@@ -7,3 +7,5 @@ export * from './someNoneUndefined';
 export * from './sanitizeSurveyResponse';
 export * from './getSurveyResponseType';
 export * from './eventAllowsApplication';
+export * from './idOrUsernameToUniqueWhere';
+export * from './validateEvent';

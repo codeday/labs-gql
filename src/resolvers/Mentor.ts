@@ -9,7 +9,7 @@ import {
   IdOrUsernameInput, MentorApplyInput, MentorCreateInput, MentorEditInput, MentorFilterInput,
 } from '../inputs';
 import { MentorOnlySelf } from './decorators';
-import { eventAllowsApplicationMentor } from '../utils';
+import { eventAllowsApplicationMentor, idOrUsernameOrAuthToUniqueWhere, idOrUsernameToUniqueWhere, validateMentorEvent } from '../utils';
 
 @Service()
 @Resolver(Mentor)
@@ -42,10 +42,11 @@ export class MentorResolver {
     @Ctx() { auth }: Context,
     @Arg('where', () => IdOrUsernameInput, { nullable: true }) where?: IdOrUsernameInput,
   ): Promise<PrismaMentor | null> {
-    const mentor = this.prisma.mentor.findUnique({
-      where: where ? where?.toQuery() : auth.toWhere(),
+    const mentor = await this.prisma.mentor.findUnique({
+      where: idOrUsernameOrAuthToUniqueWhere(auth, where),
       include: { event: true },
     });
+    if (!mentor) return null;
     if (!auth.isMentor && mentor.event.id !== auth.eventId) return null;
     return mentor;
   }
@@ -70,7 +71,6 @@ export class MentorResolver {
     @Ctx() { auth }: Context,
     @Arg('data', () => MentorApplyInput) data: MentorApplyInput,
   ): Promise<PrismaMentor> {
-    if (!auth.eventId) throw Error('Event id in authentication token is required to apply.');
     const event = await this.prisma.event.findUnique({ where: { id: auth.eventId } });
     if (!event) throw Error('Event does not exist.');
     if (!eventAllowsApplicationMentor(event)) throw Error('Mentor applications are not open for this event.');
@@ -79,6 +79,7 @@ export class MentorResolver {
       data: {
         ...data.toQuery(),
         username: auth.username,
+        event: { connect: { id: auth.eventId! } },
       },
     });
   }
@@ -91,13 +92,14 @@ export class MentorResolver {
     @Arg('data', () => MentorEditInput) data: MentorEditInput,
     @Arg('where', () => IdOrUsernameInput, { nullable: true }) where?: IdOrUsernameInput,
   ): Promise<PrismaMentor> {
+    if (where) await validateMentorEvent(auth, where);
+
     if ((data.username || data.managerUsername || data.status) && !(auth.isAdmin || auth.isManager)) {
       throw Error('You do not have permission to edit restricted fields.');
     }
 
-    // TODO(@tylermenezes) validate event id
     return this.prisma.mentor.update({
-      where: where?.toQuery() || auth.toWhere(),
+      where: idOrUsernameOrAuthToUniqueWhere(auth, where),
       data: data.toQuery(),
     });
   }
@@ -105,10 +107,10 @@ export class MentorResolver {
   @Authorized(AuthRole.ADMIN)
   @Mutation(() => Boolean)
   async deleteMentor(
+    @Ctx() { auth }: Context,
     @Arg('where', () => IdOrUsernameInput) where: IdOrUsernameInput,
   ): Promise<boolean> {
-    // TODO(@tylermenezes) validate event id
-    await this.prisma.mentor.delete({ where });
+    await this.prisma.mentor.deleteMany({ where: { ...where, eventId: auth.eventId! } });
     return true;
   }
 }

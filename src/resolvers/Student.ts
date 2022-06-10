@@ -9,7 +9,7 @@ import {
   IdOrUsernameInput, StudentApplyInput, StudentCreateInput, StudentEditInput, StudentFilterInput,
 } from '../inputs';
 import { StudentOnlySelf } from './decorators';
-import { eventAllowsApplicationStudent } from '../utils';
+import { eventAllowsApplicationStudent, idOrUsernameOrAuthToUniqueWhere, validateStudentEvent } from '../utils';
 
 @Service()
 @Resolver(Student)
@@ -42,11 +42,12 @@ export class StudentResolver {
     @Ctx() { auth }: Context,
     @Arg('where', () => IdOrUsernameInput, { nullable: true }) where?: IdOrUsernameInput,
   ): Promise<PrismaStudent | null> {
-    const student = this.prisma.student.findUnique({
+    const student = await this.prisma.student.findUnique({
       where: where?.toQuery() || auth.toWhere(),
       include: { event: true },
     });
-    if (!auth.isStudent && student.event.id !== auth.eventId) return null;
+    if (!student) return null;
+    if (student.event.id !== auth.eventId) return null;
     return student;
   }
 
@@ -59,7 +60,7 @@ export class StudentResolver {
     return this.prisma.student.create({
       data: {
         ...data.toQuery(),
-        event: { connect: { id: auth.eventId } },
+        event: { connect: { id: auth.eventId! } },
       },
     });
   }
@@ -71,7 +72,6 @@ export class StudentResolver {
     @Arg('data', () => StudentApplyInput) data: StudentApplyInput,
   ): Promise<PrismaStudent> {
     if (!auth.username) throw Error('Username is required in token for student applicants.');
-    if (!auth.eventId) throw Error('Event id in authentication token is required to apply.');
     const event = await this.prisma.event.findUnique({ where: { id: auth.eventId } });
     if (!event) throw Error('Event does not exist.');
     if (!eventAllowsApplicationStudent(event)) throw Error('Student applications are not open for this event.');
@@ -79,7 +79,7 @@ export class StudentResolver {
     return this.prisma.student.create({
       data: {
         ...data.toQuery(),
-        event: { connect: { id: auth.eventId } },
+        event: { connect: { id: auth.eventId! } },
         username: auth.username,
       },
     });
@@ -93,13 +93,14 @@ export class StudentResolver {
     @Arg('data', () => StudentEditInput) data: StudentEditInput,
     @Arg('where', () => IdOrUsernameInput, { nullable: true }) where?: IdOrUsernameInput,
   ): Promise<PrismaStudent> {
+    if (where) await validateStudentEvent(auth, where);
+
     if ((data.username || data.partnerCode || data.status || data.weeks) && !auth.isAdmin) {
       throw Error('You do not have permission to edit restricted fields.');
     }
 
-    // TODO(@tylermenezes) validate event id
     return this.prisma.student.update({
-      where: where?.toQuery() || auth.toWhere(),
+      where: idOrUsernameOrAuthToUniqueWhere(auth, where),
       data: data.toQuery(),
     });
   }
@@ -107,10 +108,10 @@ export class StudentResolver {
   @Authorized(AuthRole.ADMIN)
   @Mutation(() => Boolean)
   async deleteStudent(
+    @Ctx() { auth }: Context,
     @Arg('where', () => IdOrUsernameInput) where: IdOrUsernameInput,
   ): Promise<boolean> {
-    // TODO(@tylermenezes) validate event id
-    await this.prisma.student.delete({ where });
+    await this.prisma.student.deleteMany({ where: { ...where, eventId: auth.eventId! } });
     return true;
   }
 

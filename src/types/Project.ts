@@ -3,6 +3,7 @@ import {
   Project as PrismaProject,
   Tag as PrismaTag,
   Student as PrismaStudent,
+  Event as PrismaEvent,
   PrismaClient,
 } from '@prisma/client';
 import { Container } from 'typedi';
@@ -13,6 +14,7 @@ import { Track, ProjectStatus } from '../enums';
 import { Tag } from './Tag';
 import { Mentor } from './Mentor';
 import { Student } from './Student';
+import { Event } from './Event';
 
 @ObjectType()
 export class Project implements PrismaProject {
@@ -74,6 +76,20 @@ export class Project implements PrismaProject {
       });
     }
     return this.students;
+  }
+
+  @Field(() => String)
+  eventId: string;
+
+  event?: PrismaEvent;
+
+  @Field(() => Event, { name: 'event' })
+  async fetchEvent(): Promise<PrismaEvent> {
+    if (!this.event) {
+      this.event = (await Container.get(PrismaClient).event.findUnique({ where: { id: this.id } }))!;
+    }
+
+    return this.event;
   }
 
   @Field(() => Number)

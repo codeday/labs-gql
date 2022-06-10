@@ -29,7 +29,8 @@ export class SurveyOccurence {
     if (!this.survey) {
       this.survey = (await Container.get(PrismaClient).survey.findUnique({
         where: { id: this.surveyId },
-      })) || undefined;
+        rejectOnNotFound: true,
+      }));
     }
     return this.survey;
   }

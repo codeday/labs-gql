@@ -5,7 +5,7 @@ import {
   PrismaClient, RejectionReason, Student as PrismaStudent, StudentStatus, Track,
 } from '@prisma/client';
 import { Inject, Service } from 'typedi';
-import { randInt } from '../utils';
+import { idOrUsernameToUniqueWhere, randInt, validateStudentEvent } from '../utils';
 import { Context, AuthRole } from '../context';
 import { Student } from '../types';
 import {
@@ -24,7 +24,6 @@ export class ReviewResolver {
     @Ctx() { auth }: Context,
     @Arg('track', () => Track, { nullable: true }) track?: Track,
   ): Promise<PrismaStudent | null> {
-    // TODO(@tylermenezes) validate event id
     if (!auth.username) throw Error('Reviewers require username in token.');
     const results = await this.prisma.student.findMany({
       where: {
@@ -32,6 +31,7 @@ export class ReviewResolver {
         admissionRatings: { none: { ratedBy: auth.username } },
         username: { not: auth.username },
         status: StudentStatus.APPLIED,
+        eventId: auth.eventId,
       },
       orderBy: [{ createdAt: 'asc' }],
       take: 10,
@@ -47,7 +47,7 @@ export class ReviewResolver {
     @Arg('rating', () => Int) rating: number,
     @Arg('track', () => Track) track: Track,
   ): Promise<boolean> {
-    // TODO(@tylermenezes) validate event id
+    await validateStudentEvent(auth, where);
     if (!auth.username) throw Error('Reviewers require username in token.');
     if (rating > 10 || rating < 1 || Math.floor(rating) !== rating) throw Error('Rating must be an int from 1 - 10.');
     await this.prisma.admissionRating.create({
@@ -55,7 +55,7 @@ export class ReviewResolver {
         ratedBy: auth.username,
         rating,
         track,
-        student: { connect: where },
+        student: { connect: idOrUsernameToUniqueWhere(auth, where) },
       },
     });
     return true;
@@ -64,12 +64,12 @@ export class ReviewResolver {
   @Authorized(AuthRole.ADMIN)
   @Query(() => [Student])
   async studentsTopRated(
+    @Ctx() { auth }: Context,
     @Arg('includeRejected', () => Boolean, { nullable: true }) includeRejected?: boolean,
     @Arg('skip', () => Number, { nullable: true }) skip?: number,
     @Arg('take', () => Number, { nullable: true }) take?: number,
     @Arg('track', () => Track, { nullable: true }) track?: Track,
   ): Promise<PrismaStudent[]> {
-    // TODO(@tylermenezes) validate event id
     const topRatings = await this.prisma.admissionRating.groupBy({
       skip,
       take,
@@ -79,6 +79,7 @@ export class ReviewResolver {
       where: {
         student: {
           track,
+          eventId: auth.eventId!,
           status: {
             in: [
               StudentStatus.APPLIED,
@@ -108,20 +109,28 @@ export class ReviewResolver {
 
   @Authorized(AuthRole.ADMIN)
   @Mutation(() => Student)
-  offerStudentAdmission(
+  async offerStudentAdmission(
+    @Ctx() { auth }: Context,
     @Arg('where', () => IdOrUsernameInput) where: IdOrUsernameInput,
   ): Promise<PrismaStudent> {
-    // TODO(@tylermenezes) validate event id
-    return this.prisma.student.update({ where, data: { status: StudentStatus.OFFERED, offerDate: new Date() } });
+    await validateStudentEvent(auth, where);
+    return this.prisma.student.update({
+      where: idOrUsernameToUniqueWhere(auth, where),
+      data: { status: StudentStatus.OFFERED, offerDate: new Date() },
+    });
   }
 
   @Authorized(AuthRole.ADMIN)
   @Mutation(() => Student)
-  resetStudentAdmissionOffer(
+  async resetStudentAdmissionOffer(
+    @Ctx() { auth }: Context,
     @Arg('where', () => IdOrUsernameInput) where: IdOrUsernameInput,
   ): Promise<PrismaStudent> {
-    // TODO(@tylermenezes) validate event id
-    return this.prisma.student.update({ where, data: { offerDate: new Date() } });
+    await validateStudentEvent(auth, where);
+    return this.prisma.student.update({
+      where: idOrUsernameToUniqueWhere(auth, where),
+      data: { offerDate: new Date() },
+    });
   }
 
   @Authorized(AuthRole.STUDENT)
@@ -146,13 +155,14 @@ export class ReviewResolver {
 
   @Authorized(AuthRole.ADMIN)
   @Mutation(() => Student)
-  rejectStudent(
+  async rejectStudent(
+    @Ctx() { auth }: Context,
     @Arg('where', () => IdOrUsernameInput) where: IdOrUsernameInput,
     @Arg('reason', () => RejectionReason, { nullable: true }) reason?: RejectionReason,
   ): Promise<PrismaStudent> {
-    // TODO(@tylermenezes) validate event id
+    await validateStudentEvent(auth, where);
     return this.prisma.student.update({
-      where,
+      where: idOrUsernameToUniqueWhere(auth, where),
       data: {
         status: StudentStatus.REJECTED, rejectionReason: reason || RejectionReason.OTHER,
       },

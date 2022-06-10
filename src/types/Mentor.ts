@@ -1,5 +1,5 @@
 import {
-  Prisma, Project as PrismaProject, Mentor as PrismaMentor, PrismaClient,
+  Prisma, Project as PrismaProject, Mentor as PrismaMentor, Event as PrismaEvent, PrismaClient,
 } from '@prisma/client';
 import {
   ObjectType, Field, Authorized, Arg, Int,
@@ -9,6 +9,7 @@ import Container from 'typedi';
 import { MentorStatus } from '../enums';
 import { AuthRole } from '../context';
 import { Project } from './Project';
+import { Event } from './Event';
 
 @ObjectType()
 export class Mentor implements PrismaMentor {
@@ -51,6 +52,20 @@ export class Mentor implements PrismaMentor {
 
   @Field(() => Int)
   maxWeeks: number
+
+  @Field(() => String)
+  eventId: string;
+
+  event?: PrismaEvent;
+
+  @Field(() => Event, { name: 'event' })
+  async fetchEvent(): Promise<PrismaEvent> {
+    if (!this.event) {
+      this.event = (await Container.get(PrismaClient).event.findUnique({ where: { id: this.id } }))!;
+    }
+
+    return this.event;
+  }
 
   projects?: PrismaProject[] | null
 

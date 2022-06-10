@@ -1,4 +1,5 @@
-import { InputType, Field } from 'type-graphql';
+import { InputType, Field, Arg, Ctx } from 'type-graphql';
+import { Context } from '../context';
 
 @InputType()
 export class IdOrUsernameInput {

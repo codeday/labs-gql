@@ -1,5 +1,5 @@
 datasource db {
-  provider = "mysql"
+  provider = "postgres"
   url      = env("DATABASE_URL")
 }
 
@@ -75,22 +75,22 @@ model Event {
   name     String
   startsAt DateTime
 
-  studentApplicationsStartAt    DateTime?
-  studentApplicationsEndAt      DateTime?
-  studentApplicationSchema      Json?
-  studentApplicationUi          Json?
-  studentApplicationPostprocess Json?
+  studentApplicationsStartAt    DateTime
+  studentApplicationsEndAt      DateTime
+  studentApplicationSchema      Json
+  studentApplicationUi          Json
+  studentApplicationPostprocess Json
 
-  mentorApplicationsStartAt    DateTime?
-  mentorApplicationsEndAt      DateTime?
-  mentorApplicationSchema      Json?
-  mentorApplicationUi          Json?
-  mentorApplicationPostprocess Json?
+  mentorApplicationsStartAt    DateTime
+  mentorApplicationsEndAt      DateTime
+  mentorApplicationSchema      Json
+  mentorApplicationUi          Json
+  mentorApplicationPostprocess Json
 
-  surveys Survey[]
-  mentors Mentor[]
-  students Student[]
-  projects Project[]
+  surveys  Survey[]
+  // mentors  Mentor[]
+  // students Student[]
+  // projects Project[]
 }
 
 model Survey {
@@ -185,7 +185,7 @@ model Mentor {
   // Data
   givenName       String
   surname         String
-  username        String?      @unique
+  username        String? @unique
   email           String
   profile         Json
   status          MentorStatus @default(APPLIED)
@@ -198,8 +198,10 @@ model Mentor {
   authoredSurveyResponses SurveyResponse[] @relation("AuthorMentor")
   targetSurveyResponses   SurveyResponse[] @relation("TargetMentor")
 
-  event      Event @relation(fields: [eventId], references: [id])
-  eventId    String
+  // event   Event  @relation(fields: [eventId], references: [id])
+  // eventId String @default("codeday-labs-2022")
+
+  // @@unique([username, eventId])
 }
 
 model Student {
@@ -232,8 +234,10 @@ model Student {
   authoredSurveyResponses SurveyResponse[]        @relation("AuthorStudent")
   targetSurveyResponses   SurveyResponse[]        @relation("TargetStudent")
 
-  event      Event @relation(fields: [eventId], references: [id])
-  eventId    String
+  // event   Event  @relation(fields: [eventId], references: [id])
+  // eventId String @default("codeday-labs-2022")
+
+  // @@unique([username, eventId])
 }
 
 model Project {
@@ -257,8 +261,8 @@ model Project {
   projectPreferences    ProjectPreference[]
   targetSurveyResponses SurveyResponse[]
 
-  event      Event @relation(fields: [eventId], references: [id])
-  eventId    String
+  // event   Event  @relation(fields: [eventId], references: [id])
+  // eventId String @default("codeday-labs-2022")
 }
 
 model AdmissionRating {
