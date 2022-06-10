@@ -7,23 +7,20 @@ import { idOrUsernameToUniqueWhere } from './idOrUsernameToUniqueWhere';
 export async function validateStudentEvent(auth: AuthContext, arg: IdOrUsernameInput): Promise<void> {
   const student = await Container.get(PrismaClient).student.findUnique({
     where: idOrUsernameToUniqueWhere(auth, arg),
-    rejectOnNotFound: true,
   });
-  if (student.eventId !== auth.eventId) throw new Error('Student event does not match token event.');
+  if (student && student.eventId !== auth.eventId) throw new Error('Student event does not match token event.');
 }
 
 export async function validateMentorEvent(auth: AuthContext, arg: IdOrUsernameInput): Promise<void> {
   const mentor = await Container.get(PrismaClient).mentor.findUnique({
     where: idOrUsernameToUniqueWhere(auth, arg),
-    rejectOnNotFound: true,
   });
-  if (mentor.eventId !== auth.eventId) throw new Error('Mentor event does not match token event.');
+  if (mentor && mentor.eventId !== auth.eventId) throw new Error('Mentor event does not match token event.');
 }
 
 export async function validateProjectEvent(auth: AuthContext, id: string): Promise<void> {
   const project = await Container.get(PrismaClient).project.findUnique({
     where: { id },
-    rejectOnNotFound: true,
   });
-  if (project.eventId !== auth.eventId) throw new Error('Project event does not match token event.');
+  if (project && project.eventId !== auth.eventId) throw new Error('Project event does not match token event.');
 }
