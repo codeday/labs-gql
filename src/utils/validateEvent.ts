@@ -24,3 +24,10 @@ export async function validateProjectEvent(auth: AuthContext, id: string): Promi
   });
   if (project && project.eventId !== auth.eventId) throw new Error('Project event does not match token event.');
 }
+
+export async function validateSurveyEvent(auth: AuthContext, id: string): Promise<void> {
+  const survey = await Container.get(PrismaClient).survey.findUnique({
+    where: { id },
+  });
+  if (survey && survey.eventId !== auth.eventId) throw new Error('Survey event does not match token event.');
+}

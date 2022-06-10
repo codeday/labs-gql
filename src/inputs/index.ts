@@ -12,3 +12,4 @@ export * from './StudentCreateInput';
 export * from './StudentEditInput';
 export * from './StudentFilterInput';
 export * from './GtLtEq';
+export * from './SurveyCreateInput';

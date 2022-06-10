@@ -139,6 +139,9 @@ model SurveyOccurence {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  visibleAt DateTime
+  dueAt     DateTime
+
   survey   Survey @relation(fields: [surveyId], references: [id])
   surveyId String
 
