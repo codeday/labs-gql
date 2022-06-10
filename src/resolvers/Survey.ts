@@ -34,7 +34,7 @@ export class SurveyResolver {
 
   @Authorized(AuthRole.ADMIN)
   @Mutation(() => SurveyOccurence)
-  async createSurveyoccurence(
+  async createSurveyOccurence(
     @Ctx() { auth }: Context,
     @Arg('survey', () => String) survey: string,
     @Arg('visibleAt', () => Date) visibleAt: Date,
@@ -51,9 +51,9 @@ export class SurveyResolver {
     })
   }
 
-  @Authorized([AuthRole.STUDENT, AuthRole.MENTOR])
+  @Authorized([AuthRole.ADMIN, AuthRole.STUDENT, AuthRole.MENTOR])
   @Query(() => [Survey])
-  async getSurveys(
+  async surveys(
     @Ctx() { auth }: Context,
   ): Promise<PrismaSurvey[]> {
     const wherePersonType = auth.isAdmin ? {} : {
@@ -74,7 +74,7 @@ export class SurveyResolver {
 
   @Authorized([AuthRole.ADMIN, AuthRole.STUDENT, AuthRole.MENTOR])
   @Query(() => Survey)
-  async getSurvey(
+  async survey(
     @Ctx() { auth }: Context,
     @Arg('survey', () => String) survey: string,
   ): Promise<PrismaSurvey> {
@@ -139,8 +139,8 @@ export class SurveyResolver {
           const surveyCautionName = `${getSurveyResponseType(response)}Caution` as keyof typeof survey;
           if (surveyCautionName in survey && survey[surveyCautionName]) {
             try {
-              const cautionFunction = new Function(survey[surveyCautionName] as string);
-              response.caution = cautionFunction.call(response.response);
+              const cautionFunction = new Function(`{ return ${survey[surveyCautionName] as string} };`);
+              response.caution = cautionFunction.call(null, response.response);
             } catch (ex) {
               console.warn(`Could not evaluate ${survey.name}.${surveyCautionName}: `, ex);
             }
