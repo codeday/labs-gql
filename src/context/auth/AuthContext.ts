@@ -1,6 +1,7 @@
 import { verify } from 'jsonwebtoken';
 import config from '../../config';
 import { JwtToken, AuthByTarget, AuthRole } from './JwtToken';
+import { PersonType } from '../../enums';
 
 export class AuthContext {
   private token?: JwtToken;
@@ -44,6 +45,12 @@ export class AuthContext {
 
   get type(): AuthRole | undefined {
     return this.token?.typ;
+  }
+
+  get personType(): PersonType | null {
+    if (this.type === AuthRole.MENTOR) return PersonType.MENTOR;
+    if (this.type === AuthRole.STUDENT) return PersonType.STUDENT;
+    return null;
   }
 
   get isAdmin(): boolean {

@@ -7,6 +7,7 @@ import { Context } from '../context';
 import { PersonType } from '../enums';
 import { Survey } from './Survey';
 import { SurveyResponse } from './SurveyResponse';
+import { sanitizeSurveyResponses } from '../utils';
 
 @ObjectType()
 export class SurveyOccurence {
@@ -54,7 +55,7 @@ export class SurveyOccurence {
       return prisma.surveyResponse.findMany({
         where: {
           surveyOccurence: { id: this.id },
-          [auth.isStudent ? 'student' : 'mentor']: { id: auth.id },
+          [auth.isStudent ? 'authorStudent' : 'authorMentor']: { id: auth.id },
         },
       });
     }
@@ -67,7 +68,7 @@ export class SurveyOccurence {
     @Arg('personType', () => String, { nullable: true }) personType?: PersonType,
   ): Promise<PrismaSurveyResponse[]> {
     if (auth.isStudent || auth.isMentor) {
-      const rawResponses = Container.get(PrismaClient).surveyResponse.findMany({
+      const rawResponses = await Container.get(PrismaClient).surveyResponse.findMany({
         where: {
           surveyOccurence: { id: this.id },
           ...(personType ? { personType } : {}),
@@ -78,10 +79,9 @@ export class SurveyOccurence {
         },
       });
       const survey = await this.fetchSurvey();
-      // TODO(@tylermenezes): Sanitize survey answers
-
-      return rawResponses;
+      return sanitizeSurveyResponses(rawResponses, survey, auth);
     }
+
     // TODO(@tylermenezes): School dashboard.
     return [];
   }

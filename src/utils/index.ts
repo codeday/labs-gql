@@ -9,3 +9,4 @@ export * from './getSurveyResponseType';
 export * from './eventAllowsApplication';
 export * from './idOrUsernameToUniqueWhere';
 export * from './validateEvent';
+export * from './validateActive';

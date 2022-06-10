@@ -24,7 +24,10 @@ export class MatchResolver {
     @Ctx() { auth }: Context,
     @Arg('tags', () => [String]) tagIds: string[],
   ): Promise<Match[]> {
-    const student = await this.prisma.student.findUnique({ where: auth.toWhere() });
+    const event = await this.prisma.event.findUnique({ where: { id: auth.eventId! }, rejectOnNotFound: true });
+    if (!event.matchPreferenceSubmissionOpen) throw new Error('Match preference submission is not open.');
+
+    const student = await this.prisma.student.findUnique({ where: auth.toWhere(), rejectOnNotFound: true });
     const tags = await this.prisma.tag.findMany({ where: { id: { in: tagIds } } });
 
     if (!student || student.status !== StudentStatus.ACCEPTED) throw Error('You have not been accepted.');
@@ -50,6 +53,9 @@ export class MatchResolver {
     @Arg('projects', () => [String]) projectIdsArg: string[],
   ): Promise<Preference[]> {
     const { auth } = ctx;
+    const event = await this.prisma.event.findUnique({ where: { id: auth.eventId! }, rejectOnNotFound: true });
+    if (!event.matchPreferenceSubmissionOpen) throw new Error('Match preference submission is not open.');
+
     const projectIds = [...new Set(projectIdsArg)];
     const student = await this.prisma.student.findUnique({ where: auth.toWhere() });
     const projects = await this.prisma.project.findMany({

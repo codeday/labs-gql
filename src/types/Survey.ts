@@ -1,10 +1,12 @@
-import { ObjectType, Field } from 'type-graphql';
+import { ObjectType, Field, Ctx } from 'type-graphql';
 import { GraphQLJSONObject } from 'graphql-type-json';
 import { JSONSchema7 } from 'json-schema';
 import { Container } from 'typedi';
-import { PrismaClient, Event as PrismaEvent } from '@prisma/client';
+import { PrismaClient, Event as PrismaEvent, SurveyOccurence as PrismaSurveyOccurence } from '@prisma/client';
 import { PersonType } from '../enums';
 import { Event } from './Event';
+import { SurveyOccurence } from './SurveyOccurence';
+import { Context } from '../context';
 
 @ObjectType()
 export class Survey {
@@ -80,5 +82,23 @@ export class Survey {
     }
 
     return this.event;
+  }
+
+  surveyOccurences?: PrismaSurveyOccurence[];
+
+  @Field(() => [SurveyOccurence], { name: 'occurances' })
+  async fetchOccurances(
+    @Ctx() { auth }: Context,
+  ): Promise<PrismaSurveyOccurence[]> {
+    if (!this.surveyOccurences) {
+      this.surveyOccurences = (await Container.get(PrismaClient).surveyOccurence.findMany({
+        where: {
+          surveyId: this.id,
+          visibleAt: auth.isAdmin ? {} : { lte: new Date() },
+        },
+      }))!;
+    }
+
+    return this.surveyOccurences;
   }
 }

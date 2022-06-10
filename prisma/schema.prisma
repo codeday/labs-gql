@@ -86,6 +86,8 @@ model Event {
   mentorApplicationUi          Json
   mentorApplicationPostprocess Json
 
+  matchPreferenceSubmissionOpen Boolean @default(false)
+
   surveys  Survey[]
   mentors  Mentor[]
   students Student[]
@@ -141,6 +143,9 @@ model SurveyOccurence {
 
   visibleAt DateTime
   dueAt     DateTime
+
+  sentVisibleReminder Boolean @default(false)
+  sentOverdueReminder Boolean @default(false)
 
   survey   Survey @relation(fields: [surveyId], references: [id])
   surveyId String
