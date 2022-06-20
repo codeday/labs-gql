@@ -52,16 +52,27 @@ export class ProjectResolver {
     }
     const dbProject = await this.prisma.project.findUnique({
       where: { id: project },
-      select: { status: true, mentors: { select: { id: true, username: true } }, eventId: true },
+      select: {
+        status: true,
+        mentors: { select: { id: true, username: true } },
+        eventId: true,
+        event: { select: { matchPreferenceSubmissionOpen: true } } },
     });
     if (!dbProject) throw Error('Project not found.');
     if (!auth.isMentor && dbProject.eventId !== auth.eventId) throw Error('Cannot edit this project.');
     if (auth.isMentor && dbProject.status === ProjectStatus.MATCHED) throw Error('Matched projects cannot be edited.');
     if (auth.isMentor && !this.projectIncludesMentors(auth, dbProject.mentors)) throw Error('No permission to edit.');
+    let status = data.status;
+    if (auth.isMentor) {
+      if (dbProject.event.matchPreferenceSubmissionOpen && dbProject.status === ProjectStatus.ACCEPTED) {
+        // If the mentor's previous project has been approved, and matching is open, we will keep this one approved:
+        status = ProjectStatus.ACCEPTED;
+      } else if (!status) status = ProjectStatus.DRAFT;
+    }
 
     return this.prisma.project.update({
       where: { id: project },
-      data: { ...data.toQuery(), ...(auth.isMentor && !data.status ? { status: ProjectStatus.DRAFT } : {}) },
+      data: { ...data.toQuery(), status },
     });
   }
 
