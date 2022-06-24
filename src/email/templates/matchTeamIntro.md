@@ -17,7 +17,7 @@ Welcome to CodeDay Labs! We have placed you together in a team, working on this 
 **NEXT STEPS:**
 
 - **Mentors:** Can you please send a When2meet (or other calendar scheduling link) for the first meeting?
-- **Students:** Introduce yourself, and then [log into your dashboard](https://labs.codeday.org/dash) to view your assignments for onboarding week.
+- **Students:** (1) introduce yourself, (2) [log into your dashboard](https://labs.codeday.org/dash) to view your assignments for onboarding week, (3) start taking to your teammates to decide on a work session schedule.
 
 <div>
 <div style="color: #484848;">--<br />The CodeDay Labs Team</div>
