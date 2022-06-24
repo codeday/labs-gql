@@ -17,6 +17,7 @@ export async function getList(prisma: PrismaClient): Promise<EmailContext[]> {
           students: { some: { status: StudentStatus.ACCEPTED } },
         },
       },
+      event: { matchComplete: true },
     },
     include: {
       projects: {

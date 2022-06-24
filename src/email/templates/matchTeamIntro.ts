@@ -12,6 +12,7 @@ export async function getList(prisma: PrismaClient): Promise<EmailContext[]> {
       status: ProjectStatus.MATCHED,
       mentors: { some: { status: MentorStatus.ACCEPTED } },
       students: { some: { status: StudentStatus.ACCEPTED } },
+      event: { matchComplete: true },
     },
     include: {
       mentors: { where: { status: MentorStatus.ACCEPTED } },

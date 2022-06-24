@@ -87,6 +87,7 @@ model Event {
   mentorApplicationPostprocess Json
 
   matchPreferenceSubmissionOpen Boolean @default(false)
+  matchComplete Boolean @default(false)
 
   surveys  Survey[]
   mentors  Mentor[]
