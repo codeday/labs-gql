@@ -59,6 +59,18 @@ export class Survey {
   menteeCaution?: string
 
   @Field(() => GraphQLJSONObject, { nullable: true })
+  mentorSchema?: JSONSchema7
+
+  @Field(() => GraphQLJSONObject, { nullable: true })
+  mentorUi?: Record<string, unknown>
+
+  @Field(() => GraphQLJSONObject, { nullable: true })
+  mentorShare?: Record<string, string>
+
+  @Field(() => String, { nullable: true })
+  mentorCaution?: string
+
+  @Field(() => GraphQLJSONObject, { nullable: true })
   projectSchema?: JSONSchema7
 
   @Field(() => GraphQLJSONObject, { nullable: true })
@@ -86,8 +98,8 @@ export class Survey {
 
   surveyOccurences?: PrismaSurveyOccurence[];
 
-  @Field(() => [SurveyOccurence], { name: 'occurances' })
-  async fetchOccurances(
+  @Field(() => [SurveyOccurence], { name: 'occurrences' })
+  async fetchOccurrences(
     @Ctx() { auth }: Context,
   ): Promise<PrismaSurveyOccurence[]> {
     if (!this.surveyOccurences) {

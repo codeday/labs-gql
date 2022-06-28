@@ -2,6 +2,7 @@ import {
   Resolver, Authorized, Query, Mutation, Arg, Ctx,
 } from 'type-graphql';
 import {
+  PersonType,
   PrismaClient,
   Survey as PrismaSurvey,
   SurveyOccurence as PrismaSurveyOccurence,
@@ -59,7 +60,14 @@ export class SurveyResolver {
     const wherePersonType = auth.isAdmin ? {} : {
       personType: auth.personType!,
       surveyOccurences: {
-        some: { visibleAt: { lte: new Date() } },
+        some: {
+          visibleAt: { lte: new Date() },
+          surveyResponses: {
+            none: auth.personType === PersonType.MENTOR
+              ? { authorMentorId: auth.id }
+              : { authorStudentId: auth.id },
+          },
+        },
       },
     };
     if (!auth.isAdmin) await validateActive(auth);
@@ -97,17 +105,17 @@ export class SurveyResolver {
   }
 
   @Authorized([AuthRole.STUDENT, AuthRole.MENTOR])
-  @Query(() => Boolean)
+  @Mutation(() => Boolean)
   async surveyRespond(
     @Ctx() { auth }: Context,
-    @Arg('occurence', () => String) occurence: string,
+    @Arg('occurrence', () => String) occurrence: string,
     @Arg('responses', () => [SurveyRespondInput]) responses: SurveyRespondInput[],
   ): Promise<boolean> {
     await validateActive(auth);
 
     const { survey } = await this.prisma.surveyOccurence.findFirst({
       where: {
-        id: occurence,
+        id: occurrence,
         survey: { personType: auth.personType!, eventId: auth.eventId! },
       },
       rejectOnNotFound: true,
@@ -126,7 +134,7 @@ export class SurveyResolver {
     await this.prisma.surveyResponse.createMany({
       data: responses
         .map((response) => ({
-          surveyOccurenceId: occurence,
+          surveyOccurenceId: occurrence,
           projectId: response.project,
           mentorId: response.mentor,
           studentId: response.student,
@@ -140,7 +148,7 @@ export class SurveyResolver {
           if (surveyCautionName in survey && survey[surveyCautionName]) {
             try {
               const cautionFunction = new Function(`{ return ${survey[surveyCautionName] as string} };`);
-              response.caution = cautionFunction.call(null, response.response);
+              response.caution = cautionFunction.call(null)(response.response);
             } catch (ex) {
               console.warn(`Could not evaluate ${survey.name}.${surveyCautionName}: `, ex);
             }

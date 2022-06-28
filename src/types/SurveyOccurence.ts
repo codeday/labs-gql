@@ -20,6 +20,12 @@ export class SurveyOccurence {
   @Field(() => Date)
   updatedAt: Date
 
+  @Field(() => Date)
+  visibleAt: Date
+
+  @Field(() => Date)
+  dueAt: Date
+
   @Field(() => String)
   surveyId: string
 
