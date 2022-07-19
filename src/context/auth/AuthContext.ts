@@ -85,6 +85,14 @@ export class AuthContext {
     return this.isApplicantMentor || this.isApplicantStudent;
   }
 
+  get isPartner(): boolean {
+    return this.type === AuthRole.PARTNER;
+  }
+
+  get partnerCode(): string | undefined {
+    return this.token?.pc;
+  }
+
   get eventId(): string | undefined {
     return this.token?.evt;
   }

@@ -6,6 +6,7 @@ export enum AuthRole {
   MENTOR = 'm',
   APPLICANT_MENTOR = 'am',
   APPLICANT_STUDENT = 'as',
+  PARTNER = 'p',
 }
 
 export enum AuthByTarget {
@@ -18,4 +19,5 @@ export interface JwtToken {
   evt: string
   sid?: string
   tgt?: AuthByTarget
+  pc?: string
 }

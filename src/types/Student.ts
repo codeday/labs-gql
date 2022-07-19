@@ -7,6 +7,7 @@ import {
   PrismaClient,
   AdmissionRating,
   ProjectPreference as PrismaProjectPreference,
+  SurveyResponse as PrismaSurveyResponse,
   Event as PrismaEvent,
 } from '@prisma/client';
 import {
@@ -25,6 +26,7 @@ import { Preference } from './Preference';
 import { Tag } from './Tag';
 import { TagTrainingSubmission } from './TagTrainingSubmission';
 import { Event } from './Event';
+import { SurveyResponse } from './SurveyResponse';
 
 @ObjectType()
 export class Student implements PrismaStudent {
@@ -188,4 +190,20 @@ export class Student implements PrismaStudent {
 
     return this.event;
   }
+
+  surveyResponsesAbout?: PrismaSurveyResponse[]
+
+  @Authorized([AuthRole.PARTNER, AuthRole.ADMIN])
+  @Field(() => [SurveyResponse], { name: 'surveyResponsesAbout' })
+  async fetchSurveyResponsesAbout(): Promise<PrismaSurveyResponse[]> {
+    if (!this.surveyResponsesAbout) {
+      this.surveyResponsesAbout = (await Container.get(PrismaClient).surveyResponse.findMany({
+        where: { studentId: this.id },
+        include: { surveyOccurence: { include: { survey: true } } },
+      }));
+    }
+
+    return this.surveyResponsesAbout;
+  }
+
 }

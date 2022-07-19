@@ -35,7 +35,7 @@ export class SurveyResponse {
 
   surveyOccurence: PrismaSurveyOccurence
 
-  @Field(() => SurveyOccurence, { name: 'survey' })
+  @Field(() => SurveyOccurence, { name: 'surveyOccurence' })
   async fetchSurveyOccurence(): Promise<PrismaSurveyOccurence> {
     if (!this.surveyOccurence) {
       this.surveyOccurence = (await Container.get(PrismaClient).surveyOccurence.findUnique({

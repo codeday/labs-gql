@@ -17,7 +17,7 @@ export class StudentResolver {
   @Inject(() => PrismaClient)
   private readonly prisma : PrismaClient;
 
-  @Authorized(AuthRole.ADMIN)
+  @Authorized(AuthRole.ADMIN, AuthRole.PARTNER)
   @Query(() => [Student])
   async students(
     @Ctx() { auth }: Context,
@@ -27,7 +27,7 @@ export class StudentResolver {
   ): Promise<PrismaStudent[]> {
     return this.prisma.student.findMany({
       where: {
-        ...where?.toQuery(),
+        ...(auth.isPartner ? { partnerCode: { equals: auth.partnerCode!, mode: 'insensitive' } } : where?.toQuery()),
         eventId: auth.eventId,
       },
       skip,
