@@ -25,7 +25,7 @@ export async function validateActive(auth: AuthContext) {
     });
     if (me.status !== MentorStatus.ACCEPTED) throw new Error(`Not an active mentor.`);
     if (me.projects.length === 0) throw new Error(`No active projects.`);
-    if (DateTime.fromJSDate(me.event.startsAt).plus({ weeks: me.maxWeeks }) < DateTime.now()) {
+    if (DateTime.fromJSDate(me.event.startsAt).plus({ weeks: me.maxWeeks + 2 }) < DateTime.now()) {
       throw new Error(`Participation ended.`)
     }
   }
