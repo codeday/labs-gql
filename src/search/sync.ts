@@ -44,7 +44,8 @@ export async function syncElastic(): Promise<void> {
 
     if (resp.errors) {
       resp.items
-        .filter((action: Record<string, Record<string, unknown>>) => action[Object.keys(action)[0]].error)
+        // FIXME: hack to remove massive amounts of 404 log spam 
+        .filter((action: Record<string, Record<string, unknown>>) => action[Object.keys(action)[0]].error && action[Object.keys(action)[0]].status !== 404 )
         // eslint-disable-next-line no-console
         .forEach(console.error);
     }
