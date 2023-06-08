@@ -83,6 +83,9 @@ export class Student implements PrismaStudent {
   @Field(() => GraphQLJSON, { nullable: true })
   timeManagementPlan: Prisma.JsonValue | null
 
+  @Field(() => String, { nullable: true })
+  timezone: string | null
+
   @Field(() => Boolean)
   hasValidAdmissionOffer(): boolean {
     return this.status === 'OFFERED' && (!this.offerDate || DateTime.fromJSDate(this.offerDate).diffNow().days <= 3);
