@@ -4,6 +4,7 @@ import {
 import {
   PrismaClient, RejectionReason, Student as PrismaStudent, StudentStatus, Track,
 } from '@prisma/client';
+import { GraphQLJSONObject } from 'graphql-type-json';
 import { Inject, Service } from 'typedi';
 import { idOrUsernameToUniqueWhere, randInt, validateStudentEvent } from '../utils';
 import { Context, AuthRole } from '../context';
@@ -137,6 +138,7 @@ export class ReviewResolver {
   @Mutation(() => Student)
   async acceptStudentOffer(
     @Ctx() { auth }: Context,
+    @Arg('timeManagementPlan', () => GraphQLJSONObject, { nullable: true }) timeManagementPlan?: object,
   ): Promise<PrismaStudent> {
     const student = await this.prisma.student.findUnique({
       where: auth.toWhere(),
@@ -149,7 +151,7 @@ export class ReviewResolver {
 
     return this.prisma.student.update({
       where: auth.toWhere(),
-      data: { status: StudentStatus.ACCEPTED },
+      data: { status: StudentStatus.ACCEPTED, timeManagementPlan },
     });
   }
 

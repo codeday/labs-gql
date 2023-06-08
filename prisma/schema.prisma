@@ -231,6 +231,7 @@ model Student {
   weeks           Int              @default(6)
   minHours        Int
   partnerCode     String?
+  timeManagementPlan Json?
 
   // Relations
   projects                Project[]
