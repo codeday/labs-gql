@@ -70,7 +70,10 @@ export class SurveyResolver {
         },
       },
     };
-    if (!auth.isAdmin) await validateActive(auth);
+    if (!auth.isAdmin) {
+      try { await validateActive(auth); }
+      catch (_) { return []; }
+    }
 
     return this.prisma.survey.findMany({
       where: {
