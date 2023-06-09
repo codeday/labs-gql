@@ -27,6 +27,9 @@ export class MentorCreateInput {
   // eslint-disable-next-line @typescript-eslint/ban-types
   profile?: object
 
+  @Field(() => String, { nullable: true })
+  timezone: string | null
+
   toQuery(): Prisma.MentorCreateInput {
     return {
       givenName: this.givenName,
@@ -36,6 +39,7 @@ export class MentorCreateInput {
       maxWeeks: this.maxWeeks,
       profile: this.profile || {},
       status: this.status,
+      timezone: this.timezone,
     };
   }
 }

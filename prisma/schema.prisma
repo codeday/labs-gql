@@ -199,6 +199,7 @@ model Mentor {
   status          MentorStatus @default(APPLIED)
   managerUsername String?
   maxWeeks        Int          @default(6)
+  timezone        String?
 
   // Relations
   projects                Project[]

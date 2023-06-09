@@ -56,6 +56,9 @@ export class Mentor implements PrismaMentor {
   @Field(() => String)
   eventId: string;
 
+  @Field(() => String, { nullable: true })
+  timezone: string | null
+
   event?: PrismaEvent;
 
   @Field(() => Event, { name: 'event' })

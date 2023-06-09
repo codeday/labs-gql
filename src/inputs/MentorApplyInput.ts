@@ -25,6 +25,9 @@ export class MentorApplyInput {
   @Field(() => [ProjectCreateInput])
   projects: ProjectCreateInput[]
 
+  @Field(() => String, { nullable: true })
+  timezone: string | null
+
   toQuery(): Omit<Prisma.MentorCreateInput, 'username'> {
     return {
       givenName: this.givenName,
@@ -34,6 +37,7 @@ export class MentorApplyInput {
       status: MentorStatus.APPLIED,
       maxWeeks: this.maxWeeks,
       projects: { create: this.projects.map((p) => p.toQuery()) },
+      timezone: this.timezone,
     };
   }
 }
