@@ -4,7 +4,7 @@ datasource db {
 }
 
 generator client {
-  provider        = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 enum PersonType {
@@ -87,12 +87,13 @@ model Event {
   mentorApplicationPostprocess Json
 
   matchPreferenceSubmissionOpen Boolean @default(false)
-  matchComplete Boolean @default(false)
+  matchComplete                 Boolean @default(false)
 
   surveys  Survey[]
   mentors  Mentor[]
   students Student[]
   projects Project[]
+  Partner  Partner[]
 }
 
 model Survey {
@@ -211,6 +212,7 @@ model Mentor {
   eventId String @default("codeday-labs-2022")
 
   @@unique([username, eventId])
+  @@unique([email, eventId])
 }
 
 model Student {
@@ -220,20 +222,20 @@ model Student {
   updatedAt DateTime @updatedAt
 
   // Data
-  givenName       String
-  surname         String
-  username        String
-  email           String
-  profile         Json
-  track           Track
-  status          StudentStatus    @default(APPLIED)
-  rejectionReason RejectionReason?
-  offerDate       DateTime?
-  weeks           Int              @default(6)
-  minHours        Int
-  partnerCode     String?
+  givenName          String
+  surname            String
+  username           String
+  email              String
+  profile            Json
+  track              Track
+  status             StudentStatus    @default(APPLIED)
+  rejectionReason    RejectionReason?
+  offerDate          DateTime?
+  weeks              Int              @default(6)
+  minHours           Int
+  partnerCode        String?
   timeManagementPlan Json?
-  timezone        String?
+  timezone           String?
 
   // Relations
   projects                Project[]
@@ -249,6 +251,26 @@ model Student {
   eventId String @default("codeday-labs-2022")
 
   @@unique([username, eventId])
+  @@unique([email, eventId])
+}
+
+model Partner {
+  // Metadata
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  partnerCode String
+  weeks Int?
+  minHours Int?
+
+  forceTags  Tag[] @relation("PartnerForceTag")
+  forbidTags Tag[] @relation("PartnerForbidTag")
+
+  event   Event  @relation(fields: [eventId], references: [id])
+  eventId String
+
+  @@unique([partnerCode, eventId])
 }
 
 model Project {
@@ -325,6 +347,8 @@ model Tag {
   students               Student[]
   projects               Project[]
   tagTrainingSubmissions TagTrainingSubmission[]
+  forcedPartners         Partner[]               @relation("PartnerForceTag")
+  forbiddenPartners      Partner[]               @relation("PartnerForbidTag")
 }
 
 model TagTrainingSubmission {

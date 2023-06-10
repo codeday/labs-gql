@@ -1,6 +1,7 @@
 import {
   Project, Mentor, Tag, ProjectPreference,
 } from '@prisma/client';
+import { getTimezoneOffset as getTimezoneOffsetInner } from '../utils';
 import { Track, TagType, MentorStatus } from '../enums';
 
 export type FieldType = 'none' | 'geo_point' | 'geo_shape' | 'ip' | 'binary' | 'keyword' | 'text'
@@ -17,6 +18,7 @@ export const ElasticEntrySchema: Record<string, FieldType> = {
 
   interestTags: 'keyword',
   stackTags: 'keyword',
+  tags: 'keyword',
 
   available: 'boolean',
   maxWeeks: 'integer',
@@ -44,6 +46,7 @@ export enum ElasticEntryProperties {
   studentsSelected = 'studentsSelected',
   interestTags = 'interestTags',
   stackTags = 'stackTags',
+  tags = 'tags',
   available = 'available',
   maxWeeks = 'maxWeeks',
   track = 'track',
@@ -69,6 +72,7 @@ export interface ElasticEntry {
 
   interestTags: string[]
   stackTags: string[]
+  tags: string[]
 
   available: boolean
   maxWeeks: number
@@ -94,6 +98,9 @@ export interface ElasticEntry {
 type ProjectInput = Project & { mentors: Mentor[], tags: Tag[], projectPreferences: ProjectPreference[] }
 
 function getTimezoneOffset(timezoneString?: string) {
+  if (!timezoneString) return -7;
+  const basicLookup = getTimezoneOffsetInner(timezoneString);
+  if (basicLookup) return basicLookup;
   return {
     'America - Pacific': -7,
     'America - Mountain': -6,
@@ -137,11 +144,12 @@ export function projectToElasticEntry({
 
     interestTags: tags.filter(({ type }) => type === TagType.INTEREST).map(({ id }) => id),
     stackTags: tags.filter(({ type }) => type === TagType.TECHNOLOGY).map(({ id }) => id),
+    tags: tags.map(({ id }) => id),
 
     available: project.status === 'ACCEPTED' && hasAvailableMentor,
     maxWeeks: Math.max(...mentors.map(({ maxWeeks }) => maxWeeks)),
     track: project.track,
-    timezoneOffset: getTimezoneOffset(<string | undefined>profiles[0]?.timezone),
+    timezoneOffset: getTimezoneOffset(mentors[0].timezone || <string | undefined>profiles[0]?.timezone),
 
     mentorSchools: educations.map(({ school }) => <string>school).filter(Boolean),
     mentorDegrees: educations.map(({ degree }) => <string>degree).filter(Boolean),

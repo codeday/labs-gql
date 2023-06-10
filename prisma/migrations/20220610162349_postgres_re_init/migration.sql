@@ -156,12 +156,6 @@ CREATE TABLE "_ProjectToTag" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Mentor.username_unique" ON "Mentor"("username");
-
--- CreateIndex
-CREATE UNIQUE INDEX "Student.username_unique" ON "Student"("username");
-
--- CreateIndex
 CREATE UNIQUE INDEX "_MentorToProject_AB_unique" ON "_MentorToProject"("A", "B");
 
 -- CreateIndex

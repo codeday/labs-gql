@@ -1,5 +1,6 @@
 /* eslint-disable no-underscore-dangle */
 import esb, {
+  BoolQuery,
   FunctionScoreQuery, RangeQuery, ScoreFunction, TermQuery,
 } from 'elastic-builder';
 import { Client } from '@elastic/elasticsearch';
@@ -10,7 +11,7 @@ import {
   Student, Match, Project, Tag,
 } from '../types';
 import { Track, TagType } from '../enums';
-import { geoToTimezone } from '../utils';
+import { geoToTimezone, getTimezoneOffset } from '../utils';
 import { ElasticEntryProperties as Entry } from './ElasticEntry';
 
 const SCORE_WEIGHTS = {
@@ -50,15 +51,52 @@ function isStudentUnderrepresented(student: Student): boolean {
   return false;
 }
 
-async function buildQueryFor(student: Student, tags: Tag[]): Promise<FunctionScoreQuery> {
+async function getTimezone(student: Student): Promise<number> {
+  if (student.timezone) {
+    return getTimezoneOffset(student.timezone) || -7;
+  }
+
   const profile = <{ location?: { postal?: string, country?: string } } | undefined>student?.profile;
-  const timezone = profile?.location?.postal && profile?.location?.country
-    ? await geoToTimezone(profile.location.postal, profile.location.country)
-    : -7;
+  if (profile?.location?.postal && profile?.location?.country) {
+    return await geoToTimezone(
+      profile.location.postal,
+      profile.location.country
+    );
+  }
+
+  return -7;
+}
+
+async function buildQueryFor(student: Student, tags: Tag[]): Promise<FunctionScoreQuery> {
+  const prisma = Container.get(PrismaClient);
+  const partner = student.partnerCode
+    ? await prisma.partner.findFirst({
+        where: {
+          partnerCode: student.partnerCode,
+          eventId: student.eventId,
+        },
+        include: {
+          forceTags: { select: { id: true } },
+          forbidTags: { select: { id: true } },
+        },
+      })
+    : null;
+  const timezone = await getTimezone(student);
 
   const queryEventId = esb.matchQuery(Entry.eventId, student.eventId);
 
-  const scoreTagsMatching = buildTagsScore(tags);
+  const filteredTags = partner?.forbidTags && partner.forbidTags.length > 0
+    ? tags.filter((t) => !partner.forbidTags.includes(t))
+    : tags;
+  const scoreTagsMatching = buildTagsScore(filteredTags);
+  
+  const partnerForceTags = partner?.forceTags && partner.forbidTags.length > 0
+    ? esb.boolQuery().must(partner.forceTags.map(({ id }) => esb.termQuery('tags', id )))
+    : undefined;
+
+  const partnerForbidTags = partner?.forbidTags && partner.forbidTags.length > 0
+    ? esb.boolQuery().mustNot(partner.forbidTags.map(({ id }) => esb.termQuery('tags', id )))
+    : undefined;
 
   const queryStudentRequiresLength = esb.rangeQuery(Entry.maxWeeks).gte(student.weeks);
 
@@ -108,7 +146,9 @@ async function buildQueryFor(student: Student, tags: Tag[]): Promise<FunctionSco
     .decay(SCORE_WEIGHTS.POPULARITY_DECAY);
 
   return esb.functionScoreQuery()
-    .query(esb.boolQuery().must(<(RangeQuery | TermQuery)[]>[
+    .query(esb.boolQuery().must(<(RangeQuery | TermQuery | BoolQuery)[]>[
+      partnerForceTags,
+      partnerForbidTags,
       queryStudentRequiresLength,
       queryTrack,
       queryStudentIsUnderrepresented,

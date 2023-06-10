@@ -1,4 +1,5 @@
 export * from './IdOrUsernameInput';
+export * from './IdOrUsernameOrEmailInput';
 export * from './MentorApplyInput';
 export * from './MentorCreateInput';
 export * from './MentorEditInput';
@@ -13,3 +14,5 @@ export * from './StudentEditInput';
 export * from './StudentFilterInput';
 export * from './GtLtEq';
 export * from './SurveyCreateInput';
+export * from './PartnerCreateInput';
+export * from './PartnerEditInput';

@@ -8,3 +8,4 @@ export * from './Survey';
 export * from './SurveyOccurence';
 export * from './SurveyResponse';
 export * from './Event';
+export * from './Partner';
