@@ -51,6 +51,35 @@ export class MentorResolver {
     return mentor;
   }
 
+  @Authorized(AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.MENTOR)
+  @MentorOnlySelf('where')
+  @Query(() => Mentor, { nullable: true })
+  async mentorPriorParticipation(
+    @Ctx() { auth }: Context,
+    @Arg('where', () => IdOrUsernameInput, { nullable: true }) where?: IdOrUsernameInput,
+  ): Promise<PrismaMentor | null> {
+    const currentMentor = await this.prisma.mentor.findUnique({
+      where: idOrUsernameOrAuthToUniqueWhere(auth, where),
+      select: {
+        event: { select: { id: true } },
+        email: true,
+        username: true,
+      }
+    });
+    if (!currentMentor) return null;
+    if (!auth.isMentor && currentMentor.event.id !== auth.eventId) return null;
+
+    return await this.prisma.mentor.findFirst({
+      where: {
+        eventId: { not: currentMentor?.event.id },
+        OR: [
+          { email: { mode: 'insensitive', equals: currentMentor?.email } },
+          ...(currentMentor.username ? [{ username: currentMentor.username }] : []),
+        ],
+      }
+    });
+  }
+
   @Authorized(AuthRole.ADMIN)
   @Mutation(() => Mentor)
   async createMentor(
