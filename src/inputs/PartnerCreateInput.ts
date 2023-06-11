@@ -13,6 +13,9 @@ export class PartnerCreateInput {
   @Field(() => Int, { nullable: true })
   minHours?: number
 
+  @Field(() => Boolean, { nullable: true })
+  skipPreferences?: boolean
+
   @Field(() => [String], { nullable: true })
   forceTags?: string[]
 
@@ -24,6 +27,7 @@ export class PartnerCreateInput {
       partnerCode: this.partnerCode,
       weeks: this.weeks,
       minHours: this.minHours,
+      skipPreferences: this.skipPreferences,
       forceTags: this.forceTags
         ? { connect: this.forceTags.map((id): Prisma.TagWhereUniqueInput => ({ id })) }
         : undefined,

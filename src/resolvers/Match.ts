@@ -28,6 +28,12 @@ export class MatchResolver {
     if (!event.matchPreferenceSubmissionOpen) throw new Error('Match preference submission is not open.');
 
     const student = await this.prisma.student.findUnique({ where: auth.toWhere(), rejectOnNotFound: true });
+
+    if (!student || student.status !== StudentStatus.ACCEPTED) throw Error('You have not been accepted.');
+    if (student.skipPreferences) {
+      throw new Error('You are not eligible to express project preferences. You will be matched manually in collaboration with your partner institution.');
+    }
+
     const tags = await this.prisma.tag.findMany({ where: { id: { in: tagIds } } });
 
     if (!student || student.status !== StudentStatus.ACCEPTED) throw Error('You have not been accepted.');
@@ -56,14 +62,18 @@ export class MatchResolver {
     const event = await this.prisma.event.findUnique({ where: { id: auth.eventId! }, rejectOnNotFound: true });
     if (!event.matchPreferenceSubmissionOpen) throw new Error('Match preference submission is not open.');
 
-    const projectIds = [...new Set(projectIdsArg)];
     const student = await this.prisma.student.findUnique({ where: auth.toWhere() });
+    if (!student || student.status !== StudentStatus.ACCEPTED) throw Error('You have not been accepted.');
+    if (student.skipPreferences) {
+      throw new Error('You are not eligible to express project preferences. You will be matched manually in collaboration with your partner institution.');
+    }
+
+    const projectIds = [...new Set(projectIdsArg)];
     const projects = await this.prisma.project.findMany({
       where: { id: { in: projectIds }, eventId: auth.eventId },
       include: { tags: true, mentors: true },
     });
 
-    if (!student || student.status !== StudentStatus.ACCEPTED) throw Error('You have not been accepted.');
     if (projectIds.length < 3) throw Error('You must select at least 3 project preferences.');
     if (projects.length !== projectIds.length) throw Error('You selected a project which does not exist.');
     projects.forEach(({ id, track }) => {

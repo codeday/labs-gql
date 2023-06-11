@@ -234,6 +234,7 @@ model Student {
   weeks              Int              @default(6)
   minHours           Int
   partnerCode        String?
+  skipPreferences     Boolean @default(false)
   timeManagementPlan Json?
   timezone           String?
 
@@ -263,6 +264,7 @@ model Partner {
   partnerCode String
   weeks Int?
   minHours Int?
+  skipPreferences     Boolean @default(false)
 
   forceTags  Tag[] @relation("PartnerForceTag")
   forbidTags Tag[] @relation("PartnerForbidTag")

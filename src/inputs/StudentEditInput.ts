@@ -29,6 +29,9 @@ export class StudentEditInput {
   @Field(() => Int, { nullable: true })
   weeks?: number
 
+  @Field(() => Boolean, { nullable: true })
+  skipPreferences?: boolean
+
   @Field(() => GraphQLJSONObject, { nullable: true })
   // eslint-disable-next-line @typescript-eslint/ban-types
   profile?: object
@@ -51,6 +54,9 @@ export class StudentEditInput {
       minHours: this.minHours,
       profile: this.profile,
       partnerCode: this.partnerCode,
+      skipPreferences: typeof this.skipPreferences === 'boolean'
+        ? this.skipPreferences
+        : undefined,
       tags: this.tags ? { set: this.tags.map((id): Prisma.TagWhereUniqueInput => ({ id })) } : undefined,
     };
   }

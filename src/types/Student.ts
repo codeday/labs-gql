@@ -87,6 +87,9 @@ export class Student implements PrismaStudent {
   timezone: string | null
 
   @Field(() => Boolean)
+  skipPreferences: boolean
+
+  @Field(() => Boolean)
   hasValidAdmissionOffer(): boolean {
     return this.status === 'OFFERED' && (!this.offerDate || DateTime.fromJSDate(this.offerDate).diffNow().days <= 3);
   }

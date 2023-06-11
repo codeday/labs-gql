@@ -37,6 +37,9 @@ export class Partner implements PrismaPartner {
   @Field(() => Int, { nullable: true })
   minHours: number | null
 
+  @Field(() => Boolean)
+  skipPreferences: boolean
+
   forceTags?: PrismaTag[] | null
 
   @Field(() => [Tag], { name: 'forceTags' })

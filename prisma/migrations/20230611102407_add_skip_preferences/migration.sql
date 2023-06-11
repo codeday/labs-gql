@@ -1,0 +1,2 @@
+ALTER TABLE "Partner" ADD COLUMN "skipPreferences" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "Student" ADD COLUMN "skipPreferences" BOOLEAN NOT NULL DEFAULT false;

@@ -33,6 +33,9 @@ export class StudentCreateInput {
   @Field(() => Int, { nullable: true })
   weeks?: number
 
+  @Field(() => Boolean, { nullable: true })
+  skipPreferences?: boolean
+
   @Field(() => String, { nullable: true })
   partnerCode?: string
 
@@ -51,6 +54,7 @@ export class StudentCreateInput {
       minHours: this.minHours,
       weeks: this.weeks,
       partnerCode: this.partnerCode,
+      skipPreferences: this.skipPreferences,
       tags: this.tags ? { connect: this.tags.map((id): Prisma.TagWhereUniqueInput => ({ id })) } : undefined,
     };
   }

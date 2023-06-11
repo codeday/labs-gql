@@ -13,6 +13,9 @@ export class PartnerEditInput {
   @Field(() => Int, { nullable: true })
   minHours?: number
 
+  @Field(() => Boolean, { nullable: true })
+  skipPreferences?: boolean
+
   @Field(() => [String], { nullable: true })
   forceTags?: string[]
 
@@ -24,6 +27,9 @@ export class PartnerEditInput {
       partnerCode: this.partnerCode.toUpperCase(),
       weeks: this.weeks,
       minHours: this.minHours,
+      skipPreferences: typeof this.skipPreferences === 'boolean'
+        ? this.skipPreferences
+        : undefined,
       forceTags: this.forceTags
         ? { set: this.forceTags.map((id): Prisma.TagWhereUniqueInput => ({ id })) }
         : undefined,
