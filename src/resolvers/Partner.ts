@@ -63,8 +63,7 @@ export class ProjectResolver {
     return updatedPartner;
   }
 
-  @Authorized(AuthRole.ADMIN, AuthRole.PARTNER, AuthRole.STUDENT)
-  @StudentOnlySelf('where')
+  @Authorized(AuthRole.ADMIN, AuthRole.PARTNER)
   @Mutation(() => Student)
   async associatePartnerCode(
     @Ctx() { auth }: Context,
