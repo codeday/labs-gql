@@ -4,7 +4,7 @@ import { Track } from '../enums';
 
 @InputType()
 export class PartnerEditInput {
-  @Field(() => String)
+  @Field(() => String, { nullable: true })
   partnerCode: string
 
   @Field(() => Int, { nullable: true })
