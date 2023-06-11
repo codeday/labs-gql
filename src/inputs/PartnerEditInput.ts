@@ -21,7 +21,7 @@ export class PartnerEditInput {
 
   toQuery(): Prisma.PartnerUpdateInput {
     return {
-      partnerCode: this.partnerCode,
+      partnerCode: this.partnerCode.toUpperCase(),
       weeks: this.weeks,
       minHours: this.minHours,
       forceTags: this.forceTags

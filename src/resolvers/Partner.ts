@@ -39,7 +39,12 @@ export class ProjectResolver {
     @Arg('data', () => PartnerEditInput) data: PartnerEditInput,
   ): Promise<PrismaPartner> {
     const updatedPartner = await this.prisma.partner.update({
-      where: { partnerCode_eventId: { partnerCode, eventId: auth.eventId! } },
+      where: {
+        partnerCode_eventId: {
+          partnerCode: partnerCode.toUpperCase(),
+          eventId: auth.eventId!
+        }
+      },
       data: {
         ...data.toQuery(),
       }
@@ -49,7 +54,7 @@ export class ProjectResolver {
       where: { eventId: updatedPartner.eventId, partnerCode },
       data: {
         ...(updatedPartner.minHours ? { minHours: updatedPartner.minHours } : {}),
-        ...(updatedPartner.weeks ? { minHours: updatedPartner.weeks } : {}),
+        ...(updatedPartner.weeks ? { weeks: updatedPartner.weeks } : {}),
         partnerCode: updatedPartner.partnerCode,
       },
     });
@@ -68,7 +73,12 @@ export class ProjectResolver {
     if (where) await validateStudentEvent(auth, where);
 
     const partner = await this.prisma.partner.findUnique({
-      where: { partnerCode_eventId: { partnerCode, eventId: auth.eventId! } },
+      where: {
+        partnerCode_eventId: { 
+          partnerCode: partnerCode.toUpperCase(),
+          eventId: auth.eventId!,
+        }
+      },
       rejectOnNotFound: true,
     });
 
@@ -76,7 +86,7 @@ export class ProjectResolver {
       where: idOrUsernameOrEmailOrAuthToUniqueWhere(auth, where),
       data: {
         ...(partner.minHours ? { minHours: partner.minHours } : {}),
-        ...(partner.weeks ? { minHours: partner.weeks } : {}),
+        ...(partner.weeks ? { weeks: partner.weeks } : {}),
         partnerCode: partner.partnerCode,
       },
     });
