@@ -17,6 +17,13 @@ loadEnv();
   'GEOCODIO_API_KEY',
 ].forEach((req) => { if (!process.env[req]) throw Error(`The ${req} environment variable is required.`); });
 
+const secondaryRegion = process.env.PRIMARY_REGION
+  && process.env.FLY_REGION
+  && process.env.FLY_REGION !== process.env.PRIMARY_REGION;
+
+if (secondaryRegion)
+  console.log(`Running in secondary region ${process.env.FLY_REGION}, disabling automation.`);
+
 const config = {
   debug: process.env.NODE_ENV !== 'production',
   port: process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 5000,
@@ -24,7 +31,7 @@ const config = {
     apiKey: process.env.GEOCODIO_API_KEY!,
   },
   elastic: {
-    disable: process.env.DISABLE_SEARCH === 'TRUE',
+    disable: process.env.DISABLE_SEARCH === 'TRUE' || secondaryRegion,
     url: process.env.ELASTIC_URL!,
     index: process.env.ELASTIC_INDEX!,
   },
@@ -33,7 +40,7 @@ const config = {
     audience: process.env.AUTH_AUDIENCE!,
   },
   email: <SMTPConnection.Options & { disable: boolean }> {
-    disable: process.env.DISABLE_EMAIL === 'TRUE',
+    disable: process.env.DISABLE_EMAIL === 'TRUE' || secondaryRegion,
     host: process.env.EMAIL_HOST!,
     port: Number.parseInt(process.env.EMAIL_PORT!, 10),
     auth: {

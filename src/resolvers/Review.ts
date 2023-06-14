@@ -35,9 +35,12 @@ export class ReviewResolver {
         eventId: auth.eventId,
       },
       orderBy: [{ createdAt: 'asc' }],
-      take: 10,
+      select: { id: true },
+      take: 1000,
     });
-    return results.length > 0 ? results[randInt(0, results.length)] : null;
+    if (results.length === 0) return null;
+    const id = results[randInt(0, results.length)].id;
+    return this.prisma.student.findUnique({ where: { id } });
   }
 
   @Authorized(AuthRole.REVIEWER)
