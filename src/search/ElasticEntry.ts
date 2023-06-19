@@ -20,6 +20,8 @@ export const ElasticEntrySchema: Record<string, FieldType> = {
   stackTags: 'keyword',
   tags: 'keyword',
 
+  affinePartnerId: 'text',
+
   available: 'boolean',
   maxWeeks: 'integer',
   track: 'keyword',
@@ -47,6 +49,7 @@ export enum ElasticEntryProperties {
   interestTags = 'interestTags',
   stackTags = 'stackTags',
   tags = 'tags',
+  affinePartnerId = 'affinePartnerId',
   available = 'available',
   maxWeeks = 'maxWeeks',
   track = 'track',
@@ -73,6 +76,8 @@ export interface ElasticEntry {
   interestTags: string[]
   stackTags: string[]
   tags: string[]
+
+  affinePartnerId: string
 
   available: boolean
   maxWeeks: number
@@ -145,6 +150,8 @@ export function projectToElasticEntry({
     interestTags: tags.filter(({ type }) => type === TagType.INTEREST).map(({ id }) => id),
     stackTags: tags.filter(({ type }) => type === TagType.TECHNOLOGY).map(({ id }) => id),
     tags: tags.map(({ id }) => id),
+
+    affinePartnerId: project.affinePartnerId || '',
 
     available: project.status === 'ACCEPTED' && hasAvailableMentor,
     maxWeeks: Math.max(...mentors.map(({ maxWeeks }) => maxWeeks)),

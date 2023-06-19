@@ -265,12 +265,15 @@ model Partner {
   weeks Int?
   minHours Int?
   skipPreferences     Boolean @default(false)
+  onlyAffine          Boolean @default(false)
 
   forceTags  Tag[] @relation("PartnerForceTag")
   forbidTags Tag[] @relation("PartnerForbidTag")
 
   event   Event  @relation(fields: [eventId], references: [id])
   eventId String
+
+  affineProjects Project[]
 
   @@unique([partnerCode, eventId])
 }
@@ -295,6 +298,9 @@ model Project {
   emailsSent            EmailSent[]
   projectPreferences    ProjectPreference[]
   targetSurveyResponses SurveyResponse[]
+
+  affinePartner         Partner? @relation(fields: [affinePartnerId], references: [id])
+  affinePartnerId       String?
 
   event   Event  @relation(fields: [eventId], references: [id])
   eventId String @default("codeday-labs-2022")

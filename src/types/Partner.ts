@@ -3,6 +3,7 @@ import {
   Tag as PrismaTag,
   Student as PrismaStudent,
   Event as PrismaEvent,
+  Project as PrismaProject,
   PrismaClient,
 } from '@prisma/client';
 import { Container } from 'typedi';
@@ -14,6 +15,7 @@ import { Tag } from './Tag';
 import { Mentor } from './Mentor';
 import { Student } from './Student';
 import { Event } from './Event';
+import { Project } from './Project';
 
 @ObjectType()
 export class Partner implements PrismaPartner {
@@ -39,6 +41,9 @@ export class Partner implements PrismaPartner {
 
   @Field(() => Boolean)
   skipPreferences: boolean
+
+  @Field(() => Boolean)
+  onlyAffine: boolean
 
   forceTags?: PrismaTag[] | null
 
@@ -66,6 +71,21 @@ export class Partner implements PrismaPartner {
         });
     }
     return this.forceTags;
+  }
+
+
+  affineProjects?: PrismaProject[] | null
+
+  @Field(() => [Project], { name: 'affineProjects' })
+  async fetchAffineProjects(): Promise<PrismaProject[]> {
+    if (!this.affineProjects) {
+      this.affineProjects = await Container.get(PrismaClient)
+        .project
+        .findMany({
+          where: { affinePartnerId: this.id }
+        });
+    }
+    return this.affineProjects;
   }
 
   students?: PrismaStudent[] | null

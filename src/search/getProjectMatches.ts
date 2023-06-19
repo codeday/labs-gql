@@ -4,7 +4,7 @@ import esb, {
   FunctionScoreQuery, RangeQuery, ScoreFunction, TermQuery,
 } from 'elastic-builder';
 import { Client } from '@elastic/elasticsearch';
-import { PrismaClient } from '@prisma/client';
+import { Partner, PrismaClient } from '@prisma/client';
 import Container from 'typedi';
 import config from '../config';
 import {
@@ -65,6 +65,15 @@ async function getTimezone(student: Student): Promise<number> {
   }
 
   return -7;
+}
+
+function buildAffinityQuery(partner?: Partner | null): esb.MatchQuery | esb.BoolQuery {
+  if (!partner) return esb.matchQuery(Entry.affinePartnerId, '');
+  if (partner.onlyAffine) return esb.matchQuery(Entry.affinePartnerId, partner.id);
+  return esb.boolQuery().should([
+    esb.matchQuery(Entry.affinePartnerId, ''),
+    esb.matchQuery(Entry.affinePartnerId, partner.id),
+  ]).minimumShouldMatch(1);
 }
 
 async function buildQueryFor(student: Student, tags: Tag[]): Promise<FunctionScoreQuery> {
@@ -139,6 +148,8 @@ async function buildQueryFor(student: Student, tags: Tag[]): Promise<FunctionSco
     )
     .weight(SCORE_WEIGHTS.TIMEZONE_MATCH);
 
+  const queryAffinity = buildAffinityQuery(partner);
+
   const scorePopularity = esb.decayScoreFunction('gauss', Entry.studentsSelected)
     .origin(0)
     .scale(SCORE_WEIGHTS.POPULARITY_DECAY_SCALE)
@@ -151,6 +162,7 @@ async function buildQueryFor(student: Student, tags: Tag[]): Promise<FunctionSco
       partnerForbidTags,
       queryStudentRequiresLength,
       queryTrack,
+      queryAffinity,
       queryStudentIsUnderrepresented,
       queryEventId,
     ].filter(Boolean)))

@@ -4,6 +4,7 @@ import {
   Tag as PrismaTag,
   Student as PrismaStudent,
   Event as PrismaEvent,
+  Partner as PrismaPartner,
   PrismaClient,
 } from '@prisma/client';
 import { Container } from 'typedi';
@@ -90,6 +91,25 @@ export class Project implements PrismaProject {
     }
 
     return this.event;
+  }
+
+
+  @Field(() => String)
+  affinePartnerId: string;
+
+  affinePartner?: PrismaPartner;
+
+  @Field(() => Event, { name: 'event' })
+  async fetchAffinePartner(): Promise<PrismaPartner> {
+    if (!this.affinePartner) {
+      this.affinePartner = (
+        await Container.get(PrismaClient)
+          .partner
+          .findUnique({ where: { id: this.affinePartnerId } })
+      )!;
+    }
+
+    return this.affinePartner;
   }
 
   @Field(() => Number)

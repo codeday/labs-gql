@@ -1,0 +1,5 @@
+ALTER TABLE "Partner" ADD COLUMN "onlyAffine" BOOLEAN NOT NULL DEFAULT false;
+
+ALTER TABLE "Project" ADD COLUMN "affinePartnerId" TEXT;
+
+ALTER TABLE "Project" ADD FOREIGN KEY ("affinePartnerId") REFERENCES "Partner"("id") ON DELETE CASCADE ON UPDATE CASCADE;
