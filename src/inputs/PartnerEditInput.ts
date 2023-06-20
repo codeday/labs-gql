@@ -16,6 +16,9 @@ export class PartnerEditInput {
   @Field(() => Boolean, { nullable: true })
   skipPreferences?: boolean
 
+  @Field(() => Boolean, { nullable: true })
+  onlyAffine?: boolean
+
   @Field(() => [String], { nullable: true })
   forceTags?: string[]
 
@@ -29,6 +32,9 @@ export class PartnerEditInput {
       minHours: this.minHours,
       skipPreferences: typeof this.skipPreferences === 'boolean'
         ? this.skipPreferences
+        : undefined,
+      onlyAffine: typeof this.onlyAffine === 'boolean'
+        ? this.onlyAffine
         : undefined,
       forceTags: this.forceTags
         ? { set: this.forceTags.map((id): Prisma.TagWhereUniqueInput => ({ id })) }

@@ -22,10 +22,19 @@ export class ProjectEditInput {
   @Field(() => [String], { nullable: true })
   tags?: string[]
 
+  @Field(() => [String], { nullable: true })
+  affinePartner?: string | null
+
   toQuery(): Prisma.ProjectUpdateInput {
     return {
       description: this.description,
       deliverables: this.deliverables,
+      affinePartner: typeof this.affinePartner !== 'undefined'
+        ? (this.affinePartner
+            ? { connect: { id: this.affinePartner } }
+            : { disconnect: true }
+          )
+        : undefined,
       track: this.track,
       status: this.status,
       maxStudents: this.maxStudents,
