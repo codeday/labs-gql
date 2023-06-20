@@ -23,15 +23,15 @@ export class ProjectEditInput {
   tags?: string[]
 
   @Field(() => [String], { nullable: true })
-  affinePartner?: string | null
+  affinePartnerId?: string | null
 
   toQuery(): Prisma.ProjectUpdateInput {
     return {
       description: this.description,
       deliverables: this.deliverables,
-      affinePartner: typeof this.affinePartner !== 'undefined'
-        ? (this.affinePartner
-            ? { connect: { id: this.affinePartner } }
+      affinePartner: typeof this.affinePartnerId !== 'undefined'
+        ? (this.affinePartnerId
+            ? { connect: { id: this.affinePartnerId } }
             : { disconnect: true }
           )
         : undefined,

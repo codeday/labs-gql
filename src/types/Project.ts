@@ -16,6 +16,7 @@ import { Tag } from './Tag';
 import { Mentor } from './Mentor';
 import { Student } from './Student';
 import { Event } from './Event';
+import { Partner } from './Partner';
 
 @ObjectType()
 export class Project implements PrismaProject {
@@ -94,13 +95,14 @@ export class Project implements PrismaProject {
   }
 
 
-  @Field(() => String)
-  affinePartnerId: string;
+  @Field(() => String, { nullable: true })
+  affinePartnerId: string | null;
 
   affinePartner?: PrismaPartner;
 
-  @Field(() => Event, { name: 'event' })
-  async fetchAffinePartner(): Promise<PrismaPartner> {
+  @Field(() => Partner, { name: 'affinePartner', nullable: true })
+  async fetchAffinePartner(): Promise<PrismaPartner | null> {
+    if (!this.affinePartnerId) return null;
     if (!this.affinePartner) {
       this.affinePartner = (
         await Container.get(PrismaClient)

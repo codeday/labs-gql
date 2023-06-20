@@ -12,13 +12,14 @@ import {
 } from '../types';
 import { Track, TagType } from '../enums';
 import { geoToTimezone, getTimezoneOffset } from '../utils';
-import { ElasticEntryProperties as Entry } from './ElasticEntry';
+import { ELASTIC_NULL, ElasticEntryProperties as Entry } from './ElasticEntry';
 
 const SCORE_WEIGHTS = {
   BASE: 1.0,
   COMPANY_MATCH: 1.0,
   URBAN_DENSITY_MATCH: 1.0,
   TIMEZONE_MATCH: 15.0,
+  AFFINITY_MATCH: 10.0,
   TRACK_MATCH: 5.0,
   TAG_TECHNOLOGY_MATCH: 3.0,
   TAG_INTEREST_MATCH: 3.0,
@@ -68,10 +69,10 @@ async function getTimezone(student: Student): Promise<number> {
 }
 
 function buildAffinityQuery(partner?: Partner | null): esb.MatchQuery | esb.BoolQuery {
-  if (!partner) return esb.matchQuery(Entry.affinePartnerId, '');
+  if (!partner) return esb.matchQuery(Entry.affinePartnerId, ELASTIC_NULL);
   if (partner.onlyAffine) return esb.matchQuery(Entry.affinePartnerId, partner.id);
   return esb.boolQuery().should([
-    esb.matchQuery(Entry.affinePartnerId, ''),
+    esb.matchQuery(Entry.affinePartnerId, ELASTIC_NULL),
     esb.matchQuery(Entry.affinePartnerId, partner.id),
   ]).minimumShouldMatch(1);
 }
@@ -149,6 +150,11 @@ async function buildQueryFor(student: Student, tags: Tag[]): Promise<FunctionSco
     .weight(SCORE_WEIGHTS.TIMEZONE_MATCH);
 
   const queryAffinity = buildAffinityQuery(partner);
+  const scoreAffinity = partner
+    ? esb.weightScoreFunction()
+      .filter(esb.matchQuery(Entry.affinePartnerId, partner.id))
+      .weight(SCORE_WEIGHTS.AFFINITY_MATCH)
+    : undefined;
 
   const scorePopularity = esb.decayScoreFunction('gauss', Entry.studentsSelected)
     .origin(0)
@@ -166,13 +172,14 @@ async function buildQueryFor(student: Student, tags: Tag[]): Promise<FunctionSco
       queryStudentIsUnderrepresented,
       queryEventId,
     ].filter(Boolean)))
-    .functions([
+    .functions(<ScoreFunction[]>[
       ...scoreTagsMatching,
       scoreTrack,
       scoreStudentUnderrepresented,
       scorePopularity,
       scoreTimezone,
-    ])
+      scoreAffinity,
+    ].filter(Boolean))
     .scoreMode('multiply')
     .boostMode('replace');
 }

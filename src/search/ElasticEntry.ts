@@ -4,6 +4,8 @@ import {
 import { getTimezoneOffset as getTimezoneOffsetInner } from '../utils';
 import { Track, TagType, MentorStatus } from '../enums';
 
+export const ELASTIC_NULL = '__ELASTIC_NULL';
+
 export type FieldType = 'none' | 'geo_point' | 'geo_shape' | 'ip' | 'binary' | 'keyword' | 'text'
   | 'search_as_you_type' | 'date' | 'date_nanos' | 'boolean' | 'completion' | 'nested' | 'object'
   | 'murmur3' | 'token_count' | 'percolator' | 'integer' | 'long' | 'short' | 'byte' | 'float' | 'half_float'
@@ -151,7 +153,7 @@ export function projectToElasticEntry({
     stackTags: tags.filter(({ type }) => type === TagType.TECHNOLOGY).map(({ id }) => id),
     tags: tags.map(({ id }) => id),
 
-    affinePartnerId: project.affinePartnerId || '',
+    affinePartnerId: project.affinePartnerId || ELASTIC_NULL,
 
     available: project.status === 'ACCEPTED' && hasAvailableMentor,
     maxWeeks: Math.max(...mentors.map(({ maxWeeks }) => maxWeeks)),

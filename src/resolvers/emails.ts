@@ -2,13 +2,14 @@ import {
   Resolver, Mutation, Authorized, Arg,
 } from 'type-graphql';
 import { Inject, Service } from 'typedi';
-import { PrismaClient } from '@prisma/client';
+import { Mentor, PrismaClient, Student } from '@prisma/client';
 import handlebars from 'handlebars';
 import { Marked } from '@ts-stack/markdown';
 import { Transporter } from 'nodemailer';
 import { AuthRole } from '../context';
 import { StudentStatus, MentorStatus } from '../enums';
 import { StudentFilterInput, MentorFilterInput } from '../inputs';
+import { tokenFor } from '../email/helpers';
 
 @Service()
 @Resolver(() => Boolean)
@@ -51,20 +52,21 @@ export class Emails {
     return tos.length;
   }
 
-  genericEmailSend(subjectStr: string, bodyStr: string, tos: { email: string }[]): void {
+  genericEmailSend(subjectStr: string, bodyStr: string, tos: (Student | Mentor)[]): void {
     const subject = handlebars.compile(subjectStr);
     const body = handlebars.compile(bodyStr);
 
     (async () => {
       for (const to of tos) {
+        const toWithToken = { ...to, token: tokenFor(to) };
         try {
           // eslint-disable-next-line no-await-in-loop
           await this.email.sendMail({
             to: to.email,
             from: `"CodeDay Labs" <labs@codeday.org>`,
-            subject: subject(to),
-            html: Marked.parse(body(to)),
-            text: body(to),
+            subject: subject(toWithToken),
+            html: Marked.parse(body(toWithToken)),
+            text: body(toWithToken),
           });
         // eslint-disable-next-line no-console
         } catch (err) { console.error(err); }

@@ -20,7 +20,7 @@ export class ProjectCreateInput {
   tags?: string[]
 
   @Field(() => [String], { nullable: true })
-  affinePartner?: string | null
+  affinePartnerId?: string | null
 
   toQuery(): Prisma.ProjectCreateInput {
     return {
@@ -28,8 +28,8 @@ export class ProjectCreateInput {
       deliverables: this.deliverables,
       track: this.track,
       maxStudents: this.maxStudents,
-      affinePartner: this.affinePartner
-        ? { connect: { id: this.affinePartner } }
+      affinePartner: this.affinePartnerId
+        ? { connect: { id: this.affinePartnerId } }
         : undefined,
       tags: this.tags ? { connect: this.tags.map((id): Prisma.TagWhereUniqueInput => ({ id })) } : undefined,
     };

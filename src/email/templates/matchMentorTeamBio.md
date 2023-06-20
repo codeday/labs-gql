@@ -15,7 +15,7 @@ Hi {{ mentor.givenName }}, we're excited to say we've found you matches for the 
 {{#each project.students}}
 -----
 ## {{ this.givenName }} {{ this.surname }}
-{{#when this.weeks 'gt' 6}}<span style="color: red">**Needs to meet at least once a week for an extra {{ add this.weeks -6}} weeks (total {{ add this.weeks -1}}) for school credit.**</span> This is within the extra time you mentioned you were able to spend, but contact us if this is a problem.{{/when}}
+{{#when this.weeks 'gt' 8}}<span style="color: red">**Needs to meet at least once a week for an extra {{ add this.weeks -8}} weeks (total {{ add this.weeks -1}}) for school credit.**</span> This is within the extra time you mentioned you were able to spend, but contact us if this is a problem.{{/when}}
 
 Info:
 

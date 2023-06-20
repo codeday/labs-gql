@@ -9,7 +9,7 @@ function isMentor(sub: any): sub is Mentor {
   return Boolean(sub.maxWeeks);
 }
 
-function tokenFor(sub: Mentor | Student) {
+export function tokenFor(sub: Mentor | Student) {
   const payload: Partial<JwtToken> = { tgt: AuthByTarget.ID, sid: sub.id, evt: sub.eventId };
   if (isMentor(sub)) payload.typ = AuthRole.MENTOR;
   else payload.typ = AuthRole.STUDENT;
