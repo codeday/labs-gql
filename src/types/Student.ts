@@ -27,6 +27,7 @@ import { Tag } from './Tag';
 import { TagTrainingSubmission } from './TagTrainingSubmission';
 import { Event } from './Event';
 import { SurveyResponse } from './SurveyResponse';
+import { tokenFor } from '../email/helpers';
 
 @ObjectType()
 export class Student implements PrismaStudent {
@@ -162,6 +163,31 @@ export class Student implements PrismaStudent {
         project: { include: { mentors: true } },
       },
     });
+  }
+
+  @Field(() => Boolean, { name: 'hasProjectPreferences' })
+  async hasProjectPreferences(): Promise<boolean> {
+    if (this.projectPreferences && this.projectPreferences.length > 0) {
+      return true;
+    }
+
+    const prefCount = await Container.get(PrismaClient).projectPreference.count({
+      where: {
+        student: { id: this.id },
+        project: {
+          status: ProjectStatus.ACCEPTED,
+          mentors: { some: { status: MentorStatus.ACCEPTED } },
+        },
+      },
+    });
+
+    return prefCount > 0;
+  }
+
+  @Authorized([AuthRole.PARTNER, AuthRole.ADMIN])
+  @Field(() => String, { name: 'token' })
+  async token(): Promise<string> {
+    return tokenFor(this);
   }
 
   tagTrainingSubmissions?: PrismaTagTrainingSubmission[] | null
