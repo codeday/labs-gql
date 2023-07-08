@@ -17,6 +17,11 @@ export function tokenFor(sub: Mentor | Student) {
   return sign(payload, config.auth.secret, { audience: config.auth.audience, expiresIn: '24w', noTimestamp: true });
 }
 
+export function dashboardFor(sub: Mentor | Student) {
+  if (isMentor(sub)) return `https://labs.codeday.org/dash/m/${tokenFor(sub)}`;
+  else return `https://labs.codeday.org/dash/s/${tokenFor(sub)}`;
+}
+
 function fallback(value: any, safeValue: any) {
   const out = value || safeValue;
   return new handlebars.SafeString(out);
@@ -85,6 +90,7 @@ function lowercase(value: string): string {
 
 export function registerHandlebarsHelpers(): void {
   handlebars.registerHelper('tokenFor', tokenFor);
+  handlebars.registerHelper('dashboardFor', dashboardFor);
   handlebars.registerHelper('fallback', fallback);
   handlebars.registerHelper('when', when);
   handlebars.registerHelper('add', add);

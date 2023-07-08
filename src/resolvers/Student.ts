@@ -17,7 +17,7 @@ export class StudentResolver {
   @Inject(() => PrismaClient)
   private readonly prisma : PrismaClient;
 
-  @Authorized(AuthRole.ADMIN, AuthRole.PARTNER)
+  @Authorized(AuthRole.ADMIN, AuthRole.PARTNER, AuthRole.MANAGER)
   @Query(() => [Student])
   async students(
     @Ctx() { auth }: Context,
@@ -25,9 +25,37 @@ export class StudentResolver {
     @Arg('skip', () => Number, { nullable: true }) skip?: number,
     @Arg('take', () => Number, { nullable: true }) take?: number,
   ): Promise<PrismaStudent[]> {
+    if (auth.isManager) {
+      return this.prisma.student.findMany({
+        where: {
+          eventId: auth.eventId,
+          projects: {
+            some: {
+              mentors: {
+                some: {
+                  managerUsername: auth.username,
+                },
+              },
+            },
+          },
+        },
+        skip,
+        take,
+      });
+    } else if (auth.isPartner) {
+      return this.prisma.student.findMany({
+        where: {
+          partnerCode: { equals: auth.partnerCode!, mode: 'insensitive' },
+          eventId: auth.eventId,
+        },
+        skip,
+        take,
+      })
+    }
+
     return this.prisma.student.findMany({
       where: {
-        ...(auth.isPartner ? { partnerCode: { equals: auth.partnerCode!, mode: 'insensitive' } } : where?.toQuery()),
+        ...where?.toQuery(),
         eventId: auth.eventId,
       },
       skip,

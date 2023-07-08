@@ -184,7 +184,7 @@ export class Student implements PrismaStudent {
     return prefCount > 0;
   }
 
-  @Authorized([AuthRole.PARTNER, AuthRole.ADMIN])
+  @Authorized([AuthRole.PARTNER, AuthRole.ADMIN, AuthRole.MANAGER])
   @Field(() => String, { name: 'token' })
   async token(): Promise<string> {
     return tokenFor(this);
@@ -228,7 +228,7 @@ export class Student implements PrismaStudent {
 
   surveyResponsesAbout?: PrismaSurveyResponse[]
 
-  @Authorized([AuthRole.PARTNER, AuthRole.ADMIN])
+  @Authorized([AuthRole.PARTNER, AuthRole.ADMIN, AuthRole.MANAGER])
   @Field(() => [SurveyResponse], { name: 'surveyResponsesAbout' })
   async fetchSurveyResponsesAbout(): Promise<PrismaSurveyResponse[]> {
     if (!this.surveyResponsesAbout) {
