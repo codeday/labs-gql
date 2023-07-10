@@ -5,18 +5,21 @@ import {
   Student as PrismaStudent,
   Event as PrismaEvent,
   Partner as PrismaPartner,
+  SurveyResponse as PrismaSurveyResponse,
   PrismaClient,
 } from '@prisma/client';
 import { Container } from 'typedi';
 import {
-  ObjectType, Field, Int,
+  ObjectType, Field, Int, Authorized,
 } from 'type-graphql';
 import { Track, ProjectStatus } from '../enums';
 import { Tag } from './Tag';
 import { Mentor } from './Mentor';
 import { Student } from './Student';
 import { Event } from './Event';
+import { SurveyResponse } from './SurveyResponse';
 import { Partner } from './Partner';
+import { AuthRole } from '../context';
 
 @ObjectType()
 export class Project implements PrismaProject {
@@ -118,4 +121,21 @@ export class Project implements PrismaProject {
   async studentCount(): Promise<number> {
     return (await this.fetchStudents()).length;
   }
+
+
+  surveyResponsesAbout?: PrismaSurveyResponse[]
+
+  @Authorized([AuthRole.ADMIN, AuthRole.MANAGER])
+  @Field(() => [SurveyResponse], { name: 'surveyResponsesAbout' })
+  async fetchSurveyResponsesAbout(): Promise<PrismaSurveyResponse[]> {
+    if (!this.surveyResponsesAbout) {
+      this.surveyResponsesAbout = (await Container.get(PrismaClient).surveyResponse.findMany({
+        where: { projectId: this.id },
+        include: { surveyOccurence: { include: { survey: true } } },
+      }));
+    }
+
+    return this.surveyResponsesAbout;
+  }
+
 }

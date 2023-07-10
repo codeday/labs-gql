@@ -1,5 +1,10 @@
 import {
-  Prisma, Project as PrismaProject, Mentor as PrismaMentor, Event as PrismaEvent, PrismaClient,
+  Prisma,
+  Project as PrismaProject,
+  Mentor as PrismaMentor,
+  Event as PrismaEvent,
+  SurveyResponse as PrismaSurveyResponse,
+  PrismaClient,
 } from '@prisma/client';
 import {
   ObjectType, Field, Authorized, Arg, Int,
@@ -9,6 +14,7 @@ import Container from 'typedi';
 import { MentorStatus } from '../enums';
 import { AuthRole } from '../context';
 import { Project } from './Project';
+import { SurveyResponse } from './SurveyResponse';
 import { Event } from './Event';
 
 @ObjectType()
@@ -84,5 +90,20 @@ export class Mentor implements PrismaMentor {
   ): Prisma.JsonValue | null {
     if (typeof this.profile !== 'object' || this.profile === null) return null;
     return (this.profile as {[k: string]: Prisma.JsonValue | undefined})[key] || null;
+  }
+
+  surveyResponsesAbout?: PrismaSurveyResponse[]
+
+  @Authorized([AuthRole.ADMIN, AuthRole.MANAGER])
+  @Field(() => [SurveyResponse], { name: 'surveyResponsesAbout' })
+  async fetchSurveyResponsesAbout(): Promise<PrismaSurveyResponse[]> {
+    if (!this.surveyResponsesAbout) {
+      this.surveyResponsesAbout = (await Container.get(PrismaClient).surveyResponse.findMany({
+        where: { mentorId: this.id },
+        include: { surveyOccurence: { include: { survey: true } } },
+      }));
+    }
+
+    return this.surveyResponsesAbout;
   }
 }
