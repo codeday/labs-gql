@@ -73,6 +73,7 @@ model Event {
   // Data
   name     String
   startsAt DateTime
+  title    String
 
   studentApplicationsStartAt    DateTime
   studentApplicationsEndAt      DateTime
