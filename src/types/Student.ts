@@ -233,7 +233,7 @@ export class Student implements PrismaStudent {
   async fetchSurveyResponsesAbout(): Promise<PrismaSurveyResponse[]> {
     if (!this.surveyResponsesAbout) {
       this.surveyResponsesAbout = (await Container.get(PrismaClient).surveyResponse.findMany({
-        where: { studentId: this.id },
+        where: { studentId: this.id, surveyOccurence: { survey: { internal: false } } },
         include: { surveyOccurence: { include: { survey: true } } },
       }));
     }

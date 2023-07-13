@@ -22,6 +22,12 @@ export class Survey {
   @Field(() => String)
   name: string;
 
+  @Field(() => String, { nullable: true })
+  intro: string;
+
+  @Field(() => Boolean)
+  randomize: boolean
+
   @Field(() => PersonType)
   personType: PersonType;
 
@@ -33,6 +39,9 @@ export class Survey {
 
   @Field(() => String, { nullable: true })
   selfCaution?: string
+
+  @Field(() => String, { nullable: true })
+  selfDisplay?: string
 
   @Field(() => GraphQLJSONObject, { nullable: true })
   peerSchema?: JSONSchema7
@@ -46,6 +55,9 @@ export class Survey {
   @Field(() => String, { nullable: true })
   peerCaution?: string
 
+  @Field(() => String, { nullable: true })
+  peerDisplay?: string
+
   @Field(() => GraphQLJSONObject, { nullable: true })
   menteeSchema?: JSONSchema7
 
@@ -57,6 +69,9 @@ export class Survey {
 
   @Field(() => String, { nullable: true })
   menteeCaution?: string
+
+  @Field(() => String, { nullable: true })
+  menteeDisplay?: string
 
   @Field(() => GraphQLJSONObject, { nullable: true })
   mentorSchema?: JSONSchema7
@@ -70,6 +85,9 @@ export class Survey {
   @Field(() => String, { nullable: true })
   mentorCaution?: string
 
+  @Field(() => String, { nullable: true })
+  mentorDisplay?: string
+
   @Field(() => GraphQLJSONObject, { nullable: true })
   projectSchema?: JSONSchema7
 
@@ -81,6 +99,9 @@ export class Survey {
 
   @Field(() => String, { nullable: true })
   projectCaution?: string
+
+  @Field(() => String, { nullable: true })
+  projectDisplay?: string
 
   @Field(() => String)
   eventId: string;

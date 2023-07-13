@@ -99,7 +99,7 @@ export class Mentor implements PrismaMentor {
   async fetchSurveyResponsesAbout(): Promise<PrismaSurveyResponse[]> {
     if (!this.surveyResponsesAbout) {
       this.surveyResponsesAbout = (await Container.get(PrismaClient).surveyResponse.findMany({
-        where: { mentorId: this.id },
+        where: { mentorId: this.id, surveyOccurence: { survey: { internal: false } } },
         include: { surveyOccurence: { include: { survey: true } } },
       }));
     }

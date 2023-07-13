@@ -130,7 +130,7 @@ export class Project implements PrismaProject {
   async fetchSurveyResponsesAbout(): Promise<PrismaSurveyResponse[]> {
     if (!this.surveyResponsesAbout) {
       this.surveyResponsesAbout = (await Container.get(PrismaClient).surveyResponse.findMany({
-        where: { projectId: this.id },
+        where: { projectId: this.id, surveyOccurence: { survey: { internal: false } } },
         include: { surveyOccurence: { include: { survey: true } } },
       }));
     }

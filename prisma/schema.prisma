@@ -106,31 +106,39 @@ model Survey {
   // Data
   slug       String
   name       String
+  intro      String?
+  randomize  Boolean @default(false)
+  internal   Boolean @default(false)
   personType PersonType
 
   selfSchema  Json?
   selfUi      Json?
   selfCaution String?
+  selfDisplay String?
 
   peerSchema  Json?
   peerUi      Json?
   peerShare   Json?
   peerCaution String?
+  peerDisplay String?
 
   menteeSchema  Json?
   menteeUi      Json?
   menteeShare   Json?
   menteeCaution String?
+  menteeDisplay String?
 
   mentorSchema  Json?
   mentorUi      Json?
   mentorShare   Json?
   mentorCaution String?
+  mentorDisplay String?
 
   projectSchema  Json?
   projectUi      Json?
   projectShare   Json?
   projectCaution String?
+  projectDisplay String?
 
   // Relations
   event            Event             @relation(fields: [eventId], references: [id])

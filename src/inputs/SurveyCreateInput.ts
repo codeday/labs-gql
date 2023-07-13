@@ -11,6 +11,12 @@ export class SurveyCreateInput {
   @Field(() => String)
   name: string
 
+  @Field(() => String, { nullable: true })
+  intro: string
+
+  @Field(() => Boolean, { defaultValue: false })
+  randomize: boolean
+
   @Field(() => PersonType)
   personType: PersonType
 
@@ -24,6 +30,9 @@ export class SurveyCreateInput {
 
   @Field(() => String, { nullable: true })
   selfCaution?: string
+
+  @Field(() => String, { nullable: true })
+  selfDisplay?: string
 
   @Field(() => GraphQLJSONObject, { nullable: true })
   // eslint-disable-next-line @typescript-eslint/ban-types
@@ -40,6 +49,8 @@ export class SurveyCreateInput {
   @Field(() => String, { nullable: true })
   peerCaution?: string
 
+  @Field(() => String, { nullable: true })
+  peerDisplay?: string
 
   @Field(() => GraphQLJSONObject, { nullable: true })
   // eslint-disable-next-line @typescript-eslint/ban-types
@@ -56,6 +67,8 @@ export class SurveyCreateInput {
   @Field(() => String, { nullable: true })
   menteeCaution?: string
 
+  @Field(() => String, { nullable: true })
+  menteeDisplay?: string
 
   @Field(() => GraphQLJSONObject, { nullable: true })
   // eslint-disable-next-line @typescript-eslint/ban-types
@@ -72,6 +85,9 @@ export class SurveyCreateInput {
   @Field(() => String, { nullable: true })
   mentorCaution?: string
 
+  @Field(() => String, { nullable: true })
+  mentorDisplay?: string
+
   @Field(() => GraphQLJSONObject, { nullable: true })
   // eslint-disable-next-line @typescript-eslint/ban-types
   projectSchema?: object
@@ -86,6 +102,9 @@ export class SurveyCreateInput {
 
   @Field(() => String, { nullable: true })
   projectCaution?: string
+
+  @Field(() => String, { nullable: true })
+  projectDisplay?: string
 
   toQuery(): Omit<Prisma.SurveyCreateInput, 'event'> {
     return this;
