@@ -41,6 +41,19 @@ export class StudentResolver {
         },
         skip,
         take,
+        include: {
+          notes: true,
+          targetSurveyResponses: {
+            include: {
+              surveyOccurence: { include: { survey: true } },
+              authorMentor: true,
+              authorStudent: true,
+              mentor: true,
+              student: true,
+              project: true,
+            },
+          }
+        }
       });
     } else if (auth.isPartner) {
       return this.prisma.student.findMany({
@@ -50,6 +63,19 @@ export class StudentResolver {
         },
         skip,
         take,
+        include: {
+          notes: true,
+          targetSurveyResponses: {
+            include: {
+              surveyOccurence: { include: { survey: true } },
+              authorMentor: true,
+              authorStudent: true,
+              mentor: true,
+              student: true,
+              project: true,
+            },
+          }
+        }
       })
     }
 

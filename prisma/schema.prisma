@@ -94,7 +94,8 @@ model Event {
   mentors  Mentor[]
   students Student[]
   projects Project[]
-  Partner  Partner[]
+  partners  Partner[]
+  notes     Note[]
 }
 
 model Survey {
@@ -107,8 +108,8 @@ model Survey {
   slug       String
   name       String
   intro      String?
-  randomize  Boolean @default(false)
-  internal   Boolean @default(false)
+  randomize  Boolean    @default(false)
+  internal   Boolean    @default(false)
   personType PersonType
 
   selfSchema  Json?
@@ -243,7 +244,7 @@ model Student {
   weeks              Int              @default(6)
   minHours           Int
   partnerCode        String?
-  skipPreferences     Boolean @default(false)
+  skipPreferences    Boolean          @default(false)
   timeManagementPlan Json?
   timezone           String?
 
@@ -262,6 +263,7 @@ model Student {
 
   @@unique([username, eventId])
   @@unique([email, eventId])
+  notes Note[]
 }
 
 model Partner {
@@ -270,11 +272,11 @@ model Partner {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  partnerCode String
-  weeks Int?
-  minHours Int?
-  skipPreferences     Boolean @default(false)
-  onlyAffine          Boolean @default(false)
+  partnerCode     String
+  weeks           Int?
+  minHours        Int?
+  skipPreferences Boolean @default(false)
+  onlyAffine      Boolean @default(false)
 
   forceTags  Tag[] @relation("PartnerForceTag")
   forbidTags Tag[] @relation("PartnerForbidTag")
@@ -308,8 +310,8 @@ model Project {
   projectPreferences    ProjectPreference[]
   targetSurveyResponses SurveyResponse[]
 
-  affinePartner         Partner? @relation(fields: [affinePartnerId], references: [id])
-  affinePartnerId       String?
+  affinePartner   Partner? @relation(fields: [affinePartnerId], references: [id])
+  affinePartnerId String?
 
   event   Event  @relation(fields: [eventId], references: [id])
   eventId String @default("codeday-labs-2022")
@@ -403,4 +405,23 @@ model EmailSent {
 
   project   Project? @relation(fields: [projectId], references: [id])
   projectId String?
+}
+
+model Note {
+  // Metadata
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Data
+  note String
+  username String
+  caution  Float
+
+  // Relations
+  student   Student @relation(fields: [studentId], references: [id])
+  studentId String
+
+  event   Event  @relation(fields: [eventId], references: [id])
+  eventId String @default("codeday-labs-2022")
 }

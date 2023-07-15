@@ -70,7 +70,7 @@ export class Mentor implements PrismaMentor {
   @Field(() => Event, { name: 'event' })
   async fetchEvent(): Promise<PrismaEvent> {
     if (!this.event) {
-      this.event = (await Container.get(PrismaClient).event.findUnique({ where: { id: this.id } }))!;
+      this.event = (await Container.get(PrismaClient).event.findUnique({ where: { id: this.eventId } }))!;
     }
 
     return this.event;
@@ -100,7 +100,14 @@ export class Mentor implements PrismaMentor {
     if (!this.surveyResponsesAbout) {
       this.surveyResponsesAbout = (await Container.get(PrismaClient).surveyResponse.findMany({
         where: { mentorId: this.id, surveyOccurence: { survey: { internal: false } } },
-        include: { surveyOccurence: { include: { survey: true } } },
+        include: {
+          surveyOccurence: { include: { survey: true } },
+          authorMentor: true,
+          authorStudent: true,
+          mentor: true,
+          student: true,
+          project: true,
+        },
       }));
     }
 

@@ -8,6 +8,7 @@ import {
   AdmissionRating,
   ProjectPreference as PrismaProjectPreference,
   SurveyResponse as PrismaSurveyResponse,
+  Note as PrismaNote,
   Event as PrismaEvent,
 } from '@prisma/client';
 import {
@@ -27,6 +28,7 @@ import { Tag } from './Tag';
 import { TagTrainingSubmission } from './TagTrainingSubmission';
 import { Event } from './Event';
 import { SurveyResponse } from './SurveyResponse';
+import { Note } from './Note';
 import { tokenFor } from '../email/helpers';
 
 @ObjectType()
@@ -220,25 +222,48 @@ export class Student implements PrismaStudent {
   @Field(() => Event, { name: 'event' })
   async fetchEvent(): Promise<PrismaEvent> {
     if (!this.event) {
-      this.event = (await Container.get(PrismaClient).event.findUnique({ where: { id: this.id } }))!;
+      this.event = (await Container.get(PrismaClient).event.findUnique({ where: { id: this.eventId } }))!;
     }
 
     return this.event;
   }
 
+  targetSurveyResponses?: PrismaSurveyResponse[]
   surveyResponsesAbout?: PrismaSurveyResponse[]
 
   @Authorized([AuthRole.PARTNER, AuthRole.ADMIN, AuthRole.MANAGER])
   @Field(() => [SurveyResponse], { name: 'surveyResponsesAbout' })
   async fetchSurveyResponsesAbout(): Promise<PrismaSurveyResponse[]> {
+    if (this.targetSurveyResponses) return this.targetSurveyResponses; // included from DB
     if (!this.surveyResponsesAbout) {
       this.surveyResponsesAbout = (await Container.get(PrismaClient).surveyResponse.findMany({
         where: { studentId: this.id, surveyOccurence: { survey: { internal: false } } },
-        include: { surveyOccurence: { include: { survey: true } } },
+        include: {
+          surveyOccurence: { include: { survey: true } },
+          authorMentor: true,
+          authorStudent: true,
+          mentor: true,
+          student: true,
+          project: true,
+        },
       }));
     }
 
     return this.surveyResponsesAbout;
+  }
+
+  notes?: PrismaNote[]
+
+  @Authorized([AuthRole.PARTNER, AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.MENTOR])
+  @Field(() => [Note], { name: 'notes' })
+  async fetchNotes(): Promise<PrismaNote[]> {
+    if (!this.notes) {
+      this.notes = (await Container.get(PrismaClient).note.findMany({
+        where: { studentId: this.id },
+      }));
+    }
+
+    return this.notes;
   }
 
 }
