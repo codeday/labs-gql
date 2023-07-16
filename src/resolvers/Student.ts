@@ -44,6 +44,7 @@ export class StudentResolver {
         include: {
           notes: true,
           targetSurveyResponses: {
+            where: { surveyOccurence: { survey: { internal: false } } },
             include: {
               surveyOccurence: { include: { survey: true } },
               authorMentor: true,
@@ -66,6 +67,7 @@ export class StudentResolver {
         include: {
           notes: true,
           targetSurveyResponses: {
+            where: { surveyOccurence: { survey: { internal: false } } },
             include: {
               surveyOccurence: { include: { survey: true } },
               authorMentor: true,

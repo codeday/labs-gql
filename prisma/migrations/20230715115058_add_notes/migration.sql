@@ -6,6 +6,7 @@ CREATE TABLE "Note" (
     "studentId" TEXT NOT NULL,
     "username" TEXT NOT NULL,
     "note" TEXT NOT NULL,
+    "caution" FLOAT NOT NULL,
 
     PRIMARY KEY ("id")
 );
