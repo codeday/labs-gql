@@ -30,6 +30,9 @@ export class StudentFilterInput {
   @Field(() => Track, { nullable: true })
   track?: Track
 
+  @Field(() => String, { nullable: true })
+  id?: string;
+
   toQuery(): Prisma.StudentWhereInput {
     return {
       status: this.inStatus,
@@ -40,6 +43,7 @@ export class StudentFilterInput {
       email: this.email,
       weeks: this.weeks,
       track: this.track,
+      id: this.id,
     };
   }
 }

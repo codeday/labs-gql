@@ -91,7 +91,7 @@ export class StudentResolver {
     });
   }
 
-  @Authorized(AuthRole.ADMIN, AuthRole.STUDENT)
+  @Authorized(AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.STUDENT)
   @StudentOnlySelf('where')
   @Query(() => Student, { nullable: true })
   async student(
