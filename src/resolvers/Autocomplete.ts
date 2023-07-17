@@ -26,6 +26,7 @@ export class AutocompleteResolver {
       lookups.push(async () => 
         (await this.prisma.student.findMany({
           where: {
+            eventId: auth.eventId,
             status: 'ACCEPTED',
             OR: [
               { givenName: { contains: q, mode: 'insensitive'} },
@@ -46,6 +47,7 @@ export class AutocompleteResolver {
       lookups.push(async () =>
         (await this.prisma.mentor.findMany({
           where: {
+            eventId: auth.eventId,
             status: 'ACCEPTED',
             OR: [
               { givenName: { contains: q, mode: 'insensitive'} },
@@ -66,6 +68,7 @@ export class AutocompleteResolver {
       lookups.push(async () =>
         (await this.prisma.project.findMany({
           where: {
+            eventId: auth.eventId,
             status: { in: ['ACCEPTED', 'MATCHED' ]},
             description: { contains: q, mode: 'insensitive'}
           },
