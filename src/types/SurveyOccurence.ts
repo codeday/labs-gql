@@ -67,28 +67,4 @@ export class SurveyOccurence {
     }
     return [];
   }
-
-  @Field(() => [SurveyResponse], { name: 'surveyFeedback' })
-  async fetchSurveyFeedback(
-    @Ctx() { auth }: Context,
-    @Arg('personType', () => String, { nullable: true }) personType?: PersonType,
-  ): Promise<PrismaSurveyResponse[]> {
-    if (auth.isStudent || auth.isMentor) {
-      const rawResponses = await Container.get(PrismaClient).surveyResponse.findMany({
-        where: {
-          surveyOccurence: { id: this.id },
-          ...(personType ? { personType } : {}),
-          OR: [
-            { project: { students: { some: { id: auth.id } } } },
-            { [auth.isStudent ? 'student' : 'mentor']: { id: auth.id } },
-          ],
-        },
-      });
-      const survey = await this.fetchSurvey();
-      return sanitizeSurveyResponses(rawResponses, survey, auth);
-    }
-
-    // TODO(@tylermenezes): School dashboard.
-    return [];
-  }
 }

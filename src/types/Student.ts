@@ -10,9 +10,11 @@ import {
   SurveyResponse as PrismaSurveyResponse,
   Note as PrismaNote,
   Event as PrismaEvent,
+  SurveyOccurence as PrismaSurveyOccurence,
+  Survey as PrismaSurvey,
 } from '@prisma/client';
 import {
-  ObjectType, Field, Authorized, Int,
+  ObjectType, Field, Authorized, Int, Ctx,
 } from 'type-graphql';
 import { Container } from 'typedi';
 import GraphQLJSON from 'graphql-type-json';
@@ -20,7 +22,7 @@ import { DateTime } from 'luxon';
 import {
   StudentStatus, RejectionReason, Track, ProjectStatus, MentorStatus,
 } from '../enums';
-import { AuthRole } from '../context';
+import { AuthRole, Context } from '../context';
 import { Project } from './Project';
 import { TrackRecommendation } from './TrackRecommendation';
 import { Preference } from './Preference';
@@ -30,6 +32,7 @@ import { Event } from './Event';
 import { SurveyResponse } from './SurveyResponse';
 import { Note } from './Note';
 import { tokenFor } from '../email/helpers';
+import { SanitizableSurveyResponse, sanitizeSurveyResponses } from '../utils';
 
 @ObjectType()
 export class Student implements PrismaStudent {
@@ -228,13 +231,18 @@ export class Student implements PrismaStudent {
     return this.event;
   }
 
-  targetSurveyResponses?: PrismaSurveyResponse[]
-  surveyResponsesAbout?: PrismaSurveyResponse[]
+  targetSurveyResponses?: SanitizableSurveyResponse[]
+  surveyResponsesAbout?: SanitizableSurveyResponse[]
 
-  @Authorized([AuthRole.PARTNER, AuthRole.ADMIN, AuthRole.MANAGER])
+  @Authorized([AuthRole.PARTNER, AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.MENTOR])
   @Field(() => [SurveyResponse], { name: 'surveyResponsesAbout' })
-  async fetchSurveyResponsesAbout(): Promise<PrismaSurveyResponse[]> {
-    if (this.targetSurveyResponses) return this.targetSurveyResponses; // included from DB
+  async fetchSurveyResponsesAbout(
+    @Ctx() { auth }: Context,
+  ): Promise<PrismaSurveyResponse[]> {
+    if (this.targetSurveyResponses) { // Included from DB.
+      this.surveyResponsesAbout = this.targetSurveyResponses;
+    }
+
     if (!this.surveyResponsesAbout) {
       this.surveyResponsesAbout = (await Container.get(PrismaClient).surveyResponse.findMany({
         where: { studentId: this.id, surveyOccurence: { survey: { internal: false } } },
@@ -249,7 +257,10 @@ export class Student implements PrismaStudent {
       }));
     }
 
-    return this.surveyResponsesAbout;
+    if (auth.isAdmin || auth.isManager || auth.isPartner)
+      return this.surveyResponsesAbout;
+
+    return sanitizeSurveyResponses(this.surveyResponsesAbout, auth);
   }
 
   notes?: PrismaNote[]

@@ -3,7 +3,7 @@ import handlebars from 'handlebars';
 import { Marked } from '@ts-stack/markdown';
 import fs from 'fs';
 import { Container } from 'typedi';
-import { Mentor, PersonType, PrismaClient, Student } from '@prisma/client';
+import { Mentor, PersonType, PrismaClient, Student, Event } from '@prisma/client';
 import { Transporter } from 'nodemailer';
 import { DateTime } from 'luxon';
 import { getEmailGenerators, EmailGenerator } from './loader';
@@ -133,6 +133,32 @@ async function sendDueSurveysReminder(): Promise<void> {
       });
     }
   }
+}
+
+export async function sendLoginLinks(
+  to: string,
+  mentors: (Mentor & { event: Event })[],
+  students: (Student & { event: Event })[],
+): Promise<void> {
+  const email = await Container.get<Transporter>('email');
+
+  const loginLink = await fs.promises.readFile(path.join(__dirname, 'templates', 'loginLink.md'));
+  const loginNone = await fs.promises.readFile(path.join(__dirname, 'templates', 'loginNone.md'));
+  const tplLink = await handlebars.compile(loginLink.toString());
+  const tplNone = await handlebars.compile(loginNone.toString());
+
+  const template = (mentors.length > 0 || students.length > 0)
+    ? tplLink
+    : tplNone;
+  const renderedTemplate = template({ mentors, students });
+
+  await email.sendMail({
+    to,
+    from: 'labs@codeday.org',
+    subject: 'CodeDay Labs Dashboard Login Link',
+    text: renderedTemplate,
+    html: Marked.parse(renderedTemplate),
+  });
 }
 
 export async function sendEmails(): Promise<void> {

@@ -14,6 +14,9 @@ interface SurveyShareConfig {
   [key: string]: SurveyShareWith | SurveyShareConfig
 }
 
+export type SanitizableSurveyResponse = SurveyResponse
+  & { surveyOccurence: { survey: Survey} };
+
 function filterResponse(response: Prisma.JsonValue, shareConfig: SurveyShareConfig | null, personType: PersonType):
   Prisma.JsonValue {
   if (!shareConfig) return {};
@@ -25,10 +28,10 @@ function filterResponse(response: Prisma.JsonValue, shareConfig: SurveyShareConf
 }
 
 export function sanitizeSurveyResponse(
-  surveyResponse: SurveyResponse,
-  survey: Survey,
+  surveyResponse: SanitizableSurveyResponse,
   auth: AuthContext,
 ): SurveyResponse {
+  const survey = surveyResponse.surveyOccurence.survey;
   const surveyShareName = `${getSurveyResponseType(surveyResponse)}Share`;
   const shareConfig = surveyShareName in survey ? survey[surveyShareName as keyof Survey] as SurveyShareConfig : null;
 
@@ -40,11 +43,10 @@ export function sanitizeSurveyResponse(
 }
 
 export function sanitizeSurveyResponses(
-  responses: SurveyResponse[],
-  survey: Survey,
+  responses: SanitizableSurveyResponse[],
   auth: AuthContext,
 ): SurveyResponse[] {
   return responses
-    .map((r) => sanitizeSurveyResponse(r, survey, auth))
+    .map((r) => sanitizeSurveyResponse(r, auth))
     .filter((r) => r.response && typeof r.response === 'object' && Object.keys(r.response).length > 0);
 }

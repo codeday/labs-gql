@@ -17,3 +17,5 @@ export * from './GtLtEq';
 export * from './SurveyCreateInput';
 export * from './PartnerCreateInput';
 export * from './PartnerEditInput';
+export * from './ResourceCreateInput';
+export * from './ResourceEditInput';

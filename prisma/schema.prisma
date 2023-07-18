@@ -90,12 +90,13 @@ model Event {
   matchPreferenceSubmissionOpen Boolean @default(false)
   matchComplete                 Boolean @default(false)
 
-  surveys  Survey[]
-  mentors  Mentor[]
-  students Student[]
-  projects Project[]
+  surveys   Survey[]
+  mentors   Mentor[]
+  students  Student[]
+  projects  Project[]
   partners  Partner[]
   notes     Note[]
+  resources Resource[]
 }
 
 model Survey {
@@ -114,6 +115,7 @@ model Survey {
 
   selfSchema  Json?
   selfUi      Json?
+  selfShare   Json?
   selfCaution String?
   selfDisplay String?
 
@@ -261,9 +263,9 @@ model Student {
   event   Event  @relation(fields: [eventId], references: [id])
   eventId String @default("codeday-labs-2022")
 
+  notes Note[]
   @@unique([username, eventId])
   @@unique([email, eventId])
-  notes Note[]
 }
 
 model Partner {
@@ -414,7 +416,7 @@ model Note {
   updatedAt DateTime @updatedAt
 
   // Data
-  note String
+  note     String
   username String
   caution  Float
 
@@ -424,4 +426,23 @@ model Note {
 
   event   Event  @relation(fields: [eventId], references: [id])
   eventId String @default("codeday-labs-2022")
+}
+
+model Resource {
+  // Metadata
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Data
+  name              String
+  link              String
+  displayToMentors  Boolean
+  displayToStudents Boolean
+  displayToPartners Boolean
+  displayToManagers Boolean
+
+  // Relations
+  event   Event  @relation(fields: [eventId], references: [id])
+  eventId String
 }

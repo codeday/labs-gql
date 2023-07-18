@@ -17,7 +17,7 @@ export class StudentResolver {
   @Inject(() => PrismaClient)
   private readonly prisma : PrismaClient;
 
-  @Authorized(AuthRole.ADMIN, AuthRole.PARTNER, AuthRole.MANAGER)
+  @Authorized(AuthRole.ADMIN, AuthRole.PARTNER, AuthRole.MANAGER, AuthRole.MENTOR)
   @Query(() => [Student])
   async students(
     @Ctx() { auth }: Context,
@@ -25,6 +25,21 @@ export class StudentResolver {
     @Arg('skip', () => Number, { nullable: true }) skip?: number,
     @Arg('take', () => Number, { nullable: true }) take?: number,
   ): Promise<PrismaStudent[]> {
+    const include = {
+      notes: true,
+      targetSurveyResponses: {
+        where: { surveyOccurence: { survey: { internal: false } } },
+        include: {
+          surveyOccurence: { include: { survey: true } },
+          authorMentor: true,
+          authorStudent: true,
+          mentor: true,
+          student: true,
+          project: true,
+        },
+      }
+    };
+
     if (auth.isManager) {
       return this.prisma.student.findMany({
         where: {
@@ -41,20 +56,7 @@ export class StudentResolver {
         },
         skip,
         take,
-        include: {
-          notes: true,
-          targetSurveyResponses: {
-            where: { surveyOccurence: { survey: { internal: false } } },
-            include: {
-              surveyOccurence: { include: { survey: true } },
-              authorMentor: true,
-              authorStudent: true,
-              mentor: true,
-              student: true,
-              project: true,
-            },
-          }
-        }
+        include,
       });
     } else if (auth.isPartner) {
       return this.prisma.student.findMany({
@@ -64,21 +66,25 @@ export class StudentResolver {
         },
         skip,
         take,
-        include: {
-          notes: true,
-          targetSurveyResponses: {
-            where: { surveyOccurence: { survey: { internal: false } } },
-            include: {
-              surveyOccurence: { include: { survey: true } },
-              authorMentor: true,
-              authorStudent: true,
-              mentor: true,
-              student: true,
-              project: true,
+        include
+      })
+    } else if (auth.isMentor) {
+      return this.prisma.student.findMany({
+        where: {
+          projects: {
+            some: {
+              mentors: {
+                some: {
+                  id: auth.id,
+                },
+              },
             },
           }
-        }
-      })
+        },
+        skip,
+        take,
+        include,
+      });
     }
 
     return this.prisma.student.findMany({
@@ -88,6 +94,7 @@ export class StudentResolver {
       },
       skip,
       take,
+      include,
     });
   }
 
