@@ -1,4 +1,5 @@
-import { ObjectType, Field } from 'type-graphql';
+import { ObjectType, Field, Authorized } from 'type-graphql';
+import { AuthRole } from '../context';
 
 @ObjectType()
 export class Event {
@@ -40,4 +41,23 @@ export class Event {
 
   @Field(() => String)
   emailTemplate: string;
+
+  @Field(() => Boolean)
+  isActive: boolean;
+
+  @Authorized(AuthRole.ADMIN)
+  @Field(() => String, { nullable: true })
+  slackWorkspaceId?: string
+
+  @Authorized(AuthRole.ADMIN)
+  @Field(() => String, { nullable: true })
+  slackUserGroupId: string | null
+
+  @Authorized(AuthRole.ADMIN)
+  @Field(() => String, { nullable: true })
+  slackWorkspaceAccessToken: string | null
+
+  @Authorized(AuthRole.ADMIN)
+  @Field(() => String, { nullable: true })
+  standupAndProsperToken: string | null
 }

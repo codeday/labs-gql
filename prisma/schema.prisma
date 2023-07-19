@@ -87,16 +87,23 @@ model Event {
   mentorApplicationUi          Json
   mentorApplicationPostprocess Json
 
+  isActive                      Boolean @default(false)
   matchPreferenceSubmissionOpen Boolean @default(false)
   matchComplete                 Boolean @default(false)
 
-  surveys   Survey[]
-  mentors   Mentor[]
-  students  Student[]
-  projects  Project[]
-  partners  Partner[]
-  notes     Note[]
-  resources Resource[]
+  slackWorkspaceId          String?
+  slackUserGroupId          String?
+  slackWorkspaceAccessToken String?
+  standupAndProsperToken    String?
+
+  surveys        Survey[]
+  mentors        Mentor[]
+  students       Student[]
+  projects       Project[]
+  partners       Partner[]
+  notes          Note[]
+  resources      Resource[]
+  standupResults StandupResult[]
 }
 
 model Survey {
@@ -250,6 +257,8 @@ model Student {
   timeManagementPlan Json?
   timezone           String?
 
+  slackId String?
+
   // Relations
   projects                Project[]
   admissionRatings        AdmissionRating[]
@@ -263,7 +272,8 @@ model Student {
   event   Event  @relation(fields: [eventId], references: [id])
   eventId String @default("codeday-labs-2022")
 
-  notes Note[]
+  notes          Note[]
+  standupResults StandupResult[]
   @@unique([username, eventId])
   @@unique([email, eventId])
 }
@@ -304,6 +314,9 @@ model Project {
   maxStudents  Int           @default(4)
   status       ProjectStatus @default(DRAFT)
 
+  slackChannelId String?
+  standupId      String?
+
   // Relations
   tags                  Tag[]
   mentors               Mentor[]
@@ -315,8 +328,9 @@ model Project {
   affinePartner   Partner? @relation(fields: [affinePartnerId], references: [id])
   affinePartnerId String?
 
-  event   Event  @relation(fields: [eventId], references: [id])
-  eventId String @default("codeday-labs-2022")
+  event          Event           @relation(fields: [eventId], references: [id])
+  eventId        String          @default("codeday-labs-2022")
+  standupResults StandupResult[]
 }
 
 model AdmissionRating {
@@ -445,4 +459,27 @@ model Resource {
   // Relations
   event   Event  @relation(fields: [eventId], references: [id])
   eventId String
+}
+
+model StandupResult {
+  // Metadata
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  threadDueAt DateTime
+  threadId    String
+  text        String
+  rating      Int?
+  humanRated  Boolean  @default(false)
+
+  // Relations
+  student   Student @relation(fields: [studentId], references: [id])
+  studentId String
+
+  project   Project @relation(fields: [projectId], references: [id])
+  projectId String
+
+  event   Event  @relation(fields: [eventId], references: [id])
+  eventId String @default("codeday-labs-2022")
 }

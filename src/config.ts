@@ -27,6 +27,7 @@ if (secondaryRegion)
 const config = {
   debug: process.env.NODE_ENV !== 'production',
   port: process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 5000,
+  secondaryRegion,
   geocodio: {
     apiKey: process.env.GEOCODIO_API_KEY!,
   },
@@ -38,6 +39,12 @@ const config = {
   auth: {
     secret: process.env.AUTH_SECRET!,
     audience: process.env.AUTH_AUDIENCE!,
+  },
+  slack: {
+    disable: process.env.DISABLE_SLACK === 'TRUE' || secondaryRegion,
+  },
+  standupAndProsper: {
+    disable: process.env.DISABLE_STANDUPANDPROSPER === 'TRUE' || secondaryRegion,
   },
   email: <SMTPConnection.Options & { disable: boolean }> {
     disable: process.env.DISABLE_EMAIL === 'TRUE' || secondaryRegion,

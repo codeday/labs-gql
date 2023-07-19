@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node dist",
     "clean": "rm -rf dist",
-    "build": "npm -s run clean && npm -s run prisma && npx tsc && cpy '**/*' '!**/*.ts' ../dist/ --cwd=src/ --no-overwrite --parents",
+    "build": "npm -s run clean && npm -s run prisma && npx tsc --skipLibCheck && cpy '**/*' '!**/*.ts' ../dist/ --cwd=src/ --no-overwrite --parents",
     "prisma": "prisma format && prisma generate",
     "dev": "ts-node-dev --no-notify --respawn --transpile-only src",
     "debug": "ts-node-dev --no-notify --respawn src",
@@ -16,12 +16,15 @@
   "dependencies": {
     "@elastic/elasticsearch": "^7.13.0",
     "@prisma/client": "3",
+    "@slack/web-api": "^6.8.1",
     "@ts-stack/markdown": "^1.4.0",
     "@types/redis": "^2.8.28",
     "ajv": "^8.6.2",
     "apollo-server": "^2.24.1",
     "apollo-server-express": "^2.24.1",
     "class-validator": "^0.13.1",
+    "cron": "^2.3.1",
+    "diacritics": "^1.3.0",
     "dotenv": "^9.0.2",
     "elastic-builder": "^2.16.0",
     "express": "^4.17.1",
@@ -45,6 +48,8 @@
   },
   "devDependencies": {
     "@codeday/eslint-typescript-config": "^2.1.5",
+    "@types/cron": "^2.0.1",
+    "@types/diacritics": "^1.3.1",
     "@types/graphql-upload": "^8.0.4",
     "@types/jsonwebtoken": "^8.5.1",
     "@types/luxon": "^1.26.5",

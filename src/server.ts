@@ -9,7 +9,7 @@ import { createSchema } from './schema';
 import { createContext as context } from './context';
 import config from './config';
 
-export default async function server(): Promise<void> {
+export async function startServer(): Promise<void> {
   const schema = await createSchema();
   const apollo = new ApolloServer({
     schema,

@@ -105,6 +105,10 @@ export class Student implements PrismaStudent {
   offerDate: Date | null
 
   @Authorized(AuthRole.ADMIN)
+  @Field(() => String, { nullable: true })
+  slackId: string | null
+
+  @Authorized(AuthRole.ADMIN)
   @Field(() => Number, { nullable: true })
   admissionRatingAverage: number | null;
 

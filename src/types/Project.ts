@@ -51,6 +51,14 @@ export class Project implements PrismaProject {
 
   tags: PrismaTag[]
 
+  @Authorized(AuthRole.ADMIN)
+  @Field(() => String, { nullable: true })
+  slackChannelId: string | null
+
+  @Authorized(AuthRole.ADMIN)
+  @Field(() => String, { nullable: true })
+  standupId: string | null
+
   @Field(() => [Tag], { name: 'tags' })
   async fetchTags(): Promise<PrismaTag[]> {
     if (!this.tags) {

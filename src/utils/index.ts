@@ -12,3 +12,8 @@ export * from './validateEvent';
 export * from './validateActive';
 export * from './getTimezoneOffset';
 export * from './AllowedFieldsWithType';
+export * from './updateActiveEvents';
+export * from './WithNonNullable';
+export * from './WithRequired';
+export * from './PickNonNullable';
+export * from './groupBy';

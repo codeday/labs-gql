@@ -166,8 +166,3 @@ export async function sendEmails(): Promise<void> {
   for (const generator of await getEmailGenerators()) await sendEmailsForGenerator(generator);
   await sendDueSurveysReminder();
 }
-
-export default function emailHandler(): void {
-  setInterval(sendEmails, 1000 * 60 * (config.debug ? 0.5 : 5));
-  sendEmails();
-}
