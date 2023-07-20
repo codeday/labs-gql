@@ -1,0 +1,19 @@
+ALTER TABLE "StandupResult" DROP COLUMN "threadDueAt";
+
+CREATE TABLE "StandupThread" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "eventId" TEXT NOT NULL,
+    "projectId" TEXT NOT NULL,
+
+    "dueAt" TIMESTAMP(3) NOT NULL,
+
+    PRIMARY KEY ("id")
+);
+
+-- AddForeignKey
+ALTER TABLE "StandupThread" ADD FOREIGN KEY ("eventId") REFERENCES "Event"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "StandupThread" ADD FOREIGN KEY ("projectId") REFERENCES "Project"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE "StandupResult" ADD FOREIGN KEY ("threadId") REFERENCES "StandupThread"("id") ON DELETE CASCADE ON UPDATE CASCADE;

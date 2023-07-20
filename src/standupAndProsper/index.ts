@@ -1,12 +1,13 @@
 import Container from "typedi";
 import { EventWithStandupAndProsper, getClientForEvent } from "./StandupAndProsper";
-import { Event, MentorStatus, Prisma, PrismaClient, Project, ProjectStatus, StandupResult, Student, StudentStatus } from "@prisma/client";
+import { Event, MentorStatus, Prisma, PrismaClient, Project, ProjectStatus, StandupResult, StandupThread, Student, StudentStatus } from "@prisma/client";
 import { PickNonNullable, groupBy } from "../utils";
 import { DateTime } from "luxon";
 
 type ProjectWithStandups = PickNonNullable<Project, 'standupId' | 'id'>
   & {
     students: PickNonNullable<Student, 'slackId' | 'id'>[],
+    standupThreads: PickNonNullable<StandupThread, 'id'>[],
     standupResults: PickNonNullable<StandupResult, 'threadId' | 'studentId'>[],
     event: EventWithStandupAndProsper & Pick<Event, 'id'>,
   };
@@ -42,6 +43,8 @@ async function syncProjectStandup(project: ProjectWithStandups) {
   const sap = getClientForEvent(project.event);
   const threads = await sap.getStandupThreads(project.standupId);
 
+  const previousDbThreads = project.standupThreads.map(t => t.id);
+
   const studentIdsBySlackId = Object.fromEntries(
     project.students
       .map(s => [s.slackId, s.id])
@@ -57,9 +60,20 @@ async function syncProjectStandup(project: ProjectWithStandups) {
     .map(([k, v]) => [k, v.map(r => r.threadId)])
   );
 
-  const allCreates = [];
+  await prisma.standupThread.createMany({
+    data: threads
+        .filter(t => !previousDbThreads.includes(t.threadId))
+        .map(t => ({
+          id: t.threadId,
+          dueAt: DateTime.fromISO(t.scheduledDate).toJSDate(),
+          eventId: project.event.id,
+          projectId: project.id,
+        })),
+    });
 
+  const allCreates = [];
   for (const thread of threads) {
+    // Create responses
     const responses = await thread.responses
       .flatMap(({ users, ...r }) => users
         .map(u => ({ ...r, ...u }))
@@ -72,11 +86,10 @@ async function syncProjectStandup(project: ProjectWithStandups) {
         }))
         .filter(r => (
           (r.userId in studentIdsBySlackId)
-          && !(previousSubmissionThreadIds[studentIdsBySlackId[r.userId]] || []).includes(thread.scheduledDate)
+          && !(previousSubmissionThreadIds[studentIdsBySlackId[r.userId]] || []).includes(thread.threadId)
         ))
         .map(r => ({
-          threadId: thread.scheduledDate,
-          threadDueAt: DateTime.fromISO(thread.scheduledDate).toJSDate(),
+          threadId: thread.threadId,
           text: r.text,
           eventId: project.event.id,
           projectId: project.id,
@@ -146,6 +159,9 @@ export async function syncStandupAndProsper() {
         select: { standupAndProsperToken: true, slackWorkspaceId: true },
       },
       standupId: true,
+      standupThreads: {
+        select: { id: true },
+      },
       standupResults: {
         select: { threadId: true, studentId: true }
       },

@@ -103,6 +103,7 @@ model Event {
   partners       Partner[]
   notes          Note[]
   resources      Resource[]
+  standupThreads StandupThread[]
   standupResults StandupResult[]
 }
 
@@ -330,6 +331,7 @@ model Project {
 
   event          Event           @relation(fields: [eventId], references: [id])
   eventId        String          @default("codeday-labs-2022")
+  standupThreads StandupThread[]
   standupResults StandupResult[]
 }
 
@@ -461,19 +463,36 @@ model Resource {
   eventId String
 }
 
+model StandupThread {
+  id        String   @id
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  dueAt DateTime
+
+  results StandupResult[]
+
+  project   Project @relation(fields: [projectId], references: [id])
+  projectId String
+
+  event   Event  @relation(fields: [eventId], references: [id])
+  eventId String @default("codeday-labs-2022")
+}
+
 model StandupResult {
   // Metadata
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  threadDueAt DateTime
-  threadId    String
-  text        String
-  rating      Int?
-  humanRated  Boolean  @default(false)
+  text       String
+  rating     Int?
+  humanRated Boolean @default(false)
 
   // Relations
+  thread   StandupThread @relation(fields: [threadId], references: [id])
+  threadId String
+
   student   Student @relation(fields: [studentId], references: [id])
   studentId String
 
