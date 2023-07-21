@@ -1,6 +1,15 @@
 import { CreateCompletionResponseChoicesInner } from "openai";
 import { PickNonNullable } from "../utils";
-import { encode, encodeGenerator } from "gpt-tokenizer";
+import { encode } from 'gpt-tokenizer/cjs/model/babbage';
+
+export function classesToLogitBias(classes: string[]): Record<number, number> {
+  return Object.fromEntries(
+    classes
+      .flatMap(t => [t, ` ${t}`, `\n${t}`])
+      .flatMap(t => encode(t, ))
+      .map(t => [t, 100])
+  );
+}
 
 
 export enum Model {
@@ -63,10 +72,6 @@ export function valToCompletionExample(val: string | number): string {
   return ` ${val.toString()}\n`;
 }
 
-export function completionToClass<T extends string>(completion: string): T {
-  return completion.replace(/[^0-9\.]/g, '') as T;
-}
-
 // See https://medium.com/edge-analytics/getting-the-most-out-of-gpt-3-based-text-classifiers-part-three-77305628f472
 export function isomorphicLabelProbability(
   label: string,
@@ -75,9 +80,12 @@ export function isomorphicLabelProbability(
   let prob = 0;
   const labelClean = label.toLowerCase().trim();
 
-  // Check next token
+  if (logprobs.length === 0 || !logprobs) return 0;
+
+  // Check each token
   for (const [k, logprob] of Object.entries(logprobs[0])) {
     const kClean = k.toLowerCase().trim();
+    if (kClean == '') continue;
 
     // Add probabilities for case variants
     if (labelClean === kClean) prob += Math.exp(logprob);

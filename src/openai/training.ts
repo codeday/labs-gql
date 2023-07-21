@@ -66,11 +66,12 @@ export async function syncAiTraining() {
       },
     },
     select: {
+      id: true,
       text: true,
       rating: true,
       event: { select: { standupAiModelVague: true, standupAiModelWorkload: true } },
     },
-  }) as (PickNonNullable<StandupResult, 'rating' | 'text'>
+  }) as (PickNonNullable<StandupResult, 'rating' | 'text' | 'id'>
     & { event: PickNonNullable<Event, 'standupAiModelVague' | 'standupAiModelWorkload'> })[];
 
   console.log(`${trainingExamples.length} new standups available for fine-tuning.`)
@@ -104,6 +105,11 @@ export async function syncAiTraining() {
       },
     });
   }
+
+  await prisma.standupResult.updateMany({
+    where: { id: { in: trainingExamples.map(t => t.id) } },
+    data: { trainingSubmitted: true },
+  });
 }
 
 export async function syncAiPendingModels() {

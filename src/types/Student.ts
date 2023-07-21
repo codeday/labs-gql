@@ -310,7 +310,7 @@ export class Student implements PrismaStudent {
     );
 
     const cutoff = DateTime.now()
-      .minus({ hours: 12 })
+      .minus({ hours: 24 })
       .toJSDate();
 
     return standupThreads
