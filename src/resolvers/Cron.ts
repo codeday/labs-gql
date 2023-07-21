@@ -4,11 +4,10 @@ import {
 import { PrismaClient } from '@prisma/client';
 import { Inject, Service } from 'typedi';
 import { AuthRole } from '../context';
-import { EmploymentRecord } from '../types';
 import { runJob } from '../automation';
 
 @Service()
-@Resolver(EmploymentRecord)
+@Resolver(Boolean)
 export class StudentResolver {
   @Inject(() => PrismaClient)
   private readonly prisma : PrismaClient;

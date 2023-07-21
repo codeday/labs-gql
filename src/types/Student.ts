@@ -302,11 +302,11 @@ export class Student implements PrismaStudent {
         ? this.standupResults
         : await prisma.standupResult.findMany({
           where: { studentId: this.id },
-          select: { threadId: true, rating: true },
+          select: { id: true, threadId: true, rating: true, humanRated: true },
         });
 
     const ratingsByThread = Object.fromEntries(
-      standups.map(s => [s.threadId, s.rating])
+      standups.map(s => [s.threadId, s])
     );
 
     const cutoff = DateTime.now()
@@ -317,8 +317,10 @@ export class Student implements PrismaStudent {
       .filter(t => t.dueAt < cutoff)
       .sort((a, b) => a.dueAt < b.dueAt ? -1 : 1)
       .map(t => ({
+        id: ratingsByThread[t.id]?.id || null,
         dueAt: t.dueAt,
-        rating: t.id in ratingsByThread ? ratingsByThread[t.id] : 0,
+        humanRated: ratingsByThread[t.id]?.humanRated || false,
+        rating: t.id in ratingsByThread ? ratingsByThread[t.id].rating : 0,
       }));
   }
 }

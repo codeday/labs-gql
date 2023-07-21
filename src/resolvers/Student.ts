@@ -42,8 +42,10 @@ export class StudentResolver {
       },
       standupResults: {
         select: {
+          id: true,
           threadId: true,
           rating: true,
+          humanRated: true,
         },
       },
       targetSurveyResponses: {
@@ -117,7 +119,7 @@ export class StudentResolver {
     });
   }
 
-  @Authorized(AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.STUDENT)
+  @Authorized(AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.STUDENT, AuthRole.PARTNER)
   @StudentOnlySelf('where')
   @Query(() => Student, { nullable: true })
   async student(
@@ -132,6 +134,7 @@ export class StudentResolver {
     });
     if (!student) return null;
     if (student.event.id !== auth.eventId) return null;
+    if (auth.type === AuthRole.PARTNER && student.partnerCode !== auth.partnerCode) return null;
     return student;
   }
 
