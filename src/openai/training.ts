@@ -7,6 +7,8 @@ import { fileSync } from 'tmp';
 import { unlink, writeFile } from "fs/promises";
 import { createReadStream } from "fs";
 
+const MIN_TO_TRAIN = 100;
+
 function getTrainingExample(
   modelType: Model,
   example: PickNonNullable<StandupResult, 'text' | 'rating'>
@@ -89,6 +91,10 @@ export async function syncAiTraining() {
   };
 
   for (const [model, trainingExamples] of modelTraining[Model.Vague]) {
+    if (trainingExamples.length < MIN_TO_TRAIN) {
+      console.log(`Training corpus for ${model} needs ${MIN_TO_TRAIN-trainingExamples.length} more examples to train.`);
+      continue;
+    }
     await prisma.event.updateMany({
       where: { standupAiModelVague: model },
       data: {
@@ -98,6 +104,10 @@ export async function syncAiTraining() {
   }
 
   for (const [model, trainingExamples] of modelTraining[Model.Workload]) {
+    if (trainingExamples.length < MIN_TO_TRAIN) {
+      console.log(`Training corpus for ${model} needs ${MIN_TO_TRAIN-trainingExamples.length} more examples to train.`);
+      continue;
+    }
     await prisma.event.updateMany({
       where: { standupAiModelWorkload: model },
       data: {
