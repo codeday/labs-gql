@@ -156,7 +156,7 @@ export async function syncStandupAndProsper() {
     select: {
       id: true,
       event: {
-        select: { standupAndProsperToken: true, slackWorkspaceId: true },
+        select: { id: true, standupAndProsperToken: true, slackWorkspaceId: true },
       },
       standupId: true,
       standupThreads: {

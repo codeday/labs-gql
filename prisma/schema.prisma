@@ -91,10 +91,14 @@ model Event {
   matchPreferenceSubmissionOpen Boolean @default(false)
   matchComplete                 Boolean @default(false)
 
-  slackWorkspaceId          String?
-  slackUserGroupId          String?
-  slackWorkspaceAccessToken String?
-  standupAndProsperToken    String?
+  slackWorkspaceId              String?
+  slackUserGroupId              String?
+  slackWorkspaceAccessToken     String?
+  standupAndProsperToken        String?
+  standupAiModelVague           String?
+  standupAiModelVaguePending    String?
+  standupAiModelWorkload        String?
+  standupAiModelWorkloadPending String?
 
   surveys        Survey[]
   mentors        Mentor[]
@@ -485,9 +489,10 @@ model StandupResult {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  text       String
-  rating     Int?
-  humanRated Boolean @default(false)
+  text              String
+  rating            Int?
+  humanRated        Boolean @default(false)
+  trainingSubmitted Boolean @default(false)
 
   // Relations
   thread   StandupThread @relation(fields: [threadId], references: [id])

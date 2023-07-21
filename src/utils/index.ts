@@ -17,3 +17,4 @@ export * from './WithNonNullable';
 export * from './WithRequired';
 export * from './PickNonNullable';
 export * from './groupBy';
+export * from './ArrayElement';

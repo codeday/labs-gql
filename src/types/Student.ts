@@ -12,6 +12,8 @@ import {
   Event as PrismaEvent,
   SurveyOccurence as PrismaSurveyOccurence,
   Survey as PrismaSurvey,
+  StandupThread,
+  StandupResult,
 } from '@prisma/client';
 import {
   ObjectType, Field, Authorized, Int, Ctx,
@@ -32,7 +34,8 @@ import { Event } from './Event';
 import { SurveyResponse } from './SurveyResponse';
 import { Note } from './Note';
 import { tokenFor } from '../email/helpers';
-import { SanitizableSurveyResponse, sanitizeSurveyResponses } from '../utils';
+import { SanitizableSurveyResponse, groupBy, sanitizeSurveyResponses } from '../utils';
+import { StandupRating } from './StandupRating';
 
 @ObjectType()
 export class Student implements PrismaStudent {
@@ -281,4 +284,41 @@ export class Student implements PrismaStudent {
     return this.notes;
   }
 
+  standupResults: StandupResult[] | null
+
+  @Authorized([AuthRole.PARTNER, AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.MENTOR])
+  @Field(() => [StandupRating], { name: 'standupRatings' })
+  async fetchStandupRatings(): Promise<StandupRating[]> {
+    const prisma = Container.get(PrismaClient);
+    const projects = this.projects as (PrismaProject & { standupThreads?: StandupThread[] })[];
+    const standupThreads = projects.filter(p => Array.isArray(p.standupThreads)).length > 0
+      ? projects.flatMap(p => p.standupThreads || [])
+      : await prisma.standupThread.findMany({
+          where: { project: { students: { some: { id: this.id } } } },
+          select: { id: true, dueAt: true },
+        });
+
+    const standups = Array.isArray(this.standupResults)
+        ? this.standupResults
+        : await prisma.standupResult.findMany({
+          where: { studentId: this.id },
+          select: { threadId: true, rating: true },
+        });
+
+    const ratingsByThread = Object.fromEntries(
+      standups.map(s => [s.threadId, s.rating])
+    );
+
+    const cutoff = DateTime.now()
+      .minus({ hours: 12 })
+      .toJSDate();
+
+    return standupThreads
+      .filter(t => t.dueAt < cutoff)
+      .sort((a, b) => a.dueAt < b.dueAt ? -1 : 1)
+      .map(t => ({
+        dueAt: t.dueAt,
+        rating: t.id in ratingsByThread ? ratingsByThread[t.id] : 0,
+      }));
+  }
 }

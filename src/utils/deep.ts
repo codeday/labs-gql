@@ -5,7 +5,7 @@ export function deepIntersection<TA, TB>(a: TA, b: TB): Partial<TA> {
 
   const result: Partial<TA> = {};
 
-  Object.keys(a).forEach((key) => {
+  Object.keys(a as any).forEach((key) => {
     // @ts-ignore
     if (key in a && key in b && isObj(b[key])) { // b specifies a subobject of keys to include
       // @ts-ignore

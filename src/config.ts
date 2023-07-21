@@ -15,6 +15,8 @@ loadEnv();
   'EMAIL_USER',
   'EMAIL_PASS',
   'GEOCODIO_API_KEY',
+  'OPENAI_API_KEY',
+  'OPENAI_ORGANIZATION',
 ].forEach((req) => { if (!process.env[req]) throw Error(`The ${req} environment variable is required.`); });
 
 const secondaryRegion = process.env.PRIMARY_REGION
@@ -54,6 +56,11 @@ const config = {
       user: process.env.EMAIL_USER!,
       pass: process.env.EMAIL_PASS!,
     },
+  },
+  openAi: {
+    apiKey: process.env.OPENAI_API_KEY!,
+    organization: process.env.OPENAI_ORGANIZATION!,
+    disable: process.env.DISABLE_OPENAI === 'TRUE' || secondaryRegion,
   },
 };
 

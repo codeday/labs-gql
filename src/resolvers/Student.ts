@@ -1,7 +1,7 @@
 import {
   Resolver, Authorized, Query, Mutation, Arg, Ctx,
 } from 'type-graphql';
-import { PrismaClient, Student as PrismaStudent, StudentStatus } from '@prisma/client';
+import { Prisma, PrismaClient, Student as PrismaStudent, StudentStatus } from '@prisma/client';
 import { Inject, Service } from 'typedi';
 import { Context, AuthRole } from '../context';
 import { Student } from '../types';
@@ -25,8 +25,27 @@ export class StudentResolver {
     @Arg('skip', () => Number, { nullable: true }) skip?: number,
     @Arg('take', () => Number, { nullable: true }) take?: number,
   ): Promise<PrismaStudent[]> {
-    const include = {
+    const include: Prisma.StudentInclude = {
       notes: true,
+      projects: {
+        include: {
+          mentors: true,
+          tags: true,
+          standupThreads: {
+            select: {
+              dueAt: true,
+              id: true,
+            },
+            orderBy: [{ dueAt: 'asc' }]
+          }
+        }
+      },
+      standupResults: {
+        select: {
+          threadId: true,
+          rating: true,
+        },
+      },
       targetSurveyResponses: {
         where: { surveyOccurence: { survey: { internal: false } } },
         include: {
