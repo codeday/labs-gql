@@ -1,6 +1,10 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, node/no-process-env */
 import { config as loadEnv } from 'dotenv';
 import SMTPConnection from 'nodemailer/lib/smtp-connection';
+import path from 'path';
+import { makeDebug } from './utils';
+
+const DEBUG = makeDebug('config');
 
 loadEnv();
 
@@ -23,18 +27,17 @@ const secondaryRegion = process.env.PRIMARY_REGION
   && process.env.FLY_REGION
   && process.env.FLY_REGION !== process.env.PRIMARY_REGION;
 
-if (secondaryRegion)
-  console.log(`Running in secondary region ${process.env.FLY_REGION}, disabling automation.`);
-
 const config = {
   debug: process.env.NODE_ENV !== 'production',
   port: process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 5000,
   secondaryRegion,
+  app: {
+    emailTemplateDir: path.join(__dirname, 'email', 'templates'),
+  },
   geocodio: {
     apiKey: process.env.GEOCODIO_API_KEY!,
   },
   elastic: {
-    disable: process.env.DISABLE_SEARCH === 'TRUE' || secondaryRegion,
     url: process.env.ELASTIC_URL!,
     index: process.env.ELASTIC_INDEX!,
   },
@@ -42,14 +45,7 @@ const config = {
     secret: process.env.AUTH_SECRET!,
     audience: process.env.AUTH_AUDIENCE!,
   },
-  slack: {
-    disable: process.env.DISABLE_SLACK === 'TRUE' || secondaryRegion,
-  },
-  standupAndProsper: {
-    disable: process.env.DISABLE_STANDUPANDPROSPER === 'TRUE' || secondaryRegion,
-  },
   email: <SMTPConnection.Options & { disable: boolean }> {
-    disable: process.env.DISABLE_EMAIL === 'TRUE' || secondaryRegion,
     host: process.env.EMAIL_HOST!,
     port: Number.parseInt(process.env.EMAIL_PORT!, 10),
     auth: {
@@ -60,7 +56,6 @@ const config = {
   openAi: {
     apiKey: process.env.OPENAI_API_KEY!,
     organization: process.env.OPENAI_ORGANIZATION!,
-    disable: process.env.DISABLE_OPENAI === 'TRUE' || secondaryRegion,
   },
 };
 

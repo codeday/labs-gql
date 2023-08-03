@@ -6,10 +6,13 @@ import { Mentor, PrismaClient, Student } from '@prisma/client';
 import handlebars from 'handlebars';
 import { Marked } from '@ts-stack/markdown';
 import { Transporter } from 'nodemailer';
+import { makeDebug } from '../utils';
 import { AuthRole } from '../context';
 import { StudentStatus, MentorStatus } from '../enums';
 import { StudentFilterInput, MentorFilterInput } from '../inputs';
 import { tokenFor } from '../email/helpers';
+
+const DEBUG = makeDebug('resolvers:Emails');
 
 @Service()
 @Resolver(() => Boolean)
@@ -68,8 +71,7 @@ export class Emails {
             html: Marked.parse(body(toWithToken)),
             text: body(toWithToken),
           });
-        // eslint-disable-next-line no-console
-        } catch (err) { console.error(err); }
+        } catch (err) { DEBUG(err); }
       }
     })();
   }

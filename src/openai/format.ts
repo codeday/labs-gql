@@ -1,81 +1,142 @@
-import { CreateCompletionResponseChoicesInner } from "openai";
 import { PickNonNullable } from "../utils";
 import { encode } from 'gpt-tokenizer/cjs/model/babbage';
+import { StandupResult } from "@prisma/client";
+import { ModelType, OpenAILogitBias, OpenAILogprobs, OpenAITrainingExample } from "./types";
 
-export function classesToLogitBias(classes: string[]): Record<number, number> {
+export const MODEL_MAX_TOKENS = 2049;
+export const BINARY_CLASSIFICATION_CLASSES = ['yes', 'no'] as ['yes', 'no'];
+export const BINARY_CLASSIFICATION_PROMPTS = {
+  [ModelType.Vague]: 'Update was vague:',
+  [ModelType.Workload]: 'Person was productive:',
+};
+
+/**
+ * Converts classification classes into a logitBias object, which forces
+ * GPT to only output those tokens. This improves the quality of predictions.
+ * @param classes List of possible output classes.
+ * @returns logit_bias input for GPT.
+ */
+export function classesToLogitBias(classes: string[]): OpenAILogitBias {
   return Object.fromEntries(
     classes
-      .flatMap(t => [t, ` ${t}`, `\n${t}`])
-      .flatMap(t => encode(t, ))
+      // GPT encodes e.g. `no`, ` no`, `No`, etc with different tokens. We can
+      // improve the accuracy of the model by allowing it to predict all four
+      // options for each class.
+      .flatMap(t => [
+        t,
+        ` ${t}`,
+        `${t[0].toUpperCase() + t.slice(1)}`,
+        ` ${t[0].toUpperCase() + t.slice(1)}`,
+      ])
+
+      // Convert each possible output to its GPT tokens.
+      .flatMap(t => encode(t))
+
+      // Weight each token as 100, making it extremely unlikely GPT will predict
+      // any other tokens.
       .map(t => [t, 100])
   );
 }
 
+/**
+ * Generates a training prompt/completion for OpenAI based on the provided standup.
+ * 
+ * @param modelType Is the model for vagueness or workload?
+ * @param example Specific standup example.
+ * @returns OpenAI prompt/completion pair.
+ */
+export function getTrainingExample(
+  modelType: ModelType,
+  example: PickNonNullable<StandupResult, 'text' | 'rating'>
+): OpenAITrainingExample {
+  const completionYes = modelType === ModelType.Vague
+    ? (example.rating === 1) // is this vague? 1 => yes, this is vague.
+    : (example.rating === 3); // is this productive? 3 yes, this is productive.
 
-export enum Model {
-  Vague = 'Vague',
-  Workload = 'Workload',
-};
+  return {
+    prompt: textToCompletionPrompt(modelType, example.text),
+    completion: valToCompletionExample(completionYes ? 'yes' : 'no'),
+  };
+}
 
-export const CLASSES = ['yes', 'no'] as ['yes', 'no'];
-
-
-const INSTRUCTIONS = {
-  [Model.Vague]: `
-    You are an engineering manager categorizing status updates submitted by engineers as vague or not vague.
-    An update is not vague if most of the tasks listed can be checked off when they're done. If it's not
-    obvious what was done, or what will be done, the update is vague. (For example updates which say someone will
-    "continue" doing something or will "learn" something are usually vague.) 
-  `,
-  [Model.Workload]: `
-    You are an engineering manager reviewing the daily performance of software engineers, and categorizing them
-    as either productive or unproductive. An engineer is productive if either the tasks the accomplished in the past,
-    or the tasks they plan to accomplish, could represent at least 5 hours of full-time work.
-  `,
-};
-
-const PROMPTS = {
-  [Model.Vague]: 'Update was vague:',
-  [Model.Workload]: 'Person was productive:',
-};
-
-const MODEL_MAX_TOKENS = 2049;
-
-function textToCompletionPromptUnchecked(model: Model, text: string): string {
-  const modelInstructions = INSTRUCTIONS[model].trim().replace(/\n/g, '');
-  const modelPrompt = PROMPTS[model];
-  //return `${modelInstructions}\n\nUpdate:\n${text}\n\n###\n${modelPrompt}`;
+/**
+ * Reformats classification text into OpenAI's recommended format for
+ * classification tasks. Does not check length.
+ * 
+ * @param modelType Is the model for vagueness or workload?
+ * @param text Text to score.
+ * @returns Full model prompt.
+ */
+function textToCompletionPromptUnchecked(
+  modelType: ModelType,
+  text: string
+): string {
+  const modelPrompt = BINARY_CLASSIFICATION_PROMPTS[modelType];
   return `${text}\n\n###\n${modelPrompt}`;
 }
 
-export function textToCompletionPrompt(model: Model, text: string): string {
+/**
+ * Reformats classification text into OpenAI's recommended format for
+ * classification tasks. Truncates the value of `text` if the final prompt
+ * would exceed the max token length for the model.
+ * 
+ * @param modelType Is the model for vagueness or workload?
+ * @param text Text to score.
+ * @returns Full model prompt.
+ */
+export function textToCompletionPrompt(
+  modelType: ModelType,
+  text: string
+): string {
   let truncatedText = text;
   let truncatedTextTokenLength = encode(
-    textToCompletionPromptUnchecked(model, truncatedText)
+    textToCompletionPromptUnchecked(modelType, truncatedText)
   ).length;
 
   while (truncatedTextTokenLength > MODEL_MAX_TOKENS) {
     truncatedText = truncatedText
       .split(' ')
-      .slice(0, truncatedText.length - Math.round((truncatedTextTokenLength - MODEL_MAX_TOKENS)/2))
+      .slice(0, truncatedText.length - Math.ceil((truncatedTextTokenLength - MODEL_MAX_TOKENS)/2))
       .join(' ');
 
     truncatedTextTokenLength = encode(
-      textToCompletionPromptUnchecked(model, truncatedText)
+      textToCompletionPromptUnchecked(modelType, truncatedText)
     ).length;
   }
 
-  return textToCompletionPromptUnchecked(model, truncatedText)
+  return textToCompletionPromptUnchecked(modelType, truncatedText)
 }
 
+/**
+ * Reformats classification response example into OpenAI's recommended format
+ * for classification tasks. Does not check length.
+ * 
+ * @param val Example response.
+ * @returns Full model response example.
+ */
 export function valToCompletionExample(val: string | number): string {
   return ` ${val.toString()}\n`;
 }
 
-// See https://medium.com/edge-analytics/getting-the-most-out-of-gpt-3-based-text-classifiers-part-three-77305628f472
+/**
+ * Calculates the total probability for the given label to be the prediction
+ * given a logprobs array from GPT. The total probability will take into
+ * account:
+ * 
+ * - Variants: P(`no`) = P(`no`) + p(` no`) + p(` No`) ...
+ * - Sequences: P(`hello world`) = p(`hello`) * p(` world`).
+ * 
+ * This function also converts from logprob, so the final result will range from
+ * 0 to 1.
+ * 
+ * @see https://medium.com/edge-analytics/getting-the-most-out-of-gpt-3-based-text-classifiers-part-three-77305628f472
+ * @param label The label to check
+ * @param logprobs Logprobs array from the AI response
+ * @returns Prediction probability for the label, as a percent from 0-1.
+ */
 export function isomorphicLabelProbability(
   label: string,
-  logprobs: Record<string, number>[]
+  logprobs: OpenAILogprobs,
 ): number {
   let prob = 0;
   const labelClean = label.toLowerCase().trim();

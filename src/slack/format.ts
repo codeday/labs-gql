@@ -1,5 +1,11 @@
 import { remove as removeDiacritics } from 'diacritics';
-import { Mentor } from "@prisma/client";
+import { Event, Mentor } from "@prisma/client";
+
+export function eventToChannelName(event: Pick<Event, 'name'>): string {
+  return removeDiacritics(event.name)
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, '-');
+}
 
 export function projectToSlackChannelName(
   project: { mentors: Pick<Mentor, 'givenName' | 'surname'>[] }

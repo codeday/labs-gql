@@ -4,10 +4,13 @@ import { ApolloServer } from 'apollo-server-express';
 import { graphqlUploadExpress } from 'graphql-upload';
 import ws from 'ws';
 import { execute, subscribe } from 'graphql';
+import { makeDebug } from './utils';
 import { useServer } from 'graphql-ws/lib/use/ws';
 import { createSchema } from './schema';
 import { createContext as context } from './context';
 import config from './config';
+
+const DEBUG = makeDebug('server');
 
 export async function startServer(): Promise<void> {
   const schema = await createSchema();
@@ -33,7 +36,6 @@ export async function startServer(): Promise<void> {
       schema, execute, subscribe, context,
     }, wsServer);
 
-    // eslint-disable-next-line no-console
-    console.log(`Listening on http://0.0.0.0:${config.port}`);
+    DEBUG(`Listening on http://0.0.0.0:${config.port}`);
   });
 }

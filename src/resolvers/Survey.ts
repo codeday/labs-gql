@@ -6,15 +6,16 @@ import {
   PrismaClient,
   Survey as PrismaSurvey,
   SurveyOccurence as PrismaSurveyOccurence,
-  SurveyResponse as PrismaSurveyResponse,
 } from '@prisma/client';
+import { makeDebug } from '../utils';
 import { Inject, Service } from 'typedi';
-import { Context, AuthRole, AuthContext } from '../context';
+import { Context, AuthRole } from '../context';
 import { Survey, SurveyOccurence } from '../types';
 import { SurveyCreateInput } from '../inputs';
 import { getSurveyResponseType, validateActive, validateSurveyEvent } from '../utils';
 import { SurveyRespondInput } from '../inputs/SurveyRespondInput';
-import { error } from 'console';
+
+const DEBUG = makeDebug('resolvers:Survey');
 
 @Service()
 @Resolver(Survey)
@@ -153,7 +154,7 @@ export class SurveyResolver {
               const cautionFunction = new Function(`{ return ${survey[surveyCautionName] as string} };`);
               response.caution = cautionFunction.call(null)(response.response);
             } catch (ex) {
-              console.warn(`Could not evaluate ${survey.name}.${surveyCautionName}: `, ex);
+              DEBUG(`Could not evaluate ${survey.name}.${surveyCautionName}: `, ex);
             }
           }
           return response;

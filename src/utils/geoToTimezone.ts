@@ -34,7 +34,6 @@ export async function geoToTimezone(postal: string, country: string): Promise<nu
     try {
       const resp = await fetch(url);
       const data = await resp.json();
-      console.log(data);
       cache[key] = data?.results[0]?.fields?.timezone?.utc_offset;
     } catch (ex) {}
   }

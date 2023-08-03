@@ -1,10 +1,20 @@
 import { Container } from 'typedi';
 import { PrismaClient } from '@prisma/client';
 import { DateTime } from 'luxon';
+import { makeDebug } from "../../utils";
+
+const DEBUG = makeDebug('automation:tasks:eventDeactivate');
+
+export const JOBSPEC = '0 3 * * *';
 
 const GRACE_PERIOD_WEEKS = 2;
 
-export async function updateActiveEvents() {
+/**
+ * Most automated functions check `isActive` to make sure they're not operating
+ * on students from older batches of events. This function automatically marks
+ * events as inactive a few weeks after the last student leaves. 
+ */
+export default async function eventDeactivate() {
   const prisma = Container.get(PrismaClient);
   const now = DateTime.now();
 
@@ -31,9 +41,12 @@ export async function updateActiveEvents() {
 
       return now > expiresAt;
     });
-
-  await prisma.event.updateMany({
-    where: { id: { in: expiredEvents.map(e => e.eventId) } },
-    data: { isActive: false },
-  });
+    
+  if (expiredEvents.length > 0) {
+    DEBUG(`Deactivating events: ${expiredEvents.map(e => e.eventId)}`);
+    await prisma.event.updateMany({
+      where: { id: { in: expiredEvents.map(e => e.eventId) } },
+      data: { isActive: false },
+    });
+  }
 }

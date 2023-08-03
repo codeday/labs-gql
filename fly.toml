@@ -7,3 +7,8 @@ primary_region = "sea"
 
 [experimental]
   auto_rollback = true
+
+[env]
+  DEBUG = "codeday:labs:*"
+  DEBUG_HIDE_DATE = "1"
+  DEBUG_COLORS = "1"

@@ -15,7 +15,7 @@ export function getTimezoneOffset (timeZone: string): number | null{
   if (!offset) return 0;
 
   const matchData = offset.match(/([+-])(\d+)(?::(\d+))?/);
-  if (!matchData) throw `cannot parse timezone name: ${timeZoneName}`;
+  if (!matchData) throw new Error(`Cannot parse timezone name: ${timeZoneName}`);
 
   const [, sign, hour, minute] = matchData;
   let result = parseInt(hour) * 60;

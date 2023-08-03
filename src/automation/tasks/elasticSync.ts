@@ -1,10 +1,15 @@
 import { Client } from '@elastic/elasticsearch';
 import { PrismaClient } from '@prisma/client';
 import Container from 'typedi';
-import config from '../config';
-import { projectToElasticEntry, ElasticEntrySchema, ElasticEntry } from './ElasticEntry';
+import config from '../../config';
+import { projectToElasticEntry, ElasticEntrySchema, ElasticEntry } from '../../search';
+import { makeDebug } from "../../utils";
 
-export async function syncElastic(): Promise<void> {
+const DEBUG = makeDebug('automation:tasks:elasticSync');
+
+export const JOBSPEC = '* * * * *';
+
+export default async function syncElastic(): Promise<void> {
   const prisma = Container.get(PrismaClient);
   const elastic = Container.get(Client);
 
@@ -36,8 +41,7 @@ export async function syncElastic(): Promise<void> {
     )),
   ];
 
-  // eslint-disable-next-line no-console
-  console.log(`Synchronized ${dataset.length} entires with elastic (${datasetAvailable.length} available).`);
+  DEBUG(`Synchronized ${dataset.length} entires with elastic (${datasetAvailable.length} available).`);
 
   if (body.length > 0) {
     const { body: resp } = await elastic.bulk({ refresh: true, body });
@@ -46,8 +50,7 @@ export async function syncElastic(): Promise<void> {
       resp.items
         // FIXME: hack to remove massive amounts of 404 log spam 
         .filter((action: Record<string, Record<string, unknown>>) => action[Object.keys(action)[0]].error && action[Object.keys(action)[0]].status !== 404 )
-        // eslint-disable-next-line no-console
-        .forEach(console.error);
+        .forEach(DEBUG);
     }
   }
 }

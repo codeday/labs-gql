@@ -6,6 +6,9 @@ import handlebars from 'handlebars';
 import { Marked } from '@ts-stack/markdown';
 import { maybeRequire } from '../utils';
 import { EmailContext, FrontMatter } from './spec';
+import { makeDebug } from '../utils';
+
+const DEBUG = makeDebug('email:loader');
 
 const EMAIL_DIR = path.join(__dirname, 'templates');
 
@@ -58,5 +61,9 @@ export async function getEmailGenerators(): Promise<EmailGenerator[]> {
       };
     }));
 
-  return <EmailGenerator[]> files.filter(Boolean);
+  const validFiles = files.filter(Boolean);
+
+  DEBUG(`Loaded ${validFiles.length} email generators.`);
+
+  return <EmailGenerator[]> validFiles;
 }
