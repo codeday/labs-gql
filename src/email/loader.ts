@@ -29,7 +29,7 @@ function isEmailTs(obj: Record<string, any> | undefined): obj is EmailGeneratorT
 
 export async function getEmailGenerators(): Promise<EmailGenerator[]> {
   const files = await Promise.all(fs.readdirSync(EMAIL_DIR)
-    .filter((n) => n !== 'spec.ts' && path.extname(n) !== '.ts')
+    .filter((n) => n !== 'spec.ts' && path.extname(n) === '.md')
     .map((fileName) => fileName.replace(/\.[^/.]+$/, ''))
     .map((fileBaseName) => ({
       ts: `${path.join(EMAIL_DIR, fileBaseName)}.ts`,

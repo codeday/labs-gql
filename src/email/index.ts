@@ -18,7 +18,7 @@ export * from './loader';
 export async function getTemplate<T>(
   template: string
 ): Promise<HandlebarsTemplateDelegate<T>> {
-  return handlebars.compile<T>(getTemplateFile(template));
+  return handlebars.compile<T>(await getTemplateFile(template));
 }
 
 async function getTemplateFile(template: string): Promise<string> {
@@ -66,6 +66,8 @@ export async function sendEmailsForGenerator(generator: EmailGenerator): Promise
       && (context.project?.id || null) === prev.projectId
     ), false)
   ));
+
+  DEBUG(`* ${emailId}: ${newContexts.length} emails to send.`);
 
   for (const context of newContexts) await sendEmailForContext(emailId, generator, context);
 }

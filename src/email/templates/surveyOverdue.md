@@ -1,6 +1,8 @@
 Hi {{ to.givenName }},
 
-{{ survey.name }} is due soon, [click here to submit it.]({{ dashboardFor to }}/survey/{{ survey.id }}/{{ surveyOccurence.id }})
+The CodeDay Labs form "{{ survey.name }}" is now overdue. Please [submit it]({{ dashboardFor to }}/survey/{{ survey.id }}/{{ surveyOccurence.id }}) as soon as you can.
+
+Thank you!
 
 <div>
 <div style="color: #484848;">--<br />The CodeDay Labs Team</div>
