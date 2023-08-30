@@ -11,4 +11,4 @@ export type ProjectWithStandups = PickNonNullable<Project, 'standupId' | 'id'>
   };
 
 export type EventWithProjectChannel = EventWithStandupAndProsper
-  & { projects: PickNonNullable<Project, 'id' | 'slackChannelId'>[] };
+  & { projects: PickNonNullable<Project, 'id' | 'slackChannelId' | 'standupId'>[] };

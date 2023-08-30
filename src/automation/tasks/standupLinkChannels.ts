@@ -21,7 +21,7 @@ export default async function standupLinkChannels() {
       standupAndProsperToken: true,
       slackWorkspaceId: true,
       projects: {
-        where: { slackChannelId: { not: null }, standupId: null },
+        where: { slackChannelId: { not: null } },
         select: {
           id: true,
           slackChannelId: true,
