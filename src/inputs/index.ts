@@ -1,4 +1,5 @@
 export * from './AutocompleteFilterTypeInput';
+export * from './EventsWhereInput';
 export * from './IdOrUsernameInput';
 export * from './IdOrUsernameOrEmailInput';
 export * from './MentorApplyInput';

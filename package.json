@@ -17,13 +17,13 @@
     "@elastic/elasticsearch": "^7.13.0",
     "@prisma/client": "3",
     "@slack/web-api": "^6.8.1",
-    "@ts-stack/markdown": "^1.4.0",
+    "@ts-stack/markdown": "1.4",
     "@types/redis": "^2.8.28",
     "ajv": "^8.6.2",
     "apollo-server": "^2.24.1",
     "apollo-server-express": "^2.24.1",
     "class-validator": "^0.13.1",
-    "cron": "^2.3.1",
+    "cron": "^3.1.4",
     "debug": "^4.3.4",
     "diacritics": "^1.3.0",
     "dotenv": "^9.0.2",
@@ -39,7 +39,7 @@
     "json-schema": "^0.3.0",
     "jsonwebtoken": "^8.5.1",
     "luxon": "^1.27.0",
-    "node-fetch": "^2.6.1",
+    "node-fetch": "2",
     "nodemailer": "^6.6.0",
     "openai": "^3.3.0",
     "redis": "^3.1.2",
@@ -53,13 +53,13 @@
   },
   "devDependencies": {
     "@codeday/eslint-typescript-config": "^2.1.5",
-    "@types/cron": "^2.0.1",
     "@types/debug": "^4.1.8",
     "@types/diacritics": "^1.3.1",
     "@types/graphql-upload": "^8.0.4",
     "@types/jsonwebtoken": "^8.5.1",
     "@types/luxon": "^1.26.5",
     "@types/node": "^15.3.0",
+    "@types/node-fetch": "2",
     "@types/nodemailer": "^6.4.1",
     "@types/tmp": "^0.2.3",
     "@types/url-search-params": "^1.1.0",
@@ -68,6 +68,6 @@
     "prisma": "3",
     "ts-node": "^9.1.1",
     "ts-node-dev": "^1.1.6",
-    "typescript": "^5.1.6"
+    "typescript": "^5.2.2"
   }
 }

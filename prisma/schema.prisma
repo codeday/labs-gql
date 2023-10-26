@@ -64,6 +64,12 @@ enum QuestionType {
   CONTENT
 }
 
+enum TrainingEntryType {
+  ARTICLE
+  VIDEO
+  QUIZ
+}
+
 model Event {
   // Metadata
   id        String   @id @default(cuid())
@@ -90,6 +96,7 @@ model Event {
   isActive                      Boolean @default(false)
   matchPreferenceSubmissionOpen Boolean @default(false)
   matchComplete                 Boolean @default(false)
+  partnersOnly                  Boolean @default(false)
 
   slackWorkspaceId              String?
   slackUserGroupId              String?
@@ -100,6 +107,9 @@ model Event {
   standupAiModelWorkload        String?
   standupAiModelWorkloadPending String?
 
+  studentTrainingGroup   TrainingGroup? @relation(fields: [studentTrainingGroupId], references: [id])
+  studentTrainingGroupId String?
+
   surveys        Survey[]
   mentors        Mentor[]
   students       Student[]
@@ -109,6 +119,125 @@ model Event {
   resources      Resource[]
   standupThreads StandupThread[]
   standupResults StandupResult[]
+  meetings       Meeting[]
+}
+
+model TrainingGroup {
+  // Metadata
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Data
+  name String
+
+  // Relations
+  events  Event[]
+  entries TrainingEntry[]
+}
+
+model TrainingEntry {
+  // Metadata
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Data
+  sort            Int               @default(0)
+  name            String
+  type            TrainingEntryType
+  content         String?
+  videoId         String?
+  videoTranscript String?
+  quizSchema      Json?
+  quizUi          Json?
+  quizScore       String?
+
+  // Relations
+  trainingGroup   TrainingGroup @relation(fields: [trainingGroupId], references: [id])
+  trainingGroupId String
+
+  responses TrainingEntryResponse[]
+}
+
+model TrainingEntryResponse {
+  // Metadata
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Data
+  score    Float
+  response Json?
+
+  // Relations
+  trainingEntry   TrainingEntry @relation(fields: [trainingEntryId], references: [id])
+  trainingEntryId String
+
+  student   Student? @relation(fields: [studentId], references: [id])
+  studentId String?
+}
+
+model Meeting {
+  // Metadata
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Data
+  visibleAt DateTime
+  dueAt     DateTime
+
+  sentAgendaVisibleReminder Boolean @default(false)
+  sentAgendaOverdueReminder Boolean @default(false)
+  sentMeetingReminder       Boolean @default(false)
+
+  agendaStudentSchema Json?
+  agendaStudentUi     Json?
+
+  notesStudentSchema Json?
+  notesStudentUi     Json?
+
+  // Relations
+  event   Event  @relation(fields: [eventId], references: [id])
+  eventId String
+
+  responses  MeetingResponse[]
+  attendance MeetingAttendance[]
+}
+
+model MeetingAttendance {
+  // Metadata
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  attended Boolean @default(false)
+  prepared Boolean @default(false)
+
+  // Relations
+  meeting   Meeting @relation(fields: [meetingId], references: [id])
+  meetingId String
+
+  student   Student? @relation(fields: [studentId], references: [id])
+  studentId String?
+}
+
+model MeetingResponse {
+  // Metadata
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  agenda Json?
+  notes  Json?
+
+  // Relations
+  meeting   Meeting @relation(fields: [meetingId], references: [id])
+  meetingId String
+
+  authorStudent   Student? @relation(fields: [authorStudentId], references: [id])
+  authorStudentId String?
 }
 
 model Survey {
@@ -273,6 +402,9 @@ model Student {
   tagTrainingSubmissions  TagTrainingSubmission[]
   authoredSurveyResponses SurveyResponse[]        @relation("AuthorStudent")
   targetSurveyResponses   SurveyResponse[]        @relation("TargetStudent")
+  meetingResponses        MeetingResponse[]
+  meetingAttendance       MeetingAttendance[]
+  trainingEntryResponses  TrainingEntryResponse[]
 
   event   Event  @relation(fields: [eventId], references: [id])
   eventId String @default("codeday-labs-2022")

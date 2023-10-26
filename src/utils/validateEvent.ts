@@ -11,6 +11,17 @@ export async function validateStudentEvent(auth: AuthContext, arg: IdOrUsernameI
   if (student && student.eventId !== auth.eventId) throw new Error('Student event does not match token event.');
 }
 
+export async function validatePartnerStudent(auth: AuthContext, arg: IdOrUsernameInput | IdOrUsernameOrEmailInput): Promise<void> {
+  const student = await Container.get(PrismaClient).student.findUnique({
+    where: idOrUsernameOrEmailToUniqueWhere(auth, arg),
+  });
+  if (student &&
+      (!student.partnerCode || student.partnerCode.toLowerCase() !== auth.partnerCode?.toLowerCase())
+  ) {
+      throw new Error('Partner code does not match.');
+  }
+}
+
 export async function validateMentorEvent(auth: AuthContext, arg: IdOrUsernameInput | IdOrUsernameOrEmailInput ): Promise<void> {
   const mentor = await Container.get(PrismaClient).mentor.findUnique({
     where: idOrUsernameOrEmailToUniqueWhere(auth, arg),

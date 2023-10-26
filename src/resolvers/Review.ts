@@ -6,7 +6,7 @@ import {
 } from '@prisma/client';
 import { GraphQLJSONObject } from 'graphql-type-json';
 import { Inject, Service } from 'typedi';
-import { idOrUsernameToUniqueWhere, randInt, validateStudentEvent } from '../utils';
+import { idOrUsernameToUniqueWhere, randInt, validatePartnerStudent, validateStudentEvent } from '../utils';
 import { Context, AuthRole } from '../context';
 import { Student } from '../types';
 import {
@@ -111,26 +111,28 @@ export class ReviewResolver {
       }));
   }
 
-  @Authorized(AuthRole.ADMIN)
+  @Authorized(AuthRole.ADMIN, AuthRole.PARTNER)
   @Mutation(() => Student)
   async offerStudentAdmission(
     @Ctx() { auth }: Context,
     @Arg('where', () => IdOrUsernameInput) where: IdOrUsernameInput,
   ): Promise<PrismaStudent> {
     await validateStudentEvent(auth, where);
+    await validatePartnerStudent(auth, where);
     return this.prisma.student.update({
       where: idOrUsernameToUniqueWhere(auth, where),
       data: { status: StudentStatus.OFFERED, offerDate: new Date() },
     });
   }
 
-  @Authorized(AuthRole.ADMIN)
+  @Authorized(AuthRole.ADMIN, AuthRole.PARTNER)
   @Mutation(() => Student)
   async resetStudentAdmissionOffer(
     @Ctx() { auth }: Context,
     @Arg('where', () => IdOrUsernameInput) where: IdOrUsernameInput,
   ): Promise<PrismaStudent> {
     await validateStudentEvent(auth, where);
+    await validatePartnerStudent(auth, where);
     return this.prisma.student.update({
       where: idOrUsernameToUniqueWhere(auth, where),
       data: { offerDate: new Date() },
@@ -159,7 +161,7 @@ export class ReviewResolver {
     });
   }
 
-  @Authorized(AuthRole.ADMIN)
+  @Authorized(AuthRole.ADMIN, AuthRole.PARTNER)
   @Mutation(() => Student)
   async rejectStudent(
     @Ctx() { auth }: Context,
@@ -167,6 +169,7 @@ export class ReviewResolver {
     @Arg('reason', () => RejectionReason, { nullable: true }) reason?: RejectionReason,
   ): Promise<PrismaStudent> {
     await validateStudentEvent(auth, where);
+    await validatePartnerStudent(auth, where);
     return this.prisma.student.update({
       where: idOrUsernameToUniqueWhere(auth, where),
       data: {

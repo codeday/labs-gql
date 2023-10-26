@@ -1,5 +1,7 @@
 import { ObjectType, Field, Authorized } from 'type-graphql';
 import { AuthRole } from '../context';
+import { GraphQLJSONObject } from 'graphql-type-json';
+import { JSONSchema7 } from 'json-schema';
 
 @ObjectType()
 export class Event {
@@ -60,4 +62,16 @@ export class Event {
   @Authorized(AuthRole.ADMIN)
   @Field(() => String, { nullable: true })
   standupAndProsperToken: string | null
+
+  @Field(() => GraphQLJSONObject, { nullable: true })
+  mentorApplicationSchema?: JSONSchema7
+  
+  @Field(() => GraphQLJSONObject, { nullable: true })
+  mentorApplicationUi?: Record<string, unknown>
+
+  @Field(() => GraphQLJSONObject, { nullable: true })
+  studentApplicationSchema?: JSONSchema7
+  
+  @Field(() => GraphQLJSONObject, { nullable: true })
+  studentApplicationUi?: Record<string, unknown>
 }

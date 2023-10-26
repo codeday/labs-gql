@@ -7,6 +7,7 @@ export enum AuthRole {
   APPLICANT_MENTOR = 'am',
   APPLICANT_STUDENT = 'as',
   PARTNER = 'p',
+  UNSPECIFIED = '_',
 }
 
 export enum AuthByTarget {
