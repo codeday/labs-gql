@@ -1,9 +1,7 @@
 ---
 to: "{{ mentor.email }}"
 {{#if mentor.managerUsername }}cc: "{{ mentor.managerUsername }}@codeday.org"{{/if}}
-bcc: "labs@codeday.org"
-from: "labs@codeday.org"
-subject: "Your Mentees - {{ join (mapToKey project.students 'givenName') ', ' }}"
+subject: "Your {{ event.name }} Mentees - {{ join (mapToKey project.students 'givenName') ', ' }}"
 ---
 
 Hi {{ mentor.givenName }}, we're excited to say we've found you matches for the following project description:
@@ -26,8 +24,4 @@ Info:
 
 {{/each}}
 
-
-<div>
-<div style="color: #484848;">--<br />The CodeDay Labs Team</div>
-<div><br /><img src="https://f1.codeday.org/logo.png" /><a style="color: #bdbdbd; text-decoration: none;" href="https://www.youtube.com/watch?v=GKNBurEnGow" target="_blank" rel="noopener noreferrer"><br />There's a place in tech for everyone.</a><a style="color: #bdbdbd; text-decoration: none;" href="https://www.youtube.com/watch?v=GKNBurEnGow" target="_blank" rel="noopener noreferrer"><br /></a></div>
-</div>
+{{{ event.emailSignature }}}

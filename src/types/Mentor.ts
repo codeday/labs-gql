@@ -92,6 +92,14 @@ export class Mentor implements PrismaMentor {
     return (this.profile as {[k: string]: Prisma.JsonValue | undefined})[key] || null;
   }
 
+  @Authorized([AuthRole.PARTNER, AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.MENTOR])
+  @Field(() => Number, { name: 'emailCount' })
+  async emailCount(): Promise<number> {
+    return await Container.get(PrismaClient).projectEmail.count({
+      where: { mentorId: this.id }
+    });
+  }
+
   surveyResponsesAbout?: PrismaSurveyResponse[]
 
   @Authorized([AuthRole.ADMIN, AuthRole.MANAGER])

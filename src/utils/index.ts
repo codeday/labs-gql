@@ -19,3 +19,4 @@ export * from './groupBy';
 export * from './ArrayElement';
 export * from './makeDebug';
 export * from './timezoneFriendlyNames';
+export * from './nameToSlug';

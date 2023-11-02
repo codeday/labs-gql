@@ -107,7 +107,6 @@ export class Student implements PrismaStudent {
   @Field(() => Date, { nullable: true })
   offerDate: Date | null
 
-  @Authorized(AuthRole.ADMIN)
   @Field(() => String, { nullable: true })
   slackId: string | null
 
@@ -282,6 +281,14 @@ export class Student implements PrismaStudent {
     }
 
     return this.notes;
+  }
+
+  @Authorized([AuthRole.PARTNER, AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.MENTOR])
+  @Field(() => Number, { name: 'emailCount' })
+  async emailCount(): Promise<number> {
+    return await Container.get(PrismaClient).projectEmail.count({
+      where: { studentId: this.id }
+    });
   }
 
   standupResults: StandupResult[] | null

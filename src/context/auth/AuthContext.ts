@@ -19,7 +19,7 @@ export class AuthContext {
   // eslint-disable-next-line sonarjs/cognitive-complexity
   validate(): void {
     if (this.isAdmin && (this.username || this.id)) throw Error('Admin tokens may not specify a username or id.');
-    if (!this.eventId && !this.isUnspecified && !this.isAdmin) {
+    if (!this.eventId && !this.isUnspecified) {
       throw Error('Tokens must specify event id.');
     }
     if ((this.isApplicant || this.isManager || this.isReviewer || this.isUnspecified) && this.id) {
@@ -37,7 +37,7 @@ export class AuthContext {
   }
 
   get isAuthenticated(): boolean {
-    return Boolean(this.token);
+    return Boolean(this.token) && !this.isUnspecified;
   }
 
   get type(): AuthRole | undefined {
@@ -126,9 +126,8 @@ export class AuthContext {
     throw new Error('Token did not include username or id.');
   }
 
-  toWhereMany(): { username: string, eventId: string } | { id: string } {
+  toWhereMany(): { username: string, eventId?: string } | { id: string } {
     const { username, id, eventId } = this;
-    if (!eventId) throw new Error('Token did not include event id.');
     if (username) return { username, eventId };
     if (id) return { id };
     throw new Error('Token did not include username or id.');

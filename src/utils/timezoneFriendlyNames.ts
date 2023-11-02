@@ -356,6 +356,6 @@ export const TIMEZONE_FRIENDLY_NAMES = Object.fromEntries(TIMEZONES.map(name => 
   ).formatToParts().find(({ type }) => type === 'timeZoneName');
   return [
     name,
-    format?.value || null,
+    format?.value || name,
   ];
 }));

@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { Field, InputType, registerEnumType } from "type-graphql";
+import { AuthContext } from "../context";
 
 export enum EventStateFilter {
   ACTIVE = 'ACTIVE',
@@ -18,6 +19,9 @@ export class EventsWhereInput {
 
   @Field(() => Boolean, { nullable: true })
   public?: boolean
+
+  @Field(() => Boolean, { nullable: true })
+  mine?: boolean
 
   private dateFilterToWhere(): Prisma.EventWhereInput {
     if (!this.state) return {};
@@ -50,10 +54,19 @@ export class EventsWhereInput {
     }
   }
 
-  toQuery(): Prisma.EventWhereInput {
+  toQuery(auth: AuthContext): Prisma.EventWhereInput {
     return {
-      ...(this.public ? { partnersOnly: false } : {}),
-      ...this.dateFilterToWhere(),
+      AND: [
+        this.public ? { partnersOnly: false } : {},
+        this.dateFilterToWhere(),
+        this.mine ? {
+          OR: [
+            { mentors: { some: { username: auth.username || '' } } },
+            { mentors: { some: { managerUsername: auth.username || '' } } },
+            { students: { some: { username: auth.username || '' } } },
+          ],
+        } : {},
+      ],
     };
   }
 }

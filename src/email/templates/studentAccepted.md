@@ -1,12 +1,11 @@
 ---
 to: "{{ student.email }}"
-from: "labs@codeday.org"
-subject: "CodeDay Labs Confirmed Acceptance"
+subject: "{{ event.name }}: Acceptance Confirmation"
 ---
 
 Hi {{ student.givenName }},
 
-We're excited you have accepted your offer for CodeDay Labs ({{ student.weeks }}-week program).
+We're excited you have accepted your offer for {{ event.name }} ({{ student.weeks }}-week program).
 Here's what you should know about the next steps:
 
 1. The next step is **matching:** several weeks before the start of the program, we'll provide you with a number of
@@ -19,20 +18,18 @@ Here's what you should know about the next steps:
 
 Some other pro-tips:
 
-- We'll have tech and career talks on most weekdays during the program, except the first week (onboarding) and last week.
-  These aren't required, but we recommend you attend a few and ask questions to the speaker (a good way to network).
-- When you list this on your resume or LinkedIn, most students list the position as "Labs Intern at CodeDay" with a
-  description of the format "Under the guidance of (mentor) from (company), worked on (project description)." Remember
-  that even though your mentor works for a tech company, you're not an intern for that company.
-- CodeDay Labs isn't compatible with most full-time jobs or internships. If you're no longer able to spend your promised
-  minimum {{ student.minHours }} hours a week on this, please let us know.
-- CodeDay Labs is not a traditional paid internship, and you're not an employee of CodeDay. (Some schools have a
-  partnership where students are paid a stipend while participating. This isn't through CodeDay, and we won't be able
-  to answer any questions about it. If you haven't been told this applies to you already, it most likely does not.)
+- When you list this on your resume or LinkedIn, use the title "{{ event.title }}", and start the description with:
+  "Under the guidance of (mentor) from (company), worked on (project description)." Do not list that you are an employee
+  of your mentor's company.
+- If you're no longer able to spend your promised minimum {{ student.minHours }} hours a week on this, please let us
+  know as soon as possible.
+- {{ event.name }} is not a traditional paid internship, it's an educational opportunity. You're not an employee. (Some
+  schools have a partnership where students are paid a stipend while participating. This is through your school; we
+  can't answer any questions about it. Unless you have already been told this applies to you, it doesn't.)
+- If you need paperwork filled out for your school, please reply to this email.
+- We cannot sponsor a work visa. However, because this is an educational opportunity most people do not require a
+  work visa.
 
 If you have any questions, you can reply to this email.
 
-<div>
-<div style="color: #484848;">--<br />The CodeDay Labs Team</div>
-<div><br /><img src="https://f1.codeday.org/logo.png" /><a style="color: #bdbdbd; text-decoration: none;" href="https://www.youtube.com/watch?v=GKNBurEnGow" target="_blank" rel="noopener noreferrer"><br />There's a place in tech for everyone.</a><a style="color: #bdbdbd; text-decoration: none;" href="https://www.youtube.com/watch?v=GKNBurEnGow" target="_blank" rel="noopener noreferrer"><br /></a></div>
-</div>
+{{{ event.emailSignature }}}

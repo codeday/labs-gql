@@ -4,7 +4,7 @@ import { Marked } from '@ts-stack/markdown';
 import { Container } from 'typedi';
 import { Mentor, PrismaClient, Student, Event } from '@prisma/client';
 import { Transporter } from 'nodemailer';
-import { EmailGenerator } from './loader';
+import { EmailGenerator, PartialEvent } from './loader';
 import { EmailContext } from './spec';
 import config from '../config';
 import path from 'path';
@@ -14,6 +14,7 @@ import { makeDebug } from "../utils";
 const DEBUG = makeDebug('email');
 
 export * from './loader';
+export * from './postmark';
 
 export async function getTemplate<T>(
   template: string
@@ -26,13 +27,30 @@ async function getTemplateFile(template: string): Promise<string> {
   return buffer.toString();
 }
 
-async function sendEmailForContext(emailId: string, generator: EmailGenerator, context: EmailContext): Promise<void> {
+async function sendEmailForContext(
+  emailId: string,
+  generator: EmailGenerator,
+  context: EmailContext,
+  event: PartialEvent
+): Promise<void> {
+
   const prisma = Container.get(PrismaClient);
   const email = await Container.get<Transporter>('email');
-  const { frontMatter, html, text } = await generator.template(context);
+  const { frontMatter, html, text } = await generator.template({ ...context, event });
+
   try {
     DEBUG(`Sending email "${frontMatter.subject}" to ${frontMatter.to}.`);
-    await email.sendMail({ ...frontMatter, html, text });
+    await email.sendMail({
+      ...frontMatter,
+      html,
+      text,
+      from: frontMatter.from || config.email.from,
+      bcc: [frontMatter.bcc, config.email.from].filter(Boolean) as string[],
+      cc: [
+        frontMatter.cc,
+        context.project && `${context.project.id}@${config.email.inboundDomain}`
+      ].filter(Boolean) as string[],
+    });
     await prisma.emailSent.create({
       data: {
         emailId,
@@ -46,11 +64,14 @@ async function sendEmailForContext(emailId: string, generator: EmailGenerator, c
   }
 }
 
-export async function sendEmailsForGenerator(generator: EmailGenerator): Promise<void> {
+export async function sendEmailsForGenerator(
+  generator: EmailGenerator,
+  event: PartialEvent
+): Promise<void> {
   const prisma = Container.get(PrismaClient);
 
   const emailId = await generator.getId();
-  const contexts = await generator.getList(prisma);
+  const contexts = await generator.getList(prisma, event);
   if (!emailId || !contexts) return;
 
   const previousById = await prisma.emailSent.findMany({
@@ -69,7 +90,7 @@ export async function sendEmailsForGenerator(generator: EmailGenerator): Promise
 
   DEBUG(`* ${emailId}: ${newContexts.length} emails to send.`);
 
-  for (const context of newContexts) await sendEmailForContext(emailId, generator, context);
+  for (const context of newContexts) await sendEmailForContext(emailId, generator, context, event);
 }
 
 
@@ -92,8 +113,8 @@ export async function sendLoginLinks(
 
   await email.sendMail({
     to,
-    from: 'labs@codeday.org',
-    subject: 'CodeDay Labs Dashboard Login Link',
+    from: config.email.from,
+    subject: 'Dashboard Login Link',
     text: renderedTemplate,
     html: Marked.parse(renderedTemplate),
   });

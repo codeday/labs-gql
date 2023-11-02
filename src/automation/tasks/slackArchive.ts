@@ -4,7 +4,7 @@ import {
   SlackEventWithProjects,
   SlackMentorInfo,
   SlackStudentInfo,
-  addMissingSlackChannelMembers,
+  archiveSlackChannels,
   linkExistingSlackChannels,
   linkExistingSlackMembers,
   slackEventInfoSelect,
@@ -12,11 +12,9 @@ import {
 } from "../../slack";
 import { makeDebug } from "../../utils";
 
-const DEBUG = makeDebug('automation:tasks:syncSlack');
+const DEBUG = makeDebug('automation:tasks:slackArchive');
 
-export const JOBSPEC = '0 * * * *';
-
-export default async function slackSync(): Promise<void> {
+export default async function slackArchive(): Promise<void> {
   const prisma = Container.get(PrismaClient);
   const activeEvents = await prisma.event.findMany({
       where: {
@@ -28,12 +26,9 @@ export default async function slackSync(): Promise<void> {
     }) as SlackEventWithProjects<SlackMentorInfo & SlackStudentInfo>[];
 
   for (const event of activeEvents) {
-    DEBUG(`Syncing Slack for ${event.id}.`);
+    DEBUG(`Archiving Slack for ${event.id}.`);
     try {
-      await linkExistingSlackMembers(event);
-      await linkExistingSlackChannels(event);
-      await updateSlackUserGroups(event);
-      await addMissingSlackChannelMembers(event);
+      await archiveSlackChannels(event);
     } catch (ex) {
       DEBUG(ex);
     }

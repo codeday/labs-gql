@@ -1,7 +1,9 @@
-import { ObjectType, Field, Authorized } from 'type-graphql';
-import { AuthRole } from '../context';
+import { ObjectType, Field, Authorized, Ctx } from 'type-graphql';
+import { AuthRole, Context } from '../context';
 import { GraphQLJSONObject } from 'graphql-type-json';
 import { JSONSchema7 } from 'json-schema';
+import Container from 'typedi';
+import { PrismaClient } from '@prisma/client';
 
 @ObjectType()
 export class Event {
@@ -74,4 +76,22 @@ export class Event {
   
   @Field(() => GraphQLJSONObject, { nullable: true })
   studentApplicationUi?: Record<string, unknown>
+
+  @Field(() => Boolean)
+  async iAmMentor(
+    @Ctx() { auth }: Context,
+  ): Promise<boolean> {
+    if (!(auth.isAuthenticated || auth.isUnspecified)) return false;
+    return (await Container.get(PrismaClient)
+      .mentor.count({ where: auth.toWhereMany()! })) > 0;
+  }
+
+  @Field(() => Boolean)
+  async iAmStudent(
+    @Ctx() { auth }: Context,
+  ): Promise<boolean> {
+    if (!(auth.isAuthenticated || auth.isUnspecified)) return false;
+    return (await Container.get(PrismaClient)
+      .student.count({ where: auth.toWhereMany()! })) > 0;
+  }
 }

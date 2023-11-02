@@ -38,7 +38,7 @@ export async function createSlackChannels(
     DEBUG(`... channel created!`);
     
     await prisma.project.update({
-      where: { id },
+      where: { id: project.id },
       data: { slackChannelId: id },
     });
 

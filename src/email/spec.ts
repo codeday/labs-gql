@@ -10,6 +10,6 @@ export interface FrontMatter {
   to?: string
   cc?: string
   bcc?: string
-  from: string
+  from?: string
   subject: string
 }

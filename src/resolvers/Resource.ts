@@ -60,6 +60,7 @@ export class ResourceResolver {
     return this.prisma.resource.findMany({
       where: {
         [WHERE_KEYS[auth.type!] as string]: true,
+        eventId: auth.eventId,
       },
     });
   }

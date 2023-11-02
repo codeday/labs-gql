@@ -2,15 +2,17 @@ import { PrismaClient, ProjectStatus } from '@prisma/client';
 import { StudentStatus } from '../../enums';
 import { EmailContext } from '../spec';
 import { DateTime } from 'luxon';
+import { PartialEvent } from '../loader';
 
 export async function getId(): Promise<string | null> {
   return `studentOnboardingDue`;
 }
 
-export async function getList(prisma: PrismaClient): Promise<EmailContext[]> {
+export async function getList(prisma: PrismaClient, event: PartialEvent): Promise<EmailContext[]> {
   const students = await prisma.student.findMany({
     where: {
       status: StudentStatus.ACCEPTED,
+      eventId: event.id,
       event: {
         matchComplete: true,
         startsAt: {
@@ -26,6 +28,7 @@ export async function getList(prisma: PrismaClient): Promise<EmailContext[]> {
           },
         },
       },
+      trainingEntryResponses: { none: {} },
     },
     include: {
       projects: {

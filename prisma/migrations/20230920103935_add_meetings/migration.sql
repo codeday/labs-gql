@@ -12,7 +12,7 @@ CREATE TABLE "Meeting" (
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "eventId" TEXT NOT NULL,
 
-    "vivibleAt" TIMESTAMP(3) NOT NULL,
+    "visibleAt" TIMESTAMP(3) NOT NULL,
     "dueAt" TIMESTAMP(3) NOT NULL,
 	
 	"sentAgendaVisibleReminder" BOOLEAN NOT NULL DEFAULT FALSE,

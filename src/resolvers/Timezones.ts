@@ -7,7 +7,7 @@ import { Service } from "typedi";
 @Resolver()
 export class TimezoneResolver {
   @Query(() => GraphQLJSONObject)
-  supportedTimezones(): Promise<Record<string, string>> {
+  supportedTimezones(): Record<string, string> {
     return TIMEZONE_FRIENDLY_NAMES;
   }
 }

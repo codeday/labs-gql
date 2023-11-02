@@ -18,9 +18,11 @@ loadEnv();
   'EMAIL_PORT',
   'EMAIL_USER',
   'EMAIL_PASS',
+  'EMAIL_INBOUND_DOMAIN',
   'GEOCODIO_API_KEY',
   'OPENAI_API_KEY',
   'OPENAI_ORGANIZATION',
+  'WEBHOOK_KEY',
 ].forEach((req) => { if (!process.env[req]) throw Error(`The ${req} environment variable is required.`); });
 
 const secondaryRegion = process.env.PRIMARY_REGION
@@ -30,7 +32,11 @@ const secondaryRegion = process.env.PRIMARY_REGION
 const config = {
   debug: process.env.NODE_ENV !== 'production',
   port: process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 5000,
+  portWebhoook: process.env.PORT_WEBHOOK ? Number.parseInt(process.env.PORT_WEBHOOK) : 5001,
   secondaryRegion,
+  webhook: {
+    key: process.env.WEBHOOK_KEY!,
+  },
   app: {
     emailTemplateDir: path.join(__dirname, 'email', 'templates'),
   },
@@ -45,7 +51,9 @@ const config = {
     secret: process.env.AUTH_SECRET!,
     audience: process.env.AUTH_AUDIENCE!,
   },
-  email: <SMTPConnection.Options & { disable: boolean }> {
+  email: <SMTPConnection.Options & { disable: boolean, from: string, inboundDomain: string }> {
+    from: process.env.EMAIL_FROM || 'labs@codeday.org',
+    inboundDomain: process.env.EMAIL_INBOUND_DOMAIN!,
     host: process.env.EMAIL_HOST!,
     port: Number.parseInt(process.env.EMAIL_PORT!, 10),
     auth: {

@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { PrismaClient } from '@prisma/client';
+import { Event, PrismaClient } from '@prisma/client';
 import frontMatter from 'front-matter';
 import handlebars from 'handlebars';
 import { Marked } from '@ts-stack/markdown';
@@ -12,9 +12,11 @@ const DEBUG = makeDebug('email:loader');
 
 const EMAIL_DIR = path.join(__dirname, 'templates');
 
+export type PartialEvent = Pick<Event, 'id' | 'name' | 'emailSignature' | 'title'>;
+
 interface EmailGeneratorTs {
   getId(): Promise<string | null>
-  getList(client: PrismaClient): Promise<EmailContext[] | null>
+  getList(client: PrismaClient, event: PartialEvent): Promise<EmailContext[] | null>
 }
 
 export interface EmailGenerator extends EmailGeneratorTs {

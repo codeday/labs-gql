@@ -24,6 +24,7 @@ export default async function emailDueSurveysReminder(): Promise<void> {
 
   const visibleSurveys = await prisma.surveyOccurence.findMany({
     where: {
+      survey: { event: { isActive: true } },
       OR: [
         {
           AND: [
@@ -41,7 +42,7 @@ export default async function emailDueSurveysReminder(): Promise<void> {
         },
       ],
     },
-    include: { survey: true },
+    include: { survey: { include: { event: true } } },
   });
 
   for (const visibleSurvey of visibleSurveys) {

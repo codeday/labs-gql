@@ -16,23 +16,38 @@ export async function archiveSlackChannels(
   const archiveExtension = eventToChannelName(event);
 
   for (const project of event.projects.filter(p => p.slackChannelId)) {
-    const slackChannel = await slack.conversations.info(
-      { channel: project.slackChannelId! }
-    );
-    if (!slackChannel.ok || !slackChannel.channel?.name_normalized) return;
+      const slackChannel = await slack.conversations.info(
+        { channel: project.slackChannelId! }
+      );
+      if (!slackChannel.ok || !slackChannel.channel?.name_normalized) return;
 
-    const archivedName = slackChannel.channel.name_normalized
-      + '-' + archiveExtension;
+      DEBUG(`Joining ${slackChannel.channel.name_normalized}`);
+      try {
+        slack.conversations.join({ channel: project.slackChannelId! });
+      } catch (ex) {
+        DEBUG(ex);
+      }
 
-    DEBUG(`Archiving ${slackChannel.channel.name_normalized} as ${archivedName}`);
+      const archivedName = slackChannel.channel.name_normalized
+        + '-' + archiveExtension;
 
-    await slack.conversations.rename({
-      channel: project.slackChannelId!,
-      name: archivedName,
-    });
+      DEBUG(`Renaming ${slackChannel.channel.name_normalized} as ${archivedName}`);
+      try {
+        await slack.conversations.rename({
+          channel: project.slackChannelId!,
+          name: archivedName,
+        });
+      } catch (ex) {
+        DEBUG(ex);
+      }
 
-    await slack.conversations.archive({
-      channel: project.slackChannelId!
-    });
+      DEBUG(`Archiving ${project.slackChannelId}`);
+      try {
+        await slack.conversations.archive({
+          channel: project.slackChannelId!
+        });
+      } catch (ex) {
+        DEBUG(ex);
+      }
   }
 }

@@ -79,7 +79,9 @@ model Event {
   // Data
   name     String
   startsAt DateTime
-  title    String
+  emailSignature String?
+
+  title String
 
   studentApplicationsStartAt    DateTime
   studentApplicationsEndAt      DateTime
@@ -360,6 +362,7 @@ model Mentor {
   emailsSent              EmailSent[]
   authoredSurveyResponses SurveyResponse[] @relation("AuthorMentor")
   targetSurveyResponses   SurveyResponse[] @relation("TargetMentor")
+  projectEmails           ProjectEmail[]
 
   event   Event  @relation(fields: [eventId], references: [id])
   eventId String @default("codeday-labs-2022")
@@ -405,6 +408,7 @@ model Student {
   meetingResponses        MeetingResponse[]
   meetingAttendance       MeetingAttendance[]
   trainingEntryResponses  TrainingEntryResponse[]
+  projectEmails           ProjectEmail[]
 
   event   Event  @relation(fields: [eventId], references: [id])
   eventId String @default("codeday-labs-2022")
@@ -461,6 +465,7 @@ model Project {
   emailsSent            EmailSent[]
   projectPreferences    ProjectPreference[]
   targetSurveyResponses SurveyResponse[]
+  projectEmails         ProjectEmail[]
 
   affinePartner   Partner? @relation(fields: [affinePartnerId], references: [id])
   affinePartnerId String?
@@ -469,6 +474,30 @@ model Project {
   eventId        String          @default("codeday-labs-2022")
   standupThreads StandupThread[]
   standupResults StandupResult[]
+}
+
+model ProjectEmail {
+  // Metadata
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Data
+  subject  String?
+  to       String?
+  cc       String?
+  textBody String?
+  htmlBody String?
+
+  // Relations
+  student   Student? @relation(fields: [studentId], references: [id])
+  studentId String?
+
+  mentor   Mentor? @relation(fields: [mentorId], references: [id])
+  mentorId String?
+
+  project   Project @relation(fields: [projectId], references: [id])
+  projectId String
 }
 
 model AdmissionRating {
