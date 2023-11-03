@@ -1,5 +1,5 @@
 import {
-  Resolver, Mutation, Authorized, Arg,
+  Resolver, Mutation, Authorized, Arg, Ctx,
 } from 'type-graphql';
 import { Inject, Service } from 'typedi';
 import { Mentor, PrismaClient, Student } from '@prisma/client';
@@ -7,7 +7,7 @@ import handlebars from 'handlebars';
 import { Marked } from '@ts-stack/markdown';
 import { Transporter } from 'nodemailer';
 import { makeDebug } from '../utils';
-import { AuthRole } from '../context';
+import { AuthRole, Context } from '../context';
 import { StudentStatus, MentorStatus } from '../enums';
 import { StudentFilterInput, MentorFilterInput } from '../inputs';
 import { tokenFor } from '../email/helpers';
@@ -26,13 +26,17 @@ export class Emails {
   @Authorized(AuthRole.ADMIN)
   @Mutation(() => Number)
   async sendStudentEmail(
+    @Ctx() { auth }: Context,
     @Arg('subject', () => String) subjectStr: string,
     @Arg('body', () => String) bodyStr: string,
     @Arg('where', () => StudentFilterInput, { nullable: true }) where?: StudentFilterInput,
     @Arg('dryRun', () => Boolean, { nullable: true, defaultValue: false }) dryRun?: boolean,
   ): Promise<number> {
     const tos = await this.prisma.student.findMany({
-      where: where ? where.toQuery() : { status: StudentStatus.ACCEPTED },
+      where: {
+        ...(where ? where.toQuery() : { status: StudentStatus.ACCEPTED }),
+        eventId: auth.eventId!,
+      },
       include: { projects: { include: { mentors: true } } },
     });
     if (!dryRun) this.genericEmailSend(subjectStr, bodyStr, tos);
@@ -42,13 +46,17 @@ export class Emails {
   @Authorized(AuthRole.ADMIN)
   @Mutation(() => Number)
   async sendMentorEmail(
+    @Ctx() { auth }: Context,
     @Arg('subject', () => String) subjectStr: string,
     @Arg('body', () => String) bodyStr: string,
     @Arg('where', () => MentorFilterInput, { nullable: true }) where?: MentorFilterInput,
     @Arg('dryRun', () => Boolean, { nullable: true, defaultValue: false }) dryRun?: boolean,
   ): Promise<number> {
     const tos = await this.prisma.mentor.findMany({
-      where: where ? where.toQuery() : { status: MentorStatus.ACCEPTED },
+      where: {
+        ...(where ? where.toQuery() : { status: MentorStatus.ACCEPTED }),
+        eventId: auth.eventId!,
+      },
       include: { projects: { include: { students: true } } },
     });
     if (!dryRun) this.genericEmailSend(subjectStr, bodyStr, tos);

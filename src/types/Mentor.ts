@@ -63,6 +63,9 @@ export class Mentor implements PrismaMentor {
   eventId: string;
 
   @Field(() => String, { nullable: true })
+  slackId: string | null
+
+  @Field(() => String, { nullable: true })
   timezone: string | null
 
   event?: PrismaEvent;

@@ -40,6 +40,15 @@ async function sendEmailForContext(
 
   try {
     DEBUG(`Sending email "${frontMatter.subject}" to ${frontMatter.to}.`);
+    const { id: emailSentId } = await prisma.emailSent.create({
+      data: {
+        emailId,
+        mentor: context.mentor ? { connect: { id: context.mentor.id } } : undefined,
+        student: context.student ? { connect: { id: context.student.id } } : undefined,
+        project: context.project ? { connect: { id: context.project.id } } : undefined,
+      },
+      select: { id: true },
+    });
     await email.sendMail({
       ...frontMatter,
       html,
@@ -48,16 +57,8 @@ async function sendEmailForContext(
       bcc: [frontMatter.bcc, config.email.from].filter(Boolean) as string[],
       cc: [
         frontMatter.cc,
-        context.project && `${context.project.id}@${config.email.inboundDomain}`
+        context.project && `${context.project.id}+${emailSentId}@${config.email.inboundDomain}`
       ].filter(Boolean) as string[],
-    });
-    await prisma.emailSent.create({
-      data: {
-        emailId,
-        mentor: context.mentor ? { connect: { id: context.mentor.id } } : undefined,
-        student: context.student ? { connect: { id: context.student.id } } : undefined,
-        project: context.project ? { connect: { id: context.project.id } } : undefined,
-      },
     });
   } catch (ex) {
     DEBUG(ex);

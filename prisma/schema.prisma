@@ -77,8 +77,8 @@ model Event {
   updatedAt DateTime @updatedAt
 
   // Data
-  name     String
-  startsAt DateTime
+  name           String
+  startsAt       DateTime
   emailSignature String?
 
   title String
@@ -356,6 +356,7 @@ model Mentor {
   managerUsername String?
   maxWeeks        Int          @default(6)
   timezone        String?
+  slackId         String?
 
   // Relations
   projects                Project[]
@@ -498,6 +499,9 @@ model ProjectEmail {
 
   project   Project @relation(fields: [projectId], references: [id])
   projectId String
+
+  emailSent   EmailSent? @relation(fields: [emailSentId], references: [id])
+  emailSentId String?
 }
 
 model AdmissionRating {
@@ -588,6 +592,8 @@ model EmailSent {
 
   project   Project? @relation(fields: [projectId], references: [id])
   projectId String?
+
+  projectEmails ProjectEmail[]
 }
 
 model Note {

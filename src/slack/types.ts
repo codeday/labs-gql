@@ -1,7 +1,7 @@
 import { Event, Mentor, MentorStatus, Project, ProjectStatus, Student, StudentStatus } from "@prisma/client";
 import { PickNonNullable } from "../utils";
 
-export type SlackMentorInfo = { mentors: Pick<Mentor, 'givenName' | 'surname'>[] };
+export type SlackMentorInfo = { mentors: Pick<Mentor, 'id' | 'email' | 'givenName' | 'surname' | 'slackId'>[] };
 export type SlackStudentInfo = { students: Pick<Student, 'id' | 'email' | 'slackId'>[] };
 
 export type SlackEventWithProjects<T> =
@@ -23,8 +23,11 @@ export const slackEventInfoSelect = {
       mentors: {
         where: { status: MentorStatus.ACCEPTED },
         select: {
+          id: true,
           givenName: true,
           surname: true,
+          email: true,
+          slackId: true,
         }
       },
       students: {

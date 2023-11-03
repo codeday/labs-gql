@@ -61,14 +61,19 @@ export async function processPostmarkInboundEmail(req: Request, res: Response) {
       students: { select: { id: true, email: true } },
     },
   });
-
   if (!project) {
     DEBUG(`...project ${projectId} not found.`);
     return res.send('ok');
   }
+  
+  const emailSentId = myToEmails[0].split('+')[1] || undefined;
+  const emailSent = !emailSentId ? undefined : await prisma.emailSent.findUnique({
+    where: { id: emailSentId },
+    select: { id: true },
+  });
 
-  const fromMentor = project.mentors.filter(m => m.email === email.FromFull.Email)[0] || undefined;
-  const fromStudent = project.students.filter(s => s.email === email.FromFull.Email)[0] || undefined;
+  const fromMentor = project.mentors.filter(m => m.email.toLowerCase().trim() === email.FromFull.Email.toLowerCase().trim())[0] || undefined;
+  const fromStudent = project.students.filter(s => s.email.toLowerCase().trim() === email.FromFull.Email.toLowerCase().trim())[0] || undefined;
 
   DEBUG(`... email ${email.FromFull.Email} matches: mentor - ${fromMentor?.id}, ${fromStudent?.id}`);
 
@@ -77,6 +82,7 @@ export async function processPostmarkInboundEmail(req: Request, res: Response) {
       project: { connect: { id: project.id } },
       ...(fromMentor ? { mentor: { connect: { id: fromMentor.id } } } : {}),
       ...(fromStudent ? { student: { connect: { id: fromStudent.id } } } : {}),
+      ...(emailSent ? { emailSent: { connect: { id: emailSent.id } } } : {}),
       subject: email.Subject,
       textBody: email.TextBody,
       htmlBody: email.HtmlBody,

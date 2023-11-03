@@ -1,21 +1,25 @@
 import { PrismaClient } from "@prisma/client";
 import Container from "typedi";
+import { Context } from '../../context';
 import {
   SlackEventWithProjects,
   SlackMentorInfo,
   SlackStudentInfo,
-  createSlackChannels,
+  archiveSlackChannels,
+  linkExistingSlackChannels,
+  linkExistingSlackMembers,
   slackEventInfoSelect,
+  updateSlackUserGroups
 } from "../../slack";
 import { makeDebug } from "../../utils";
 
-const DEBUG = makeDebug('automation:tasks:slackCreateChannels');
+const DEBUG = makeDebug('activities:tasks:slackArchive');
 
-export default async function slackCreateChannels(): Promise<void> {
+export default async function slackArchive({ auth }: Context): Promise<void> {
   const prisma = Container.get(PrismaClient);
   const activeEvents = await prisma.event.findMany({
       where: {
-        isActive: true,
+        id: auth.eventId,
         slackWorkspaceAccessToken: { not: null },
         slackWorkspaceId: { not: null },
       },
@@ -23,9 +27,9 @@ export default async function slackCreateChannels(): Promise<void> {
     }) as SlackEventWithProjects<SlackMentorInfo & SlackStudentInfo>[];
 
   for (const event of activeEvents) {
-    DEBUG(`Creating Slack for ${event.id}.`);
+    DEBUG(`Archiving Slack for ${event.id}.`);
     try {
-      await createSlackChannels(event);
+      await archiveSlackChannels(event);
     } catch (ex) {
       DEBUG(ex);
     }
