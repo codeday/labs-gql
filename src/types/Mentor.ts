@@ -3,6 +3,7 @@ import {
   Project as PrismaProject,
   Mentor as PrismaMentor,
   Event as PrismaEvent,
+  Artifact as PrismaArtifact,
   SurveyResponse as PrismaSurveyResponse,
   PrismaClient,
 } from '@prisma/client';
@@ -16,6 +17,7 @@ import { AuthRole } from '../context';
 import { Project } from './Project';
 import { SurveyResponse } from './SurveyResponse';
 import { Event } from './Event';
+import { Artifact } from './Artifact';
 
 @ObjectType()
 export class Mentor implements PrismaMentor {
@@ -101,6 +103,18 @@ export class Mentor implements PrismaMentor {
     return await Container.get(PrismaClient).projectEmail.count({
       where: { mentorId: this.id }
     });
+  }
+
+  artifacts?: PrismaArtifact[] | null
+
+  @Field(() => [Artifact], { name: 'artifacts' })
+  async fetchArtifacts(): Promise<PrismaArtifact[]> {
+    if (!this.artifacts) {
+      this.artifacts = await Container.get(PrismaClient).artifact.findMany({
+        where: { mentor: { id: this.id } },
+      });
+    }
+    return this.artifacts;
   }
 
   surveyResponsesAbout?: PrismaSurveyResponse[]

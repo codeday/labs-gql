@@ -20,3 +20,6 @@ export * from './PartnerCreateInput';
 export * from './PartnerEditInput';
 export * from './ResourceCreateInput';
 export * from './ResourceEditInput';
+export * from './RepositoryCreateInput';
+export * from './RepositoryEditInput';
+export * from './RepositoryWhereInput';

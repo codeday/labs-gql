@@ -122,6 +122,7 @@ model Event {
   standupThreads StandupThread[]
   standupResults StandupResult[]
   meetings       Meeting[]
+  artifactTypes  ArtifactType[]
 }
 
 model TrainingGroup {
@@ -364,6 +365,7 @@ model Mentor {
   authoredSurveyResponses SurveyResponse[] @relation("AuthorMentor")
   targetSurveyResponses   SurveyResponse[] @relation("TargetMentor")
   projectEmails           ProjectEmail[]
+  artifacts               Artifact[]
 
   event   Event  @relation(fields: [eventId], references: [id])
   eventId String @default("codeday-labs-2022")
@@ -410,6 +412,7 @@ model Student {
   meetingAttendance       MeetingAttendance[]
   trainingEntryResponses  TrainingEntryResponse[]
   projectEmails           ProjectEmail[]
+  artifacts               Artifact[]
 
   event   Event  @relation(fields: [eventId], references: [id])
   eventId String @default("codeday-labs-2022")
@@ -455,6 +458,8 @@ model Project {
   track        Track
   maxStudents  Int           @default(4)
   status       ProjectStatus @default(DRAFT)
+  issueUrl     String?
+  complete     Boolean       @default(false)
 
   slackChannelId String?
   standupId      String?
@@ -471,10 +476,72 @@ model Project {
   affinePartner   Partner? @relation(fields: [affinePartnerId], references: [id])
   affinePartnerId String?
 
+  repository   Repository? @relation(fields: [repositoryId], references: [id])
+  repositoryId String?
+
   event          Event           @relation(fields: [eventId], references: [id])
   eventId        String          @default("codeday-labs-2022")
   standupThreads StandupThread[]
   standupResults StandupResult[]
+  artifacts      Artifact[]
+}
+
+model ArtifactType {
+  // Metadata
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Data
+  name        String
+  personType  PersonType?
+  description String?
+  required    Boolean     @default(false)
+
+  // Relations
+  event   Event  @relation(fields: [eventId], references: [id])
+  eventId String
+
+  artifacts Artifact[]
+}
+
+model Artifact {
+  // Metadata
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Data
+  name String
+  link String
+
+  // Relations
+  project   Project @relation(fields: [projectId], references: [id])
+  projectId String
+
+  student   Student? @relation(fields: [studentId], references: [id])
+  studentId String?
+
+  mentor   Mentor? @relation(fields: [mentorId], references: [id])
+  mentorId String?
+
+  artifactType   ArtifactType? @relation(fields: [artifactTypeId], references: [id])
+  artifactTypeId String?
+}
+
+model Repository {
+  // Metadata
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Data
+  logoUrl String?
+  name    String
+  url     String
+
+  // Relations
+  projects Project[]
 }
 
 model ProjectEmail {

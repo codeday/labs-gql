@@ -51,6 +51,7 @@ export class EventResolver {
         },
         resources: true,
         meetings: true,
+        artifactTypes: true,
         studentTrainingGroup: {
           include: {
             entries: true,
@@ -183,6 +184,17 @@ export class EventResolver {
           eventId: event.id,
         }))
       });
+    }
+
+    if (source.artifactTypes.length > 0) {
+      await this.prisma.artifactType.createMany({
+        data: source.artifactTypes.map(at => ({
+          name: at.name,
+          description: at.description,
+          personType: at.personType,
+          eventId: event.id,
+        }))
+      })
     }
 
     if (source.meetings.length > 0) {

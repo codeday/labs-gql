@@ -3,7 +3,8 @@ import { AuthRole, Context } from '../context';
 import { GraphQLJSONObject } from 'graphql-type-json';
 import { JSONSchema7 } from 'json-schema';
 import Container from 'typedi';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, ArtifactType as PrismaArtifactType } from '@prisma/client';
+import { ArtifactType } from './ArtifactType';
 
 @ObjectType()
 export class Event {
@@ -93,5 +94,17 @@ export class Event {
     if (!(auth.isAuthenticated || auth.isUnspecified)) return false;
     return (await Container.get(PrismaClient)
       .student.count({ where: auth.toWhereMany()! })) > 0;
+  }
+
+  artifactTypes?: PrismaArtifactType[] | null
+
+  @Field(() => [ArtifactType], { name: 'artifactTypes' })
+  async fetchArtifactTypes(): Promise<PrismaArtifactType[]> {
+    if (!this.artifactTypes) {
+      this.artifactTypes = await Container.get(PrismaClient).artifactType.findMany({
+        where: { event: { id: this.id } },
+      });
+    }
+    return this.artifactTypes;
   }
 }

@@ -6,11 +6,12 @@ import {
   PrismaClient,
   Survey as PrismaSurvey,
   SurveyOccurence as PrismaSurveyOccurence,
+  SurveyResponse as PrismaSurveyResponse,
 } from '@prisma/client';
 import { makeDebug } from '../utils';
 import { Inject, Service } from 'typedi';
 import { Context, AuthRole } from '../context';
-import { Survey, SurveyOccurence } from '../types';
+import { Survey, SurveyOccurence, SurveyResponse } from '../types';
 import { SurveyCreateInput } from '../inputs';
 import { getSurveyResponseType, validateActive, validateSurveyEvent } from '../utils';
 import { SurveyRespondInput } from '../inputs/SurveyRespondInput';
@@ -162,5 +163,35 @@ export class SurveyResolver {
     });
 
     return true;
+  }
+
+  @Authorized(AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.PARTNER)
+  @Query(() => SurveyResponse)
+  async getSurveyResponse(
+    @Ctx() { auth }: Context,
+    @Arg('where', () => String) where: string,
+  ): Promise<PrismaSurveyResponse> {
+    const surveyResponse = await this.prisma.surveyResponse.findUnique({
+      where: { id: where },
+      include: {
+        student: true,
+        authorStudent: true,
+        mentor: true,
+        authorMentor: true,
+        surveyOccurence: { include: { survey: true } },
+      },
+      rejectOnNotFound: true,
+    });
+
+    if (auth.type === AuthRole.PARTNER) {
+      if (
+        !surveyResponse.student
+        || auth.partnerCode !== surveyResponse.student.partnerCode
+      ) {
+        throw new Error('No permission to view this student\'s survey responses.');
+      }
+    }
+
+    return surveyResponse;
   }
 }

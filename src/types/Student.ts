@@ -10,8 +10,7 @@ import {
   SurveyResponse as PrismaSurveyResponse,
   Note as PrismaNote,
   Event as PrismaEvent,
-  SurveyOccurence as PrismaSurveyOccurence,
-  Survey as PrismaSurvey,
+  Artifact as PrismaArtifact,
   StandupThread,
   StandupResult,
 } from '@prisma/client';
@@ -33,6 +32,7 @@ import { TagTrainingSubmission } from './TagTrainingSubmission';
 import { Event } from './Event';
 import { SurveyResponse } from './SurveyResponse';
 import { Note } from './Note';
+import { Artifact } from './Artifact';
 import { tokenFor } from '../email/helpers';
 import { SanitizableSurveyResponse, groupBy, sanitizeSurveyResponses } from '../utils';
 import { StandupRating } from './StandupRating';
@@ -281,6 +281,18 @@ export class Student implements PrismaStudent {
     }
 
     return this.notes;
+  }
+
+  artifacts?: PrismaArtifact[] | null
+
+  @Field(() => [Artifact], { name: 'artifacts' })
+  async fetchArtifacts(): Promise<PrismaArtifact[]> {
+    if (!this.artifacts) {
+      this.artifacts = await Container.get(PrismaClient).artifact.findMany({
+        where: { student: { id: this.id } },
+      });
+    }
+    return this.artifacts;
   }
 
   @Authorized([AuthRole.PARTNER, AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.MENTOR])
