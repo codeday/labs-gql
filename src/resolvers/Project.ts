@@ -1,5 +1,5 @@
 import {
-  Resolver, Authorized, Mutation, Arg, Ctx,
+  Resolver, Authorized, Mutation, Arg, Ctx, Int, Query,
 } from 'type-graphql';
 import { PrismaClient, Project as PrismaProject, ProjectStatus } from '@prisma/client';
 import { Inject, Service } from 'typedi';
@@ -10,12 +10,20 @@ import {
 } from '../inputs';
 import { MentorOnlySelf } from './decorators';
 import { idOrUsernameOrAuthToUniqueWhere, idOrUsernameToUniqueWhere, validateMentorEvent, validateProjectEvent, validateStudentEvent } from '../utils';
+import { ProjectCountWhereInput } from '../inputs/ProjectCountWhereInput';
 
 @Service()
 @Resolver(Project)
 export class ProjectResolver {
   @Inject(() => PrismaClient)
   private readonly prisma : PrismaClient;
+
+  @Query(() => Int)
+  async projectCount(
+    @Arg('where', () => ProjectCountWhereInput, { nullable: true }) where?: ProjectCountWhereInput,
+  ): Promise<number> {
+    return this.prisma.project.count({ where: where?.toQuery() });
+  }
 
   @Authorized(AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.MENTOR)
   @MentorOnlySelf('mentor')
