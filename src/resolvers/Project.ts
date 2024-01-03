@@ -25,7 +25,7 @@ export class ProjectResolver {
     return this.prisma.project.count({ where: where?.toQuery() });
   }
 
-  @Authorized(AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.MENTOR)
+  @Authorized(AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.MENTOR, AuthRole.OPEN_SOURCE_MANAGER)
   @MentorOnlySelf('mentor')
   @Mutation(() => Project)
   async createProject(
@@ -33,16 +33,23 @@ export class ProjectResolver {
     @Arg('data', () => ProjectCreateInput) data: ProjectCreateInput,
     @Arg('mentor', () => IdOrUsernameInput, { nullable: true }) mentor?: IdOrUsernameInput,
   ): Promise<PrismaProject> {
+    if (auth.isOpenSourceManager && !data.repositoryId) {
+      throw new Error('Open Source Managers must select a repository when creating a project.');
+    }
+    if (auth.isOpenSourceManager && !data.issueUrl) {
+      throw new Error('Open Source Managers must include an issue link');
+    }
+
     return this.prisma.project.create({
       data: {
         ...data.toQuery(),
-        event: { connect: { id: auth.eventId } },
-        mentors: { connect: idOrUsernameOrAuthToUniqueWhere(auth, mentor) },
+        event: auth.eventId ? { connect: { id: auth.eventId } } : undefined,
+        mentors: mentor ? { connect: idOrUsernameOrAuthToUniqueWhere(auth, mentor) } : undefined,
       },
     });
   }
 
-  @Authorized(AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.MENTOR)
+  @Authorized(AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.MENTOR, AuthRole.OPEN_SOURCE_MANAGER)
   @Mutation(() => Project)
   async editProject(
     @Ctx() { auth }: Context,
@@ -54,10 +61,11 @@ export class ProjectResolver {
         data.maxStudents
         || (data.status && !(<ProjectStatus[]>[ProjectStatus.PROPOSED, ProjectStatus.DRAFT]).includes(data.status))
       )
-      && !(auth.isAdmin || auth.isManager)
+      && !(auth.isAdmin || auth.isManager || auth.isOpenSourceManager)
     ) {
       throw Error('You do not have permission to edit restricted fields.');
     }
+
     const dbProject = await this.prisma.project.findUnique({
       where: { id: project },
       select: {
@@ -71,7 +79,7 @@ export class ProjectResolver {
     if (auth.isMentor && dbProject.status === ProjectStatus.MATCHED) throw Error('Matched projects cannot be edited.');
     if (auth.isMentor && !this.projectIncludesMentors(auth, dbProject.mentors)) throw Error('No permission to edit.');
     let status = data.status;
-    if (auth.isMentor) {
+    if (auth.isMentor && dbProject.event) {
       if (dbProject.event.matchPreferenceSubmissionOpen && dbProject.status === ProjectStatus.ACCEPTED) {
         // If the mentor's previous project has been approved, and matching is open, we will keep this one approved:
         status = ProjectStatus.ACCEPTED;
@@ -84,7 +92,7 @@ export class ProjectResolver {
     });
   }
 
-  @Authorized(AuthRole.ADMIN, AuthRole.MANAGER)
+  @Authorized(AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.OPEN_SOURCE_MANAGER)
   @Mutation(() => Boolean)
   async deleteProject(
     @Ctx() { auth }: Context,
@@ -139,6 +147,53 @@ export class ProjectResolver {
     return this.prisma.project.update({
       where: { id: project },
       data: { mentors: { connect: [idOrUsernameToUniqueWhere(auth, mentor)] } },
+    });
+  }
+
+  @Authorized(AuthRole.ADMIN, AuthRole.MANAGER)
+  @Query(() => [Project])
+  async unclaimedProjects(
+    @Ctx() { auth }: Context,
+  ): Promise<PrismaProject[]> {
+    return this.prisma.project.findMany({
+      where: {
+        mentors: { none: {} },
+        issueUrl: { not: null },
+        OR: [
+          { event: null },
+          { event: { id: auth.eventId! } },
+        ],
+      },
+    });
+  }
+
+  @Authorized(AuthRole.ADMIN, AuthRole.MANAGER)
+  @Mutation(() => Project)
+  async claimProject(
+    @Ctx() { auth }: Context,
+    @Arg('project', () => String) project: string,
+    @Arg('mentor', () => IdOrUsernameInput) mentor: IdOrUsernameInput,
+  ): Promise<PrismaProject> {
+    const dbProject = await this.prisma.project.findUnique({
+      where: { id: project },
+      include: { mentors: true },
+      rejectOnNotFound: true,
+    });
+
+    if (dbProject.mentors.length > 0) {
+      throw new Error('Project is already claimed.');
+    }
+
+    if (dbProject.eventId && dbProject.eventId !== auth.eventId!) {
+      throw new Error('Project is not associated with this event.');
+    }
+
+    return this.prisma.project.update({
+      where: { id: project },
+      data: {
+        mentors: { connect: [idOrUsernameToUniqueWhere(auth, mentor)] },
+        event: { connect: { id: auth.eventId! } },
+      },
     });
   }
 

@@ -22,8 +22,17 @@ export class ProjectEditInput {
   @Field(() => [String], { nullable: true })
   tags?: string[]
 
-  @Field(() => [String], { nullable: true })
+  @Field(() => String, { nullable: true })
   affinePartnerId?: string | null
+
+  @Field(() => String, { nullable: true })
+  issueUrl?: string | null
+
+  @Field(() => Boolean, { nullable: true })
+  complete?: boolean | null
+
+  @Field(() => String, { nullable: true })
+  repositoryId?: string | null
 
   toQuery(): Prisma.ProjectUpdateInput {
     return {
@@ -39,6 +48,14 @@ export class ProjectEditInput {
       status: this.status,
       maxStudents: this.maxStudents,
       tags: this.tags ? { set: this.tags.map((id): Prisma.TagWhereUniqueInput => ({ id })) } : undefined,
+      issueUrl: this.issueUrl ?? undefined,
+      complete: this.complete ?? undefined,
+      repository: typeof this.repositoryId !== 'undefined'
+        ? (this.repositoryId
+            ? { connect: { id: this.repositoryId } }
+            : { disconnect: true }
+          )
+        : undefined,
     };
   }
 }

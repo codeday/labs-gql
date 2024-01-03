@@ -19,10 +19,10 @@ export class AuthContext {
   // eslint-disable-next-line sonarjs/cognitive-complexity
   validate(): void {
     if (this.isAdmin && (this.username || this.id)) throw Error('Admin tokens may not specify a username or id.');
-    if (!this.eventId && !this.isUnspecified) {
+    if (!this.eventId && !this.isUnspecified && !this.isOpenSourceManager) {
       throw Error('Tokens must specify event id.');
     }
-    if ((this.isApplicant || this.isManager || this.isReviewer || this.isUnspecified) && this.id) {
+    if ((this.isApplicant || this.isManager || this.isReviewer || this.isUnspecified || this.isOpenSourceManager) && this.id) {
       throw Error('Non-participant tokens may only specify username, not id.');
     }
     if (this.username && this.id) throw Error('Token may not specify both username and id.');
@@ -30,7 +30,7 @@ export class AuthContext {
       throw Error('Auth target (username/id) does not match provided information.');
     }
     if (this.isApplicantStudent && !this.username) throw Error('Student applicant tokens require username.');
-    if (this.isUnspecified && !this.username) throw Error('Unspecified tokens require username.');
+    if ((this.isUnspecified || this.isOpenSourceManager) && !this.username) throw Error('Unspecified/OSS tokens require username.');
     if ((this.isMentor || this.isStudent) && !(this.id || this.username)) {
       throw Error('Mentor/student tokens require username or id.');
     }
@@ -60,6 +60,10 @@ export class AuthContext {
 
   get isManager(): boolean {
     return this.type === AuthRole.MANAGER;
+  }
+
+  get isOpenSourceManager(): boolean {
+    return this.type === AuthRole.OPEN_SOURCE_MANAGER;
   }
 
   get isReviewer(): boolean {

@@ -1,9 +1,12 @@
 import {
   Repository as PrismaRepository,
+  Project as PrismaProject,
   PrismaClient
 } from '@prisma/client';
-import { ObjectType, Field, Int } from 'type-graphql';
+import { ObjectType, Field, Int, Authorized } from 'type-graphql';
 import Container from 'typedi';
+import { Project } from './Project';
+import { AuthRole } from '../context';
 
 @ObjectType()
 export class Repository implements PrismaRepository {
@@ -32,5 +35,19 @@ export class Repository implements PrismaRepository {
     return Container.get(PrismaClient).project.count({
       where: { repositoryId: this.id }
     });
+  }
+
+  projects?: PrismaProject[]
+
+  @Field(() => [Project], { name: 'projects' })
+  @Authorized(AuthRole.ADMIN, AuthRole.MENTOR, AuthRole.OPEN_SOURCE_MANAGER)
+  async fetchProjects(): Promise<PrismaProject[]> {
+    if (!this.projects) {
+      this.projects = await Container.get(PrismaClient).project.findMany({
+        where: { repositoryId: this.id }
+      });
+    }
+
+    return this.projects;
   }
 }

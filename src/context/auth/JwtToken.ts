@@ -7,6 +7,7 @@ export enum AuthRole {
   APPLICANT_MENTOR = 'am',
   APPLICANT_STUDENT = 'as',
   PARTNER = 'p',
+  OPEN_SOURCE_MANAGER = 'osm',
   UNSPECIFIED = '_',
 }
 

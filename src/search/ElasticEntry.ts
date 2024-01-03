@@ -125,7 +125,7 @@ function getTimezoneOffset(timezoneString?: string) {
 export function projectToElasticEntry({
   mentors, tags, projectPreferences, ...project
 }: ProjectInput): ElasticEntry | null {
-  if (mentors.length === 0) return null;
+  if (mentors.length === 0 || !project.eventId) return null;
   const profiles = mentors.map(({ profile }) => <Record<string, unknown>>profile).filter(Boolean);
   const educations = profiles.map(({ education }) => <Record<string, unknown>>education).filter(Boolean);
   const background = {

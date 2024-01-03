@@ -13,7 +13,7 @@ export class RepositoryResolver {
   @Inject(() => PrismaClient)
   private readonly prisma : PrismaClient;
 
-  @Authorized(AuthRole.ADMIN)
+  @Authorized(AuthRole.ADMIN, AuthRole.OPEN_SOURCE_MANAGER)
   @Mutation(() => Repository)
   async addRepository(
     @Arg('data', () => RepositoryCreateInput) data: RepositoryCreateInput,
@@ -25,7 +25,7 @@ export class RepositoryResolver {
     });
   }
 
-  @Authorized(AuthRole.ADMIN)
+  @Authorized(AuthRole.ADMIN, AuthRole.OPEN_SOURCE_MANAGER)
   @Mutation(() => Repository)
   async editRepository(
     @Arg('where', () => String) where: string,
@@ -41,6 +41,6 @@ export class RepositoryResolver {
   async repositories(
     @Arg('where', () => RepositoryWhereInput, { nullable: true }) where: RepositoryWhereInput,
   ): Promise<PrismaRepository[]> {
-    return this.prisma.repository.findMany({ where: where.toQuery() });
+    return this.prisma.repository.findMany({ where: where?.toQuery() });
   }
 }

@@ -348,16 +348,16 @@ model Mentor {
   updatedAt DateTime @updatedAt
 
   // Data
-  givenName       String
-  surname         String
-  username        String?
-  email           String
-  profile         Json
-  status          MentorStatus @default(APPLIED)
-  managerUsername String?
-  maxWeeks        Int          @default(6)
-  timezone        String?
-  slackId         String?
+  givenName          String
+  surname            String
+  username           String?
+  email              String
+  profile            Json
+  status             MentorStatus @default(APPLIED)
+  managerUsername    String?
+  maxWeeks           Int          @default(6)
+  timezone           String?
+  slackId            String?
   projectPreferences String?
 
   // Relations
@@ -481,8 +481,8 @@ model Project {
   repository   Repository? @relation(fields: [repositoryId], references: [id])
   repositoryId String?
 
-  event          Event           @relation(fields: [eventId], references: [id])
-  eventId        String          @default("codeday-labs-2022")
+  event          Event?          @relation(fields: [eventId], references: [id])
+  eventId        String?
   standupThreads StandupThread[]
   standupResults StandupResult[]
   artifacts      Artifact[]

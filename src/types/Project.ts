@@ -102,18 +102,18 @@ export class Project implements PrismaProject {
     return this.students;
   }
 
-  @Field(() => String)
-  eventId: string;
+  @Field(() => String, { nullable: true })
+  eventId: string | null;
 
   event?: PrismaEvent;
 
-  @Field(() => Event, { name: 'event' })
-  async fetchEvent(): Promise<PrismaEvent> {
-    if (!this.event) {
+  @Field(() => Event, { name: 'event', nullable: true })
+  async fetchEvent(): Promise<PrismaEvent | null> {
+    if (!this.event && this.eventId) {
       this.event = (await Container.get(PrismaClient).event.findUnique({ where: { id: this.eventId } }))!;
     }
 
-    return this.event;
+    return this.event ?? null;
   }
 
   @Field(() => String, { nullable: true })
