@@ -80,7 +80,7 @@ export class MentorResolver {
     });
   }
 
-  @Authorized(AuthRole.ADMIN)
+  @Authorized(AuthRole.ADMIN, AuthRole.MANAGER)
   @Mutation(() => Mentor)
   async createMentor(
     @Ctx() { auth }: Context,

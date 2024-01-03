@@ -8,7 +8,7 @@ Hi {{ student.givenName }},
 We're excited you have accepted your offer for {{ event.name }} ({{ student.weeks }}-week program).
 Here's what you should know about the next steps:
 
-1. The next step is **matching:** several weeks before the start of the program, we'll provide you with a number of
+1. The next step is **matching:** before the start of the program, we'll provide you with a number of
   project options, and you'll need to pick your favorites.
 2. We will **introduce** you to your final project (one of your picks) a few days before the start of the program.
 3. The first week of CodeDay Labs is **onboarding,** which is where you'll get up-to-speed on the technology used in your

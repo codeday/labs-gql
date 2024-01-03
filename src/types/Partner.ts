@@ -45,6 +45,9 @@ export class Partner implements PrismaPartner {
   @Field(() => Boolean)
   onlyAffine: boolean
 
+  @Field(() => Boolean)
+  autoApprove: boolean
+
   forceTags?: PrismaTag[] | null
 
   @Field(() => [Tag], { name: 'forceTags' })

@@ -5,7 +5,7 @@ import { Event as PrismaEvent, PrismaClient } from '@prisma/client';
 import { Inject, Service } from 'typedi';
 import { AuthRole, Context } from '../context';
 import { Event } from '../types';
-import { EventsWhereInput } from '../inputs';
+import { EventEditInput, EventsWhereInput } from '../inputs';
 import { DateTime } from 'luxon';
 import { nameToSlug } from '../utils';
 
@@ -30,6 +30,19 @@ export class EventResolver {
   ): Promise<PrismaEvent[]> {
     return this.prisma.event.findMany({
       where: where ? where.toQuery(auth) : {},
+      orderBy: [{ startsAt: 'desc' }]
+    });
+  }
+
+  @Authorized(AuthRole.ADMIN)
+  @Mutation(() => Event)
+  async editEvent(
+    @Ctx() { auth }: Context,
+    @Arg('data', () => EventEditInput) data: EventEditInput,
+  ): Promise<PrismaEvent> {
+    return this.prisma.event.update({
+      where: { id: auth.eventId! },
+      data: data.toQuery(),
     });
   }
 
@@ -70,6 +83,7 @@ export class EventResolver {
         name,
         startsAt,
         title: source.title,
+        emailSignature: source.emailSignature,
 
         studentApplicationsStartAt: (
           DateTime.fromJSDate(source.studentApplicationsStartAt)

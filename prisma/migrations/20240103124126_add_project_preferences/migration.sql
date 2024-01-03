@@ -1,0 +1,1 @@
+ALTER TABLE "Mentor" ADD COLUMN     "projectPreferences" TEXT NULL DEFAULT NULL;

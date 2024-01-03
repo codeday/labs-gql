@@ -163,9 +163,34 @@ export class StudentResolver {
     if (!event) throw Error('Event does not exist.');
     if (!eventAllowsApplicationStudent(event)) throw Error('Student applications are not open for this event.');
 
+    let partnerData: Partial<Prisma.StudentCreateInput> = { partnerCode: null };
+
+    if (data.partnerCode) {
+      const partner = await this.prisma.partner.findFirst({
+        where: {
+          eventId: auth.eventId!,
+          partnerCode: { equals: data.partnerCode.trim(), mode: 'insensitive' },
+        }
+      });
+
+      if (partner) {
+        partnerData = {
+          ...(partner.minHours ? { minHours: partner.minHours } : {}),
+          ...(partner.weeks ? { weeks: partner.weeks } : {}),
+          skipPreferences: partner.skipPreferences,
+          partnerCode: partner.partnerCode,
+        };
+        
+        if (partner.autoApprove) {
+          partnerData.status = 'OFFERED';
+        }
+      };
+    }
+
     return this.prisma.student.create({
       data: {
         ...data.toQuery(),
+        ...partnerData,
         event: { connect: { id: auth.eventId! } },
         username: auth.username,
       },

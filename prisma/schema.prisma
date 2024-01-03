@@ -358,6 +358,7 @@ model Mentor {
   maxWeeks        Int          @default(6)
   timezone        String?
   slackId         String?
+  projectPreferences String?
 
   // Relations
   projects                Project[]
@@ -434,6 +435,7 @@ model Partner {
   minHours        Int?
   skipPreferences Boolean @default(false)
   onlyAffine      Boolean @default(false)
+  autoApprove     Boolean @default(false)
 
   forceTags  Tag[] @relation("PartnerForceTag")
   forbidTags Tag[] @relation("PartnerForbidTag")

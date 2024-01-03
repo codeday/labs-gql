@@ -8,12 +8,12 @@ import {
   PrismaClient,
 } from '@prisma/client';
 import {
-  ObjectType, Field, Authorized, Arg, Int,
+  ObjectType, Field, Authorized, Arg, Int, Ctx,
 } from 'type-graphql';
 import GraphQLJSON from 'graphql-type-json';
 import Container from 'typedi';
 import { MentorStatus } from '../enums';
-import { AuthRole } from '../context';
+import { AuthRole, Context } from '../context';
 import { Project } from './Project';
 import { SurveyResponse } from './SurveyResponse';
 import { Event } from './Event';
@@ -69,6 +69,15 @@ export class Mentor implements PrismaMentor {
 
   @Field(() => String, { nullable: true })
   timezone: string | null
+
+  projectPreferences: string | null;
+
+  @Authorized([AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.MENTOR])
+  @Field(() => String, { name: 'projectPreferences', nullable: true })
+  fetchProjectPreferences(@Ctx() { auth }: Context ): string | null {
+    if (auth.type === AuthRole.MENTOR && auth.id !== this.id) throw Error('Unauthorized.');
+    return this.projectPreferences;
+  }
 
   event?: PrismaEvent;
 

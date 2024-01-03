@@ -16,8 +16,8 @@ export class LoginResolver {
     @Arg('email', () => String) email: string,
   ): Promise<Boolean> {
     const [mentors, students] = await Promise.all([
-      this.prisma.mentor.findMany({ where: { email }, include: { event: true } }),
-      this.prisma.student.findMany({ where: { email }, include: { event: true } }),
+      this.prisma.mentor.findMany({ where: { email: { equals: email, mode: 'insensitive' } }, include: { event: true } }),
+      this.prisma.student.findMany({ where: { email: { equals: email, mode: 'insensitive' } }, include: { event: true } }),
     ]);
 
     await sendLoginLinks(email, mentors, students);

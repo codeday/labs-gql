@@ -1,8 +1,21 @@
-export function getTimezoneOffset (timeZone: string): number | null{
-  const timeZoneObj = Intl.DateTimeFormat("ia", {
-    timeZoneName: "short",
-    timeZone,
-  });
+export function getTimezoneOffset (_timeZone: string): number | null{
+  // Process old-style timezones
+  const timeZone = {
+    'America - Pacific': 'America/Los_Angeles',
+    'America - Arizona': 'America/Phoenix',
+    'America - Mountain': 'America/Denver',
+    'America - Central': 'America/Chicago',
+    'America - Eastern': 'America/New_York',
+  }[_timeZone] || _timeZone;
+  
+  let timeZoneObj = null;
+  try {
+    timeZoneObj = Intl.DateTimeFormat("ia", {
+      timeZoneName: "short",
+      timeZone,
+    });
+  } catch (ex) {}
+
   if (!timeZoneObj) return null;
 
   const timeZoneName = timeZoneObj

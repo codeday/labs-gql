@@ -84,7 +84,7 @@ export class Event {
   ): Promise<boolean> {
     if (!(auth.isAuthenticated || auth.isUnspecified)) return false;
     return (await Container.get(PrismaClient)
-      .mentor.count({ where: auth.toWhereMany()! })) > 0;
+      .mentor.count({ where: { ...auth.toWhereMany()!, eventId: this.id } })) > 0;
   }
 
   @Field(() => Boolean)
@@ -92,8 +92,8 @@ export class Event {
     @Ctx() { auth }: Context,
   ): Promise<boolean> {
     if (!(auth.isAuthenticated || auth.isUnspecified)) return false;
-    return (await Container.get(PrismaClient)
-      .student.count({ where: auth.toWhereMany()! })) > 0;
+        return (await Container.get(PrismaClient)
+      .student.count({ where: { ...auth.toWhereMany()!, eventId: this.id } })) > 0;
   }
 
   artifactTypes?: PrismaArtifactType[] | null

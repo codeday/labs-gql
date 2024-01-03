@@ -23,6 +23,9 @@ export class MentorCreateInput {
   @Field(() => Int, { nullable: true })
   maxWeeks?: number
 
+  @Field(() => String, { nullable: true })
+  projectPreferences: string | null
+
   @Field(() => GraphQLJSONObject, { nullable: true })
   // eslint-disable-next-line @typescript-eslint/ban-types
   profile?: object
@@ -40,6 +43,7 @@ export class MentorCreateInput {
       profile: this.profile || {},
       status: this.status,
       timezone: this.timezone,
+      projectPreferences: this.projectPreferences,
     };
   }
 }

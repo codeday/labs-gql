@@ -26,6 +26,9 @@ export class MentorEditInput {
   @Field(() => String, { nullable: true })
   managerUsername?: string
 
+  @Field(() => String, { nullable: true })
+  projectPreferences?: string | null
+
   @Field(() => GraphQLJSONObject, { nullable: true })
   // eslint-disable-next-line @typescript-eslint/ban-types
   profile?: object
@@ -44,6 +47,7 @@ export class MentorEditInput {
       profile: this.profile,
       managerUsername: this.managerUsername,
       timezone: this.timezone,
+      projectPreferences: this.projectPreferences ?? undefined,
     };
   }
 }
