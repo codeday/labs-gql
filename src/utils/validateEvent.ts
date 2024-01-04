@@ -15,7 +15,7 @@ export async function validatePartnerStudent(auth: AuthContext, arg: IdOrUsernam
   const student = await Container.get(PrismaClient).student.findUnique({
     where: idOrUsernameOrEmailToUniqueWhere(auth, arg),
   });
-  if (student &&
+  if (student && auth.isPartner &&
       (!student.partnerCode || student.partnerCode.toLowerCase() !== auth.partnerCode?.toLowerCase())
   ) {
       throw new Error('Partner code does not match.');
