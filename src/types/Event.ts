@@ -1,4 +1,4 @@
-import { ObjectType, Field, Authorized, Ctx } from 'type-graphql';
+import { ObjectType, Field, Authorized, Ctx, Int } from 'type-graphql';
 import { AuthRole, Context } from '../context';
 import { GraphQLJSONObject } from 'graphql-type-json';
 import { JSONSchema7 } from 'json-schema';
@@ -23,6 +23,21 @@ export class Event {
   @Field(() => String)
   name: string;
 
+  @Field(() => Int)
+  defaultWeeks: number
+
+  @Field(() => Boolean)
+  hasBeginner: boolean
+
+  @Field(() => Boolean)
+  hasIntermediate: boolean
+
+  @Field(() => Boolean)
+  hasAdvanced: boolean
+
+  @Field(() => Boolean)
+  partnersOnly: boolean
+
   @Field(() => Date)
   studentApplicationsStartAt: Date;
 
@@ -41,9 +56,11 @@ export class Event {
   @Field(() => Date)
   startsAt: Date;
 
+  @Authorized([AuthRole.ADMIN])
   @Field(() => String)
   matchingAlgorithm: string;
 
+  @Authorized([AuthRole.ADMIN])
   @Field(() => String)
   emailTemplate: string;
 

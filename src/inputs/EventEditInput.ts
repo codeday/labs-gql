@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { GraphQLJSONObject } from "graphql-type-json";
-import { Field, InputType } from "type-graphql";
+import { Field, InputType, Int } from "type-graphql";
 
 @InputType()
 export class EventEditInput {
@@ -13,6 +13,18 @@ export class EventEditInput {
 
   @Field(() => String, { nullable: true })
   title?: string | null
+
+  @Field(() => Int, { nullable: true })
+  defaultWeeks?: number | null
+
+  @Field(() => Boolean, { nullable: true })
+  hasBeginner?: boolean | null
+
+  @Field(() => Boolean, { nullable: true })
+  hasIntermediate?: boolean | null
+
+  @Field(() => Boolean, { nullable: true })
+  hasAdvanced?: boolean | null
 
   @Field(() => Date, { nullable: true })
   studentApplicationsStartAt?: Date | null
@@ -62,6 +74,11 @@ export class EventEditInput {
       name: this.name ?? undefined,
       emailSignature: this.emailSignature ?? undefined,
       title: this.title ?? undefined,
+
+      defaultWeeks: this.defaultWeeks ?? undefined,
+      hasBeginner: this.hasBeginner ?? undefined,
+      hasIntermediate: this.hasIntermediate ?? undefined,
+      hasAdvanced: this.hasAdvanced ?? undefined,
 
       studentApplicationsStartAt: this.studentApplicationsStartAt ?? undefined,
       studentApplicationsEndAt: this.studentApplicationsEndAt ?? undefined,

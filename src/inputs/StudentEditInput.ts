@@ -32,6 +32,9 @@ export class StudentEditInput {
   @Field(() => Boolean, { nullable: true })
   skipPreferences?: boolean
 
+  @Field(() => String, { nullable: true })
+  interviewNotes?: string
+
   @Field(() => GraphQLJSONObject, { nullable: true })
   // eslint-disable-next-line @typescript-eslint/ban-types
   profile?: object
@@ -44,16 +47,17 @@ export class StudentEditInput {
 
   toQuery(): Prisma.StudentUpdateInput {
     return {
-      givenName: this.givenName,
-      surname: this.surname,
-      username: this.username,
-      email: this.email,
-      status: this.status,
-      track: this.track,
-      weeks: this.weeks,
-      minHours: this.minHours,
-      profile: this.profile,
-      partnerCode: this.partnerCode,
+      givenName: this.givenName ?? undefined,
+      surname: this.surname ?? undefined,
+      username: this.username ?? undefined,
+      email: this.email ?? undefined,
+      status: this.status ?? undefined,
+      track: this.track ?? undefined,
+      weeks: this.weeks ?? undefined,
+      minHours: this.minHours ?? undefined,
+      profile: this.profile ?? undefined,
+      partnerCode: this.partnerCode ?? undefined,
+      interviewNotes: this.interviewNotes ?? undefined,
       skipPreferences: typeof this.skipPreferences === 'boolean'
         ? this.skipPreferences
         : undefined,

@@ -98,6 +98,10 @@ export class Student implements PrismaStudent {
   @Field(() => Boolean)
   skipPreferences: boolean
 
+  @Authorized([AuthRole.ADMIN, AuthRole.MANAGER])
+  @Field(() => String, { nullable: true })
+  interviewNotes: string | null
+
   @Field(() => Boolean)
   hasValidAdmissionOffer(): boolean {
     return this.status === 'OFFERED' && (!this.offerDate || DateTime.fromJSDate(this.offerDate).diffNow().days <= 3);

@@ -197,7 +197,7 @@ export class StudentResolver {
     });
   }
 
-  @Authorized(AuthRole.ADMIN, AuthRole.STUDENT)
+  @Authorized(AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.STUDENT)
   @StudentOnlySelf('where')
   @Mutation(() => Student)
   async editStudent(
@@ -207,7 +207,7 @@ export class StudentResolver {
   ): Promise<PrismaStudent> {
     if (where) await validateStudentEvent(auth, where);
 
-    if ((data.username || data.partnerCode || data.status || data.weeks) && !auth.isAdmin) {
+    if ((data.username || data.partnerCode || data.status || data.weeks || data.interviewNotes || data.skipPreferences) && !(auth.isAdmin || auth.isManager)) {
       throw Error('You do not have permission to edit restricted fields.');
     }
 

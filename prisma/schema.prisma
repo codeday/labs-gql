@@ -81,7 +81,8 @@ model Event {
   startsAt       DateTime
   emailSignature String?
 
-  title String
+  title        String
+  defaultWeeks Int    @default(4)
 
   studentApplicationsStartAt    DateTime
   studentApplicationsEndAt      DateTime
@@ -94,6 +95,10 @@ model Event {
   mentorApplicationSchema      Json
   mentorApplicationUi          Json
   mentorApplicationPostprocess Json
+
+  hasBeginner Boolean @default(true)
+  hasIntermediate Boolean @default(true)
+  hasAdvanced Boolean @default(true)
 
   isActive                      Boolean @default(false)
   matchPreferenceSubmissionOpen Boolean @default(false)
@@ -397,6 +402,7 @@ model Student {
   skipPreferences    Boolean          @default(false)
   timeManagementPlan Json?
   timezone           String?
+  interviewNotes     String?
 
   slackId String?
 

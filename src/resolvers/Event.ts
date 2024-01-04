@@ -85,6 +85,11 @@ export class EventResolver {
         title: source.title,
         emailSignature: source.emailSignature,
 
+        defaultWeeks: source.defaultWeeks,
+        hasBeginner: source.hasBeginner,
+        hasIntermediate: source.hasIntermediate,
+        hasAdvanced: source.hasAdvanced,
+
         studentApplicationsStartAt: (
           DateTime.fromJSDate(source.studentApplicationsStartAt)
             .plus(diff)
