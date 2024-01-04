@@ -2,6 +2,7 @@ import {
   Resolver, Authorized, Arg, Ctx, Query,
 } from 'type-graphql';
 import { PrismaClient } from '@prisma/client';
+import { StudentStatus } from '../enums';
 import { Inject, Service } from 'typedi';
 import { Context, AuthRole } from '../context';
 import { AutocompleteResult, AutocompleteType } from '../types/AutocompleteResult';
@@ -18,6 +19,7 @@ export class AutocompleteResolver {
   async autocomplete(
     @Ctx() { auth }: Context,
     @Arg('types', () => AutocompleteFilterTypeInput) types: AutocompleteFilterTypeInput,
+    @Arg('status', () => [StudentStatus], { defaultValue: [StudentStatus.ACCEPTED] }) status: StudentStatus[],
     @Arg('q', () => String) q: string,
   ): Promise<AutocompleteResult[]> {
     const lookups: (() => Promise<AutocompleteResult[]>)[] = [];
@@ -27,12 +29,20 @@ export class AutocompleteResolver {
         (await this.prisma.student.findMany({
           where: {
             eventId: auth.eventId,
-            status: 'ACCEPTED',
-            OR: [
-              { givenName: { contains: q, mode: 'insensitive'} },
-              { surname: { contains: q, mode: 'insensitive'} },
-              { email: { contains: q, mode: 'insensitive'} },
-            ],
+            AND: [
+              {
+                OR: status.map(s => ({
+                  status: s
+                }))
+              },
+              {
+                OR: [
+                  { givenName: { contains: q, mode: 'insensitive'} },
+                  { surname: { contains: q, mode: 'insensitive'} },
+                  { email: { contains: q, mode: 'insensitive'} },
+                ],
+              }
+            ]
           },
         }))
           .map(s => ({

@@ -74,7 +74,16 @@ export class ReviewResolver {
     @Arg('take', () => Number, { nullable: true }) take?: number,
     @Arg('track', () => Track, { nullable: true }) track?: Track,
   ): Promise<PrismaStudent[]> {
-    const topRatings = await this.prisma.admissionRating.groupBy({
+    const statuses = [
+      StudentStatus.APPLIED,
+      StudentStatus.TRACK_CHALLENGE,
+      StudentStatus.TRACK_INTERVIEW,
+      ...(includeRejected ? [StudentStatus.REJECTED] : []),
+    ];
+
+    type RatingInfo = { admissionRatingAverage: number, admissionRatingCount: number }; 
+
+    const topRatings = <Record<string, RatingInfo>>(await this.prisma.admissionRating.groupBy({
       skip,
       take,
       by: ['studentId'],
@@ -85,30 +94,29 @@ export class ReviewResolver {
           track,
           eventId: auth.eventId!,
           status: {
-            in: [
-              StudentStatus.APPLIED,
-              StudentStatus.TRACK_CHALLENGE,
-              StudentStatus.TRACK_INTERVIEW,
-              ...(includeRejected ? [StudentStatus.REJECTED] : []),
-            ],
+            in: statuses,
           },
         },
       },
       orderBy: { _avg: { rating: 'desc' } },
-    });
-    const students = <Record<string, PrismaStudent>>(await this.prisma.student.findMany({
+    })).reduce((accum, e) => ({
+      ...accum,
+      [e.studentId]: { admissionRatingAverage: e._avg?.rating, admissionRatingCount: e._count?.rating}
+    }), {});
+
+    const students = (await this.prisma.student.findMany({
       skip,
       take,
-      where: { id: { in: topRatings.map(({ studentId }) => studentId) } },
+      where: { eventId: auth.eventId!, status: { in: statuses }, track },
       include: { admissionRatings: { select: { track: true } } },
-    })).reduce((accum, student) => ({ ...accum, [student.id]: student }), {});
+    }));
 
-    return topRatings
-      .map(({ studentId, _avg, _count }) => ({
-        ...students[studentId],
-        admissionRatingAverage: _avg?.rating,
-        admissionRatingCount: _count?.rating,
-      }));
+    return students
+      .map(s => ({ ...s, ...topRatings[s.id] }))
+      .sort((a, b) => {
+        if (a.admissionRatingAverage > b.admissionRatingAverage) return -1;
+        else return 1;
+      });
   }
 
   @Authorized(AuthRole.ADMIN, AuthRole.PARTNER)
