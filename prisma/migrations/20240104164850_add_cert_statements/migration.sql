@@ -1,0 +1,1 @@
+ALTER TABLE "Event" ADD COLUMN     "certificationStatements" TEXT[] NOT NULL DEFAULT array[]::text[];

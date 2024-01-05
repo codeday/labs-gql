@@ -83,6 +83,7 @@ model Event {
 
   title        String
   defaultWeeks Int    @default(4)
+  certificationStatements String[]
 
   studentApplicationsStartAt    DateTime
   studentApplicationsEndAt      DateTime

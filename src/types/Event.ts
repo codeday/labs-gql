@@ -26,6 +26,9 @@ export class Event {
   @Field(() => Int)
   defaultWeeks: number
 
+  @Field(() => [String])
+  certificationStatements: string
+
   @Field(() => Boolean)
   hasBeginner: boolean
 

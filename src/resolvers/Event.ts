@@ -84,6 +84,7 @@ export class EventResolver {
         startsAt,
         title: source.title,
         emailSignature: source.emailSignature,
+        certificationStatements: source.certificationStatements,
 
         defaultWeeks: source.defaultWeeks,
         hasBeginner: source.hasBeginner,

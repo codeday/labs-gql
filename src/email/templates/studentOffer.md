@@ -26,9 +26,6 @@ If you accept this offer, you are committing to:
 - [I accept this offer!](https://labs.codeday.org/dash/s/{{ tokenFor student }}/offer-accept)
 - [I do NOT accept, and want to cancel my application.](https://labs.codeday.org/dash/s/{{ tokenFor student }}/withdraw)
 
-Remember that while we aim to provide an internship-style experience, this isn't a paid internship and you won't be an
-employee. (Don't worry, you can still include it on your LinkedIn and resume.)
-
 Thank you! We hope to work with you soon!
 
 {{{ event.emailSignature }}}

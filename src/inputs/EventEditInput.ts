@@ -17,6 +17,9 @@ export class EventEditInput {
   @Field(() => Int, { nullable: true })
   defaultWeeks?: number | null
 
+  @Field(() => [String], { nullable: true })
+  certificationStatements?: string[] | null
+
   @Field(() => Boolean, { nullable: true })
   hasBeginner?: boolean | null
 
@@ -76,6 +79,7 @@ export class EventEditInput {
       title: this.title ?? undefined,
 
       defaultWeeks: this.defaultWeeks ?? undefined,
+      certificationStatements: this.certificationStatements ?? undefined,
       hasBeginner: this.hasBeginner ?? undefined,
       hasIntermediate: this.hasIntermediate ?? undefined,
       hasAdvanced: this.hasAdvanced ?? undefined,
