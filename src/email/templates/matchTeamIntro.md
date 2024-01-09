@@ -1,10 +1,8 @@
 ---
 to: "{{ join (mapToKey project.students 'email') ',' }}, {{ join (mapToKey project.mentors 'email') ','}}"
 cc: "{{ join (mentorManagers project '@codeday.org') ',' }}"
-subject: "{{ event.name }} Team Intro: {{{ join (mapToKey project.students 'givenName') ' <> ' }}} <> {{{ join (mapToKey project.mentors 'givenName') ' <> '}}}"
+subject: "[Action Required] {{ event.name }} Team Intro: {{{ join (mapToKey project.students 'givenName') ' <> ' }}} <> {{{ join (mapToKey project.mentors 'givenName') ' <> '}}}"
 ---
-
-**(PLEASE REMEMBER TO REPLY-ALL TO THIS MESSAGE.)**
 
 {{ join (names project.students) '/' }} (students), and {{ join (names project.mentors) '/'}} (mentors) --
 
@@ -20,5 +18,7 @@ Welcome to CodeDay Labs! We have placed you together in a team, working on this 
   - (2) [log into your dashboard](https://labs.codeday.org/dash) to view any outstanding assignments
   - (3) start taking to your teammates to decide on a work session schedule
   - (4) once your mentor replies to this email with a When2Meet, make sure to fill it out
+
+**STUDENTS AND MENTORS, YOUR NEXT STEP IS TO REPLY-ALL TO THIS MESSAGE.** (Please remember to click REPLY-ALL not just reply.)
 
 {{{ event.emailSignature }}}
