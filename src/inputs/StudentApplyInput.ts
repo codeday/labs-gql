@@ -30,6 +30,9 @@ export class StudentApplyInput {
   @Field(() => [String], { nullable: true })
   tags?: string[]
 
+  @Field(() => String, { nullable: true })
+  timezone?: string
+
   toQuery(): Omit<Prisma.StudentCreateInput, 'username'> {
     return {
       givenName: this.givenName,
@@ -40,6 +43,7 @@ export class StudentApplyInput {
       track: this.track,
       minHours: this.minHours,
       partnerCode: this.partnerCode,
+      timezone: this.timezone,
       tags: this.tags ? { connect: this.tags.map((id): Prisma.TagWhereUniqueInput => ({ id })) } : undefined,
     };
   }

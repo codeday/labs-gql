@@ -10,6 +10,14 @@ const tasksByName = Object.fromEntries(
   tasks.map(t => [t.name, t])
 );
 
+export function getActivities() {
+  return tasks.map(t => t.name);
+}
+
+export function getActivitySchema(name: string): object | null {
+  return tasksByName[name]?.schema || null;
+}
+
 export function runActivity(name: string, context: Context, args: Object): boolean {
   if (name in tasksByName) {
     DEBUG(`Running activity ${name}`);

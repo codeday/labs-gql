@@ -6,12 +6,27 @@ import {
 import { Context } from '../../context';
 import { makeDebug, PickNonNullable } from "../../utils";
 
-const DEBUG = makeDebug('activities:tasks:slackCreateChannels');
+const DEBUG = makeDebug('activities:tasks:slackInviteChannels');
 
 interface SlackInviteChannelsArgs {
   user: string
   partnerCode?: string
 }
+
+export const SCHEMA = {
+  type: 'object',
+  required: ['user'],
+  properties: {
+    user: { 
+      type: 'string',
+      title: 'User ID'
+    },
+    partnerCode: {
+      type: 'string',
+      title: 'Partner Code (Optional)',
+    },
+  }
+};
 
 export default async function slackInviteChannels({ auth }: Context, args: Partial<SlackInviteChannelsArgs> | undefined): Promise<void> {
   if (!args || !args.user) throw new Error(`Must specify user in arguments.`);

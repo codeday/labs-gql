@@ -23,12 +23,8 @@ Some other pro-tips:
   of your mentor's company.
 - If you're no longer able to spend your promised minimum {{ student.minHours }} hours a week on this, please let us
   know as soon as possible.
-- {{ event.name }} is not a traditional paid internship, it's an educational opportunity. You're not an employee. (Some
-  schools have a partnership where students are paid a stipend while participating. This is through your school; we
-  can't answer any questions about it. Unless you have already been told this applies to you, it doesn't.)
+- {{ event.name }} is not a traditional internship, it's an educational opportunity. You're not an employee.
 - If you need paperwork filled out for your school, please reply to this email.
-- We cannot sponsor a work visa. However, because this is an educational opportunity most people do not require a
-  work visa.
 
 If you have any questions, you can reply to this email.
 

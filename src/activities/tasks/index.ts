@@ -7,8 +7,8 @@ import { makeDebug } from "../../utils";
 
 const DEBUG = makeDebug('activities:tasks');
 
-type TaskImport = { default: Function };
-export type TaskExport = { name: string, fn: Function }
+type TaskImport = { default: Function, SCHEMA?: object | null };
+export type TaskExport = { name: string, fn: Function, schema: object | null }
 
 const allTasks = <TaskExport[]>fs.readdirSync(__dirname)
   .filter(n => !['index.ts', 'index.js'].includes(n))
@@ -17,6 +17,7 @@ const allTasks = <TaskExport[]>fs.readdirSync(__dirname)
     if (!f.default) throw new Error(`Task ${n} does not include a default export.`);
     return {
       name: n.replace(/\.(ts|js)$/g, ''),
+      schema: f.SCHEMA || null,
       fn: f.default,
     };
   });

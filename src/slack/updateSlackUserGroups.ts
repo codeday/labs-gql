@@ -31,8 +31,10 @@ export async function updateSlackUserGroups(
 
   DEBUG(`Updating group ${event.slackUserGroupId} with ${ids.length} members.`);
   
-  await slack.usergroups.users.update({
-    usergroup: event.slackUserGroupId,
-    users: ids.join(','),
-  });
+  if (ids.length > 0) {
+    await slack.usergroups.users.update({
+      usergroup: event.slackUserGroupId,
+      users: ids.join(','),
+    });
+  }
 }

@@ -1,5 +1,5 @@
 import {
-  Resolver, Authorized, Mutation, Arg, Ctx,
+  Resolver, Authorized, Mutation, Arg, Ctx, Query,
 } from 'type-graphql';
 import { PersonType, PrismaClient, Partner as PrismaPartner, Student as PrismaStudent } from '@prisma/client';
 import { Inject, Service } from 'typedi';
@@ -16,6 +16,16 @@ import { idOrUsernameOrEmailOrAuthToUniqueWhere, validateStudentEvent } from '..
 export class ProjectResolver {
   @Inject(() => PrismaClient)
   private readonly prisma : PrismaClient;
+
+  @Authorized(AuthRole.ADMIN)
+  @Query(() => [Partner])
+  async partners(
+    @Ctx() { auth }: Context,
+  ): Promise<PrismaPartner[]> {
+    return this.prisma.partner.findMany({
+      where: { eventId: auth.eventId! },
+    });
+  }
 
   @Authorized(AuthRole.ADMIN)
   @Mutation(() => Partner)

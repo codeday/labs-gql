@@ -9,6 +9,10 @@ const tasksByName = Object.fromEntries(
   tasks.map(t => [t.name, t])
 );
 
+export function getAutomations() {
+  return tasks.map(t => t.name);
+}
+
 function tryCrontab(fn: Function) {
   return async () => {
     DEBUG(`Automation ${fn.name} starting.`);

@@ -65,6 +65,7 @@ export class EventResolver {
         resources: true,
         meetings: true,
         artifactTypes: true,
+        partners: true,
         studentTrainingGroup: {
           include: {
             entries: true,
@@ -229,6 +230,20 @@ export class EventResolver {
           agendaStudentUi: m.agendaStudentUi as any || undefined,
           notesStudentSchame: m.notesStudentSchema as any || undefined,
           notesStudentUi: m.notesStudentUi as any || undefined,
+          eventId: event.id,
+        })),
+      });
+    }
+
+    if (source.partners.length > 0) {
+      await this.prisma.partner.createMany({
+        data: source.partners.map(p => ({
+          partnerCode: p.partnerCode,
+          weeks: p.weeks,
+          minHours: p.minHours,
+          skipPreferences: p.skipPreferences,
+          onlyAffine: p.onlyAffine,
+          autoApprove: p.autoApprove,
           eventId: event.id,
         })),
       });

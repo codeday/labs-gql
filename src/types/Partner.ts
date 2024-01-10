@@ -8,7 +8,7 @@ import {
 } from '@prisma/client';
 import { Container } from 'typedi';
 import {
-  ObjectType, Field, Int,
+  ObjectType, Field, Int, Authorized,
 } from 'type-graphql';
 import { Track, ProjectStatus } from '../enums';
 import { Tag } from './Tag';
@@ -16,6 +16,9 @@ import { Mentor } from './Mentor';
 import { Student } from './Student';
 import { Event } from './Event';
 import { Project } from './Project';
+import { AuthRole, JwtToken } from '../context';
+import { sign } from 'jsonwebtoken';
+import config from '../config';
 
 @ObjectType()
 export class Partner implements PrismaPartner {
@@ -123,5 +126,16 @@ export class Partner implements PrismaPartner {
   @Field(() => Number)
   async studentCount(): Promise<number> {
     return (await this.fetchStudents()).length;
+  }
+
+  @Authorized(AuthRole.ADMIN)
+  @Field(() => String)
+  token(): string {
+    const token: JwtToken = {
+      typ: AuthRole.PARTNER,
+      evt: this.eventId,
+      pc: this.partnerCode,
+    };
+    return sign(token, config.auth.secret, { audience: config.auth.audience });
   }
 }
