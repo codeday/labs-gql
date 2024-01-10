@@ -81,8 +81,8 @@ model Event {
   startsAt       DateTime
   emailSignature String?
 
-  title        String
-  defaultWeeks Int    @default(4)
+  title                   String
+  defaultWeeks            Int      @default(4)
   certificationStatements String[]
 
   studentApplicationsStartAt    DateTime
@@ -97,9 +97,9 @@ model Event {
   mentorApplicationUi          Json
   mentorApplicationPostprocess Json
 
-  hasBeginner Boolean @default(true)
+  hasBeginner     Boolean @default(true)
   hasIntermediate Boolean @default(true)
-  hasAdvanced Boolean @default(true)
+  hasAdvanced     Boolean @default(true)
 
   isActive                      Boolean @default(false)
   matchPreferenceSubmissionOpen Boolean @default(false)

@@ -1,14 +1,16 @@
 import { PickNonNullable } from "../utils";
-import { encode } from 'gpt-tokenizer/cjs/model/babbage';
+import { encode } from 'gpt-tokenizer/cjs/model/gpt-3.5-turbo';
 import { StandupResult } from "@prisma/client";
 import { ModelType, OpenAILogitBias, OpenAILogprobs, OpenAITrainingExample } from "./types";
+import OpenAI from "openai";
 
 export const MODEL_MAX_TOKENS = 2049;
-export const BINARY_CLASSIFICATION_CLASSES = ['yes', 'no'] as ['yes', 'no'];
+const SYSTEM_PROMPT = `You are an agile scrum manager in a software company reviewing your team's standup updates.`;
 export const BINARY_CLASSIFICATION_PROMPTS = {
-  [ModelType.Vague]: 'Update was vague:',
-  [ModelType.Workload]: 'Person was productive:',
+  [ModelType.Vague]: 'Is the update vague?',
+  [ModelType.Workload]: 'Was the person productive?',
 };
+export const BINARY_CLASSIFICATION_CLASSES = ['yes', 'no'] as ['yes', 'no'];
 
 /**
  * Converts classification classes into a logitBias object, which forces
@@ -54,25 +56,11 @@ export function getTrainingExample(
     : (example.rating === 3); // is this productive? 3 yes, this is productive.
 
   return {
-    prompt: textToCompletionPrompt(modelType, example.text),
-    completion: valToCompletionExample(completionYes ? 'yes' : 'no'),
+    messages: [
+      ...textToCompletionPrompt(modelType, example.text),
+      { role: 'assistant', content: valToCompletionExample(completionYes ? 'yes' : 'no') }
+    ]
   };
-}
-
-/**
- * Reformats classification text into OpenAI's recommended format for
- * classification tasks. Does not check length.
- * 
- * @param modelType Is the model for vagueness or workload?
- * @param text Text to score.
- * @returns Full model prompt.
- */
-function textToCompletionPromptUnchecked(
-  modelType: ModelType,
-  text: string
-): string {
-  const modelPrompt = BINARY_CLASSIFICATION_PROMPTS[modelType];
-  return `${text}\n\n###\n${modelPrompt}`;
 }
 
 /**
@@ -87,11 +75,9 @@ function textToCompletionPromptUnchecked(
 export function textToCompletionPrompt(
   modelType: ModelType,
   text: string
-): string {
+): OpenAI.Chat.Completions.ChatCompletionMessageParam[] {
   let truncatedText = text;
-  let truncatedTextTokenLength = encode(
-    textToCompletionPromptUnchecked(modelType, truncatedText)
-  ).length;
+  let truncatedTextTokenLength = encode(truncatedText).length;
 
   while (truncatedTextTokenLength > MODEL_MAX_TOKENS) {
     truncatedText = truncatedText
@@ -99,12 +85,15 @@ export function textToCompletionPrompt(
       .slice(0, truncatedText.length - Math.ceil((truncatedTextTokenLength - MODEL_MAX_TOKENS)/2))
       .join(' ');
 
-    truncatedTextTokenLength = encode(
-      textToCompletionPromptUnchecked(modelType, truncatedText)
-    ).length;
+    truncatedTextTokenLength = encode(truncatedText).length;
   }
 
-  return textToCompletionPromptUnchecked(modelType, truncatedText)
+  return [
+    { role: 'system', content: SYSTEM_PROMPT },
+    { role: 'user', content: truncatedText },
+    { role: 'assistant', content: 'What would you like to know about this standup update?' },
+    { role: 'user', content: BINARY_CLASSIFICATION_PROMPTS[modelType]},
+  ];
 }
 
 /**

@@ -125,7 +125,13 @@ export class Partner implements PrismaPartner {
 
   @Field(() => Number)
   async studentCount(): Promise<number> {
-    return (await this.fetchStudents()).length;
+    return await Container.get(PrismaClient).student.count({
+        where: {
+          partnerCode: this.partnerCode,
+          eventId: this.eventId,
+          status: { notIn: [ 'CANCELED', 'REJECTED' ]},
+        },
+      });
   }
 
   @Authorized(AuthRole.ADMIN)

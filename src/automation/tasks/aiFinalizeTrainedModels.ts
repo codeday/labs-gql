@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { OpenAIApi } from "openai";
+import OpenAIApi from "openai";
 import Container from "typedi";
 import { makeDebug } from "../../utils";
 
@@ -46,14 +46,14 @@ export default async function aiFinalizeTrainedModels() {
   DEBUG(`Checking the status of ${updateModles.length} fine-tunes`);
 
   for (const { key, keyPending, value } of updateModles) {
-    const result = await openAi.retrieveFineTune(value!);
-    DEBUG(`Fine-tune ${value} is ${result.data.status}.`)
-    if (result.data.status === 'pending') continue;
-    if (result.data.status === 'succeeded' && result.data.fine_tuned_model) {
+    const result = await openAi.fineTuning.jobs.retrieve(value!);
+    DEBUG(`Fine-tune ${value} is ${result.status}.`)
+    if (['validating_files', 'queued', 'running'].includes(result.status)) continue;
+    if (result.status === 'succeeded' && result.fine_tuned_model) {
       await prisma.event.updateMany({
         where: { [keyPending]: value },
         data: {
-          [key]: result.data.fine_tuned_model,
+          [key]: result.fine_tuned_model,
           [keyPending]: null,
         },
       });

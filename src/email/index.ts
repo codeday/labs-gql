@@ -89,7 +89,7 @@ export async function sendEmailsForGenerator(
     ), false)
   ));
 
-  DEBUG(`* ${emailId}: ${newContexts.length} emails to send.`);
+  if (newContexts.length > 0) DEBUG(`* ${emailId}: ${newContexts.length} emails to send.`);
 
   for (const context of newContexts) await sendEmailForContext(emailId, generator, context, event);
 }

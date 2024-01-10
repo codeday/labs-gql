@@ -1,6 +1,7 @@
 import { Event } from "@prisma/client";
+import OpenAI from "openai";
 
-export type OpenAITrainingExample = { prompt: string, completion: string };
+export type OpenAITrainingExample = { messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] }
 export type OpenAILogprobs = Record<string, number>[];
 export type OpenAILogitBias = Record<number, number>;
 export enum ModelType {

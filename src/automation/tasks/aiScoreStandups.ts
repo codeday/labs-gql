@@ -1,5 +1,6 @@
 import { PrismaClient, StudentStatus } from "@prisma/client";
 import Container from "typedi";
+import { APIError } from 'openai';
 import { StandupWithModel, getProjectStandupScore } from "../../openai";
 import { makeDebug } from "../../utils";
 
@@ -11,14 +12,22 @@ async function scoreProjectStandup(
   standup: StandupWithModel
 ): Promise<void> {
   const prisma = Container.get(PrismaClient);
-  const rating = await getProjectStandupScore(standup);
+  try {
+    const rating = await getProjectStandupScore(standup);
 
-  DEBUG(`Standup ${standup.id} was scored ${rating}`);
+    DEBUG(`Standup ${standup.id} was scored ${rating}`);
 
-  await prisma.standupResult.update({
-    where: { id: standup.id },
-    data: { rating },
-  });
+    await prisma.standupResult.update({
+      where: { id: standup.id },
+      data: { rating },
+    });
+  } catch (ex) {
+    if (ex instanceof APIError) {
+      DEBUG(ex.message);
+    } else {
+      DEBUG(ex);
+    }
+  }
 }
 
 export default async function aiScoreStandups() {
