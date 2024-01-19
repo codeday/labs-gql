@@ -1,6 +1,7 @@
 ---
 to: "{{ join (mapToKey project.students 'email') ',' }}, {{ join (mapToKey project.mentors 'email') ','}}"
 cc: "{{ join (mentorManagers project '@codeday.org') ',' }}"
+bcc: "labs@codeday.org"
 subject: "[Action Required] {{ event.name }} Team Intro: {{{ join (mapToKey project.students 'givenName') ' <> ' }}} <> {{{ join (mapToKey project.mentors 'givenName') ' <> '}}}"
 ---
 

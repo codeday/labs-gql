@@ -1,5 +1,6 @@
 ---
 to: "{{ student.email }}"
+bcc: "labs@codeday.org"
 subject: "[Action Required] Onboarding Week Assignments"
 ---
 

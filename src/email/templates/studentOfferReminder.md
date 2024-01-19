@@ -1,5 +1,6 @@
 ---
 to: "{{ student.email }}"
+bcc: "labs@codeday.org"
 subject: "Re: [Action Required] {{ event.name }} Admission Offer"
 ---
 

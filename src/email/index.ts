@@ -54,7 +54,7 @@ async function sendEmailForContext(
       html,
       text,
       from: frontMatter.from || config.email.from,
-      bcc: [frontMatter.bcc, config.email.from].filter(Boolean) as string[],
+      bcc: [frontMatter.bcc].filter(Boolean) as string[],
       cc: [
         frontMatter.cc,
         context.project && `${context.project.id}+${emailSentId}@${config.email.inboundDomain}`

@@ -12,7 +12,7 @@ const DEBUG = makeDebug('email:loader');
 
 const EMAIL_DIR = path.join(__dirname, 'templates');
 
-export type PartialEvent = Pick<Event, 'id' | 'name' | 'emailSignature' | 'title'>;
+export type PartialEvent = Pick<Event, 'id' | 'name' | 'emailSignature' | 'title' | 'startsAt' | 'defaultWeeks'>;
 
 interface EmailGeneratorTs {
   getId(): Promise<string | null>

@@ -12,7 +12,7 @@ export default async function emailSend() {
   const prisma = Container.get(PrismaClient);
   const events = await prisma.event.findMany({
     where: { isActive: true },
-    select: { id: true, name: true, emailSignature: true, title: true },
+    select: { id: true, name: true, emailSignature: true, title: true, startsAt: true, defaultWeeks: true },
   });
   for (const event of events) {
     for (const generator of await getEmailGenerators()) {

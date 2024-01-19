@@ -4,6 +4,7 @@ import { Mentor, Student, Project } from '@prisma/client';
 import { sign } from 'jsonwebtoken';
 import config from '../config';
 import { JwtToken, AuthRole, AuthByTarget } from '../context';
+import { DateTime } from 'luxon';
 
 function isMentor(sub: any): sub is Mentor {
   return Boolean(sub.maxWeeks);
@@ -88,6 +89,14 @@ function lowercase(value: string): string {
   return value.toLocaleLowerCase();
 }
 
+function nextWeek(value: Date): Date {
+  return DateTime.fromJSDate(value).plus({ weeks: 1 }).toJSDate();
+}
+
+function prettyDate(value: Date): string {
+  return DateTime.fromJSDate(value).toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY);
+}
+
 export function registerHandlebarsHelpers(): void {
   handlebars.registerHelper('tokenFor', tokenFor);
   handlebars.registerHelper('dashboardFor', dashboardFor);
@@ -102,4 +111,6 @@ export function registerHandlebarsHelpers(): void {
   handlebars.registerHelper('plural', plural);
   handlebars.registerHelper('mentorManagers', mentorManagers);
   handlebars.registerHelper('lowercase', lowercase);
+  handlebars.registerHelper('nextWeek', nextWeek);
+  handlebars.registerHelper('prettyDate', prettyDate);
 }
