@@ -8,6 +8,8 @@ import { makeDebug } from "../../utils";
 
 const DEBUG = makeDebug('automation:tasks:emailDueSurveysReminder');
 
+export const JOBSPEC = '*/5 * * * *';
+
 interface SurveyReminderContext {
   to: Mentor | Student,
   surveyOccurence: SurveyOccurence,
@@ -21,6 +23,7 @@ export default async function emailDueSurveysReminder(): Promise<void> {
 
   const tplDue = await getTemplate<SurveyReminderContext>('surveyDue.md');
   const tplOverdue = await getTemplate<SurveyReminderContext>('surveyOverdue.md');
+
 
   const visibleSurveys = await prisma.surveyOccurence.findMany({
     where: {
@@ -44,6 +47,8 @@ export default async function emailDueSurveysReminder(): Promise<void> {
     },
     include: { survey: { include: { event: true } } },
   });
+
+  DEBUG(`Sending emails for ${visibleSurveys.length} surveys.`);
 
   for (const visibleSurvey of visibleSurveys) {
     let targets: (Student | Mentor)[] = [];

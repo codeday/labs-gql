@@ -136,15 +136,25 @@ export class SurveyResolver {
       }
     }
 
+    // Figure out ID if a username is provided
+    let authorId: string | null = null;
+    if (auth.isMentor) {
+      authorId = auth.id ?? (await this.prisma.mentor.findUnique({ where: { username_eventId: { username: auth.username!, eventId: auth.eventId! }}}))?.id!;
+    } else {
+      authorId = auth.id ?? (await this.prisma.student.findUnique({ where: { username_eventId: { username: auth.username!, eventId: auth.eventId! }}}))?.id!;
+    }
+
+    if (!authorId) throw new Error(`Must provide an authorship token when creating a survey.`);
+    
     await this.prisma.surveyResponse.createMany({
       data: responses
         .map((response) => ({
           surveyOccurenceId: occurrence,
           projectId: response.project,
+          authorMentorId: auth.isMentor ? authorId : null,
+          authorStudentId: auth.isStudent ? authorId : null,
           mentorId: response.mentor,
           studentId: response.student,
-          authorMentorId: auth.isMentor ? auth.id! : null,
-          authorStudentId: auth.isStudent ? auth.id! : null,
           response: response.response,
           caution: 0.0,
         }))
