@@ -34,7 +34,10 @@ export async function startAutomation() {
 
   tasks
     .filter(t => t.spec)
-    .forEach(({ spec, fn }) => new CronJob(spec!, tryCrontab(fn), null, true))
+    .forEach(({ spec, fn, name }) => {
+      DEBUG(`Registered task ${name} for ${spec}.`);
+      new CronJob(spec!, tryCrontab(fn), null, true)
+    })
 }
 
 export function runJob(name: string): boolean {
