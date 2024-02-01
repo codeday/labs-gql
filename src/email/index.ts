@@ -2,7 +2,7 @@
 import handlebars from 'handlebars';
 import { Marked } from '@ts-stack/markdown';
 import { Container } from 'typedi';
-import { Mentor, PrismaClient, Student, Event } from '@prisma/client';
+import { Mentor, PrismaClient, Student, Event, Project } from '@prisma/client';
 import { Transporter } from 'nodemailer';
 import { EmailGenerator, PartialEvent } from './loader';
 import { EmailContext } from './spec';
@@ -94,6 +94,26 @@ export async function sendEmailsForGenerator(
   for (const context of newContexts) await sendEmailForContext(emailId, generator, context, event);
 }
 
+export async function sendProjectUpdate(
+  to: string[],
+  oldProject: Project,
+  newProject: Project,
+): Promise<void> {
+  DEBUG(`Sending project update notification.`);
+  const email = await Container.get<Transporter>('email');
+
+  const projectUpdateEmail = await readFile(path.join(__dirname, 'templates', 'projectUpdate.md'));
+  const tplProjectUpdateEmail = await handlebars.compile(projectUpdateEmail.toString());
+  const renderedTemplate = tplProjectUpdateEmail({ oldProject, newProject });
+
+  await email.sendMail({
+    to,
+    from: config.email.from,
+    subject: 'Project Information Updated',
+    text: renderedTemplate,
+    html: Marked.parse(renderedTemplate),
+  });
+}
 
 export async function sendLoginLinks(
   to: string,

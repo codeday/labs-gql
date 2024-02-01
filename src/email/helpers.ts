@@ -5,6 +5,7 @@ import { sign } from 'jsonwebtoken';
 import config from '../config';
 import { JwtToken, AuthRole, AuthByTarget } from '../context';
 import { DateTime } from 'luxon';
+import { diffChars, diffWords } from 'diff';
 
 function isMentor(sub: any): sub is Mentor {
   return Boolean(sub.maxWeeks);
@@ -97,7 +98,19 @@ function prettyDate(value: Date): string {
   return DateTime.fromJSDate(value).toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY);
 }
 
+function diff(oldStr: string, newStr: string): string {
+  return diffWords(oldStr, newStr).map(part => {
+    const color = part.added
+      ? 'green'
+      : part.removed && 'red';
+    return color
+      ? `<span style="color: ${color}">${part.value}</span>`
+      : part.value;
+  }).join('');
+}
+
 export function registerHandlebarsHelpers(): void {
+  handlebars.registerHelper('diff', diff);
   handlebars.registerHelper('tokenFor', tokenFor);
   handlebars.registerHelper('dashboardFor', dashboardFor);
   handlebars.registerHelper('fallback', fallback);

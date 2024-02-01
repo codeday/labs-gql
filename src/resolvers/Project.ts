@@ -11,6 +11,7 @@ import {
 import { MentorOnlySelf } from './decorators';
 import { idOrUsernameOrAuthToUniqueWhere, idOrUsernameToUniqueWhere, validateMentorEvent, validateProjectEvent, validateStudentEvent } from '../utils';
 import { ProjectCountWhereInput } from '../inputs/ProjectCountWhereInput';
+import { sendProjectUpdate } from '../email';
 
 @Service()
 @Resolver(Project)
@@ -68,10 +69,9 @@ export class ProjectResolver {
 
     const dbProject = await this.prisma.project.findUnique({
       where: { id: project },
-      select: {
-        status: true,
-        mentors: { select: { id: true, username: true } },
-        eventId: true,
+      include: {
+        mentors: { select: { id: true, username: true, givenName: true, surname: true, email: true } },
+        students: { select: { id: true, username: true, givenName: true, surname: true, email: true } },
         event: { select: { matchPreferenceSubmissionOpen: true } } },
     });
     if (!dbProject) throw Error('Project not found.');
@@ -86,10 +86,24 @@ export class ProjectResolver {
       } else if (!status) status = ProjectStatus.DRAFT;
     }
 
-    return this.prisma.project.update({
+    const newProject = await this.prisma.project.update({
       where: { id: project },
       data: { ...data.toQuery(), status },
     });
+
+    if (
+      dbProject.status === ProjectStatus.MATCHED
+      && (data.description && dbProject.description !== data.description)
+      || (data.issueUrl && dbProject.issueUrl !== data.issueUrl)
+    ) {
+      const to = [
+        ...dbProject.students.map(s => s.email),
+        ...dbProject.mentors.map(m => m.email),
+      ];
+      await sendProjectUpdate(to, dbProject, newProject);
+    }
+
+    return newProject;
   }
 
   @Authorized(AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.OPEN_SOURCE_MANAGER)

@@ -7,7 +7,14 @@ subject: "[Action Required] {{ event.name }} Team Intro: {{{ join (mapToKey proj
 
 {{ join (names project.students) '/' }} (students), and {{ join (names project.mentors) '/'}} (mentors) -- welcome to {{ event.name }}! We have placed you together in a team, working on this project:
 
+{{# if project.issueUrl}}[{{project.issueUrl}}]({{project.issueUrl}}){{/if}}
+
 <blockquote>{{ project.description }}</blockquote>
+
+{{#if project.deliverables }}**Deliverables:**
+
+{{project.deliverables}}
+{{/if}}
 
 **ACTION REQUIRED -- NEXT STEPS:**
 
