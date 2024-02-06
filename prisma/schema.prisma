@@ -404,6 +404,7 @@ model Student {
   timeManagementPlan Json?
   timezone           String?
   interviewNotes     String?
+  resumeUrl          String?
 
   slackId String?
 

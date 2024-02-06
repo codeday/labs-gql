@@ -189,7 +189,7 @@ export class StudentResolver {
 
     return this.prisma.student.create({
       data: {
-        ...data.toQuery(),
+        ...(await data.toQuery()),
         ...partnerData,
         event: { connect: { id: auth.eventId! } },
         username: auth.username,

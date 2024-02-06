@@ -1,7 +1,9 @@
 import { InputType, Field, Int } from 'type-graphql';
 import { Prisma } from '@prisma/client';
 import { GraphQLJSONObject } from 'graphql-type-json';
+import { GraphQLUpload, FileUpload } from 'graphql-upload';
 import { StudentStatus, Track } from '../enums';
+import { uploadResume } from '../utils';
 
 @InputType()
 export class StudentApplyInput {
@@ -33,7 +35,14 @@ export class StudentApplyInput {
   @Field(() => String, { nullable: true })
   timezone?: string
 
-  toQuery(): Omit<Prisma.StudentCreateInput, 'username'> {
+  @Field(() => GraphQLUpload, { nullable: true })
+  resume?: FileUpload
+
+  async toQuery(): Promise<Omit<Prisma.StudentCreateInput, 'username'>> {
+    const resumeUrl = this.resume
+      ? await uploadResume(this.resume)
+      : null;
+
     return {
       givenName: this.givenName,
       surname: this.surname,
@@ -45,6 +54,7 @@ export class StudentApplyInput {
       partnerCode: this.partnerCode,
       timezone: this.timezone,
       tags: this.tags ? { connect: this.tags.map((id): Prisma.TagWhereUniqueInput => ({ id })) } : undefined,
+      resumeUrl,
     };
   }
 }

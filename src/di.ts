@@ -5,6 +5,7 @@ import nodemailer from 'nodemailer';
 import OpenAIApi from "openai";
 import config from './config';
 import { registerHandlebarsHelpers } from './email/helpers';
+import Uploader from '@codeday/uploader-node';
 
 export function registerDi(): void {
   Container.set(PrismaClient, new PrismaClient());
@@ -13,6 +14,7 @@ export function registerDi(): void {
   Container.set(OpenAIApi, new OpenAIApi({
     organization: config.openAi.organization,
     apiKey: config.openAi.apiKey,
-  }));
+  }))
+  Container.set(Uploader, new Uploader(config.uploader.base, config.uploader.secret));;
   registerHandlebarsHelpers();
 }

@@ -37,6 +37,10 @@ const config = {
   webhook: {
     key: process.env.WEBHOOK_KEY!,
   },
+  uploader: {
+    base: process.env.UPLOADER_BASE!,
+    secret: process.env.UPLOADER_SECRET,
+  },
   app: {
     emailTemplateDir: path.join(__dirname, 'email', 'templates'),
   },

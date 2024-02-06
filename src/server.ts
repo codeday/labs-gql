@@ -21,6 +21,7 @@ export async function startServer(): Promise<void> {
     context,
     playground: config.debug,
     introspection: true,
+    uploads: false,
   });
 
   const app = Express();

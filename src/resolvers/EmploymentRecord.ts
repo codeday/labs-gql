@@ -1,15 +1,9 @@
 import {
-  Resolver, Authorized, Query, Mutation, Arg, Ctx,
+  Resolver, Query, Arg
 } from 'type-graphql';
-import { PrismaClient, Student as PrismaStudent, StudentStatus } from '@prisma/client';
+import { PrismaClient, StudentStatus } from '@prisma/client';
 import { Inject, Service } from 'typedi';
-import { Context, AuthRole } from '../context';
-import { EmploymentRecord, Student } from '../types';
-import {
-  IdOrUsernameInput, StudentApplyInput, StudentCreateInput, StudentEditInput, StudentFilterInput,
-} from '../inputs';
-import { StudentOnlySelf } from './decorators';
-import { eventAllowsApplicationStudent, idOrUsernameOrAuthToUniqueWhere, validateStudentEvent } from '../utils';
+import { EmploymentRecord } from '../types';
 
 @Service()
 @Resolver(EmploymentRecord)
