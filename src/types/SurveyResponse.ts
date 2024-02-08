@@ -1,4 +1,4 @@
-import { ObjectType, Field } from 'type-graphql';
+import { ObjectType, Field, Ctx } from 'type-graphql';
 import { Container } from 'typedi';
 import { GraphQLJSONObject } from 'graphql-type-json';
 import {
@@ -12,6 +12,7 @@ import { SurveyOccurence } from './SurveyOccurence';
 import { Student } from './Student';
 import { Mentor } from './Mentor';
 import { Project } from './Project';
+import { Context } from '../context';
 
 @ObjectType()
 export class SurveyResponse {
@@ -27,8 +28,15 @@ export class SurveyResponse {
   @Field(() => GraphQLJSONObject)
   response: Record<string, unknown>
 
-  @Field(() => Number)
   caution: number
+
+  @Field(() => Number, { name: 'caution' })
+  public fetchCaution(
+    @Ctx() { auth }: Context,
+  ): number {
+    if (auth.isStudent) return 0;
+    return this.caution;
+  }
 
   @Field(() => String)
   surveyOccurenceId: string

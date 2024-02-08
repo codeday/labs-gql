@@ -8,7 +8,7 @@ import {
   SurveyOccurence as PrismaSurveyOccurence,
   SurveyResponse as PrismaSurveyResponse,
 } from '@prisma/client';
-import { makeDebug } from '../utils';
+import { makeDebug, sanitizeSurveyResponse } from '../utils';
 import { Inject, Service } from 'typedi';
 import { Context, AuthRole } from '../context';
 import { Survey, SurveyOccurence, SurveyResponse } from '../types';
@@ -175,7 +175,7 @@ export class SurveyResolver {
     return true;
   }
 
-  @Authorized(AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.PARTNER)
+  @Authorized(AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.PARTNER, AuthRole.MENTOR, AuthRole.STUDENT)
   @Query(() => SurveyResponse)
   async getSurveyResponse(
     @Ctx() { auth }: Context,
@@ -193,15 +193,35 @@ export class SurveyResolver {
       rejectOnNotFound: true,
     });
 
-    if (auth.type === AuthRole.PARTNER) {
+    if (auth.isPartner) {
       if (
         !surveyResponse.student
         || auth.partnerCode !== surveyResponse.student.partnerCode
       ) {
         throw new Error('No permission to view this student\'s survey responses.');
       }
+    } else if (auth.isMentor) {
+      const id = auth.id ?? (await this.prisma.mentor.findUnique({ where: { username_eventId: { username: auth.username!, eventId: auth.eventId! }}}))?.id!;
+      const projectCount = await this.prisma.project.count({
+        where: {
+          mentors: { some: { id: id } },
+          OR: [
+            ...(surveyResponse.authorStudentId ? [{ students: { some: { id: surveyResponse.authorStudentId } } }] : []),
+            ...(surveyResponse.studentId ? [{ students: { some: { id: surveyResponse.studentId } } }] : []),
+          ],
+        }
+      });
+      if (projectCount === 0) {
+        throw new Error(`Cannot access this survey response.`)
+      }
+    } else if (auth.isStudent) {
+      const id = auth.id ?? (await this.prisma.student.findUnique({ where: { username_eventId: { username: auth.username!, eventId: auth.eventId! }}}))?.id!;
+      if (surveyResponse.authorStudentId !== id && surveyResponse.studentId !== id) {
+        throw new Error(`Cannot access this survey response.`);
+      }
     }
 
+    if (auth.isMentor || auth.isStudent) return sanitizeSurveyResponse(surveyResponse, auth);
     return surveyResponse;
   }
 }

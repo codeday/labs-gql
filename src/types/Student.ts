@@ -248,7 +248,7 @@ export class Student implements PrismaStudent {
   targetSurveyResponses?: SanitizableSurveyResponse[]
   surveyResponsesAbout?: SanitizableSurveyResponse[]
 
-  @Authorized([AuthRole.PARTNER, AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.MENTOR])
+  @Authorized([AuthRole.PARTNER, AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.MENTOR, AuthRole.STUDENT])
   @Field(() => [SurveyResponse], { name: 'surveyResponsesAbout' })
   async fetchSurveyResponsesAbout(
     @Ctx() { auth }: Context,
@@ -303,7 +303,7 @@ export class Student implements PrismaStudent {
     return this.artifacts;
   }
 
-  @Authorized([AuthRole.PARTNER, AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.MENTOR])
+  @Authorized([AuthRole.PARTNER, AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.MENTOR, AuthRole.STUDENT])
   @Field(() => Number, { name: 'emailCount' })
   async emailCount(): Promise<number> {
     return await Container.get(PrismaClient).projectEmail.count({
@@ -313,9 +313,14 @@ export class Student implements PrismaStudent {
 
   standupResults: StandupResult[] | null
 
-  @Authorized([AuthRole.PARTNER, AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.MENTOR])
+  @Authorized([AuthRole.PARTNER, AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.MENTOR, AuthRole.STUDENT])
   @Field(() => [StandupRating], { name: 'standupRatings' })
-  async fetchStandupRatings(): Promise<StandupRating[]> {
+  async fetchStandupRatings(
+    @Ctx() { auth }: Context,
+  ): Promise<StandupRating[]> {
+    if (auth.isStudent && auth.id !== this.id) {
+      throw new Error(`Cannot access information about other students.`);
+    }
     const prisma = Container.get(PrismaClient);
     const projects = this.projects as (PrismaProject & { standupThreads?: StandupThread[] })[];
     const standupThreads = projects.filter(p => Array.isArray(p.standupThreads)).length > 0

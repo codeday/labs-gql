@@ -17,7 +17,7 @@ export class StudentResolver {
   @Inject(() => PrismaClient)
   private readonly prisma : PrismaClient;
 
-  @Authorized(AuthRole.ADMIN, AuthRole.PARTNER, AuthRole.MANAGER, AuthRole.MENTOR)
+  @Authorized(AuthRole.ADMIN, AuthRole.PARTNER, AuthRole.MANAGER, AuthRole.MENTOR, AuthRole.STUDENT)
   @Query(() => [Student])
   async students(
     @Ctx() { auth }: Context,
@@ -101,6 +101,15 @@ export class StudentResolver {
               },
             },
           }
+        },
+        skip,
+        take,
+        include,
+      });
+    } else if (auth.isStudent) {
+      return this.prisma.student.findMany({
+        where: {
+          id: auth.id,
         },
         skip,
         take,

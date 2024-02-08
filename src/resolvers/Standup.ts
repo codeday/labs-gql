@@ -46,7 +46,7 @@ export class StandupResolver {
     return true;
   }
 
-  @Authorized(AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.PARTNER)
+  @Authorized(AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.PARTNER, AuthRole.STUDENT, AuthRole.MENTOR)
   @Query(() => String)
   async getStandup(
     @Ctx() { auth }: Context,
@@ -54,13 +54,29 @@ export class StandupResolver {
   ): Promise<string> {
     const standup = await this.prisma.standupResult.findUnique({
       where: { id: where },
-      select: { text: true, student: { select: { partnerCode: true } } },
+      select: { text: true, student: { select: { partnerCode: true, id: true } } },
       rejectOnNotFound: true,
     });
 
     if (auth.type === AuthRole.PARTNER) {
       if (auth.partnerCode !== standup.student.partnerCode) {
         throw new Error('No permission to view this student\'s standups.');
+      }
+    } else if (auth.isMentor) {
+      const id = auth.id ?? (await this.prisma.mentor.findUnique({ where: { username_eventId: { username: auth.username!, eventId: auth.eventId! }}}))?.id!;
+      const projectCount = await this.prisma.project.count({
+        where: {
+          mentors: { some: { id: id } },
+          students: { some: { id: standup.student.id } },
+        }
+      });
+      if (projectCount === 0) {
+        throw new Error(`Cannot access this standup.`)
+      }
+    } else if (auth.isStudent) {
+      const id = auth.id ?? (await this.prisma.student.findUnique({ where: { username_eventId: { username: auth.username!, eventId: auth.eventId! }}}))?.id!;
+      if (standup.student.id !== id) {
+        throw new Error(`Cannot access this standup.`);
       }
     }
 
