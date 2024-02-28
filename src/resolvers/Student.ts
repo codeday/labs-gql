@@ -1,5 +1,5 @@
 import {
-  Resolver, Authorized, Query, Mutation, Arg, Ctx,
+  Resolver, Authorized, Query, Mutation, Arg, Ctx, Int,
 } from 'type-graphql';
 import { Prisma, PrismaClient, Student as PrismaStudent, StudentStatus } from '@prisma/client';
 import { Inject, Service } from 'typedi';
@@ -107,14 +107,13 @@ export class StudentResolver {
         include,
       });
     } else if (auth.isStudent) {
-      return this.prisma.student.findMany({
-        where: {
-          id: auth.id,
-        },
-        skip,
-        take,
-        include,
-      });
+      return [
+          await this.prisma.student.findUnique({
+          where: idOrUsernameOrAuthToUniqueWhere(auth),
+          include,
+          rejectOnNotFound: true,
+        })
+      ];
     }
 
     return this.prisma.student.findMany({
@@ -159,6 +158,20 @@ export class StudentResolver {
         event: { connect: { id: auth.eventId! } },
       },
     });
+  }
+
+  @Authorized([AuthRole.APPLICANT_STUDENT, AuthRole.APPLICANT_MENTOR])
+  @Query(() => String, { nullable: true })
+  async applicationId(
+    @Ctx() { auth }: Context,
+  ): Promise<string | null | undefined> {
+    const where: Prisma.MentorWhereInput & Prisma.StudentWhereInput = {
+      username: auth.username,
+      eventId: auth.eventId,
+    };
+
+    if (auth.type === AuthRole.APPLICANT_MENTOR) return (await this.prisma.mentor.findFirst({ where }))?.id;
+    return (await this.prisma.student.findFirst({ where }))?.id;
   }
 
   @Authorized(AuthRole.APPLICANT_STUDENT)

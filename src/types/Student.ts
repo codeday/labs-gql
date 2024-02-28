@@ -257,6 +257,10 @@ export class Student implements PrismaStudent {
       this.surveyResponsesAbout = this.targetSurveyResponses;
     }
 
+    if (auth.isStudent && auth.id !== this.id && auth.username !== this.username) {
+      throw new Error(`Cannot access information about other students.`);
+    }
+
     if (!this.surveyResponsesAbout) {
       this.surveyResponsesAbout = (await Container.get(PrismaClient).surveyResponse.findMany({
         where: { studentId: this.id, surveyOccurence: { survey: { internal: false } } },
@@ -318,7 +322,7 @@ export class Student implements PrismaStudent {
   async fetchStandupRatings(
     @Ctx() { auth }: Context,
   ): Promise<StandupRating[]> {
-    if (auth.isStudent && auth.id !== this.id) {
+    if (auth.isStudent && auth.id !== this.id && auth.username !== this.username) {
       throw new Error(`Cannot access information about other students.`);
     }
     const prisma = Container.get(PrismaClient);
