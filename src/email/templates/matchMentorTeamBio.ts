@@ -12,14 +12,13 @@ export async function getList(prisma: PrismaClient, event: PartialEvent): Promis
   const mentors = await prisma.mentor.findMany({
     where: {
       status: MentorStatus.ACCEPTED,
-      eventId: event.id,
       projects: {
         some: {
           status: ProjectStatus.MATCHED,
           students: { some: { status: StudentStatus.ACCEPTED } },
         },
       },
-      event: { matchComplete: true },
+      event: { matchComplete: true, id: event.id },
     },
     include: {
       projects: {
