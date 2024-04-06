@@ -391,6 +391,7 @@ model Student {
   givenName          String
   surname            String
   username           String
+  githubUsername     String?
   email              String
   profile            Json
   track              Track
@@ -456,6 +457,15 @@ model Partner {
   @@unique([partnerCode, eventId])
 }
 
+enum PrStatus {
+  NOT_OPENED
+  OPENED_PENDING
+  OPENED_CLA_REQUESTED
+  OPENED_CHANGES_REQUESTED
+  CLOSED_REJECTED
+  CLOSED_MERGED
+}
+
 model Project {
   // Metadata
   id        String   @id @default(cuid())
@@ -469,6 +479,13 @@ model Project {
   maxStudents  Int           @default(4)
   status       ProjectStatus @default(DRAFT)
   issueUrl     String?
+  issueFetchedAt DateTime?
+  
+  prUrl         String?
+  prStatus     PrStatus?
+  prFetchedAt DateTime?
+  prStatusUpdatedAt DateTime?
+
   complete     Boolean       @default(false)
 
   slackChannelId String?
@@ -549,6 +566,7 @@ model Repository {
   logoUrl String?
   name    String
   url     String
+  usersExp Int?
 
   // Relations
   projects Project[]

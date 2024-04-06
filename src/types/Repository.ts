@@ -50,4 +50,7 @@ export class Repository implements PrismaRepository {
 
     return this.projects;
   }
+
+  @Field(() => Int, { nullable: true })
+  usersExp: number | null
 }

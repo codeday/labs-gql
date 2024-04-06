@@ -15,7 +15,7 @@ import { Container } from 'typedi';
 import {
   ObjectType, Field, Int, Authorized, Ctx,
 } from 'type-graphql';
-import { Track, ProjectStatus } from '../enums';
+import { Track, ProjectStatus, PrStatus } from '../enums';
 import { Tag } from './Tag';
 import { Mentor } from './Mentor';
 import { Student } from './Student';
@@ -205,4 +205,13 @@ export class Project implements PrismaProject {
     return this.surveyResponsesAbout;
   }
 
+  issueFetchedAt: Date | null
+  prFetchedAt: Date | null
+  prStatusUpdatedAt: Date | null
+
+  @Field(() => String, { nullable: true })
+  prUrl: string | null
+
+  @Field(() => PrStatus, { nullable: true })
+  prStatus: PrStatus | null
 }

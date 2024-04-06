@@ -106,6 +106,10 @@ export class Student implements PrismaStudent {
   @Field(() => String, { nullable: true })
   resumeUrl: string
 
+  @Authorized()
+  @Field(() => String, { nullable: true })
+  githubUsername: string
+
   @Field(() => Boolean)
   hasValidAdmissionOffer(): boolean {
     return this.status === 'OFFERED' && (!this.offerDate || DateTime.fromJSDate(this.offerDate).diffNow().days <= 3);

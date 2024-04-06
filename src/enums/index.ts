@@ -6,6 +6,7 @@ import {
   RejectionReason,
   TagType,
   PersonType,
+  PrStatus,
 } from '@prisma/client';
 import { registerEnumType } from 'type-graphql';
 
@@ -16,6 +17,7 @@ registerEnumType(ProjectStatus, { name: 'ProjectStatus' });
 registerEnumType(RejectionReason, { name: 'RejectionReason' });
 registerEnumType(TagType, { name: 'TagType' });
 registerEnumType(PersonType, { name: 'PersonType' });
+registerEnumType(PrStatus, { name: 'PrStatus' });
 
 export {
   Track,
@@ -25,4 +27,5 @@ export {
   RejectionReason,
   TagType,
   PersonType,
+  PrStatus,
 };
