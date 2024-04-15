@@ -29,7 +29,7 @@ export const SCHEMA = {
     },
     emailId: {
       type: 'string',
-      title: 'Emaiil ID (Optional)',
+      title: 'Email ID (Optional)',
     },
     partnerCode: {
       type: 'string',
