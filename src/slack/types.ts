@@ -5,7 +5,7 @@ export type SlackMentorInfo = { mentors: Pick<Mentor, 'id' | 'email' | 'givenNam
 export type SlackStudentInfo = { students: Pick<Student, 'id' | 'email' | 'slackId'>[] };
 
 export type SlackEventWithProjects<T> =
-  PickNonNullable<Event, 'slackWorkspaceAccessToken' | 'slackWorkspaceId' | 'name' | 'id'>
+  PickNonNullable<Event, 'slackWorkspaceAccessToken' | 'slackWorkspaceId' | 'slackMentorChannelId' | 'name' | 'id'>
   & Pick<Event, 'slackUserGroupId'>
   & { projects: (Pick<Project, 'id' | 'slackChannelId'> & T)[] };
 

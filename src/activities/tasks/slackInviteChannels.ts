@@ -1,4 +1,4 @@
-import { PrismaClient, Event } from "@prisma/client";
+import { PrismaClient, Event, Mentor } from "@prisma/client";
 import Container from "typedi";
 import {
   getSlackClientForEvent
@@ -39,7 +39,7 @@ export default async function slackInviteChannels({ auth }: Context, args: Parti
       slackWorkspaceAccessToken: { not: null },
     },
     rejectOnNotFound: true,
-  }) as PickNonNullable<Event, 'slackWorkspaceId' | 'slackWorkspaceAccessToken'>;
+  }) as PickNonNullable<Event, 'slackWorkspaceId' | 'slackWorkspaceAccessToken' | 'slackMentorChannelId'>;
   
   const projects = await prisma.project.findMany({
     where: {
@@ -57,6 +57,16 @@ export default async function slackInviteChannels({ auth }: Context, args: Parti
   
   for (const project of projects) {
     DEBUG(`Inviting ${args.user} to ${project.slackChannelId}`);
-    await slack.conversations.invite({ channel: project.slackChannelId!, users: args.user });
+    try {
+      await slack.conversations.invite({ channel: project.slackChannelId!, users: args.user });
+    } catch (ex) {}
   } 
+
+  if (event.slackMentorChannelId && !args.partnerCode) {
+    DEBUG(`Inviting ${args.user} to mentor channel (${event.slackMentorChannelId})`);
+    await slack.conversations.invite({
+      channel: event.slackMentorChannelId!,
+      users: args.user,
+    });
+  }
 }

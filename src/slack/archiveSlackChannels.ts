@@ -15,6 +15,12 @@ export async function archiveSlackChannels(
   const slack = getSlackClientForEvent(event);
   const archiveExtension = eventToChannelName(event);
 
+  if (event.slackMentorChannelId) {
+    await slack.conversations.archive({
+      channel: event.slackMentorChannelId,
+    });
+  }
+
   for (const project of event.projects.filter(p => p.slackChannelId)) {
       const slackChannel = await slack.conversations.info(
         { channel: project.slackChannelId! }

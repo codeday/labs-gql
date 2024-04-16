@@ -108,6 +108,7 @@ model Event {
 
   slackWorkspaceId              String?
   slackUserGroupId              String?
+  slackMentorChannelId          String?
   slackWorkspaceAccessToken     String?
   standupAndProsperToken        String?
   standupAiModelVague           String?

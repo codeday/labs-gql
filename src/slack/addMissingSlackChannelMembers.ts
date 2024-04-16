@@ -10,6 +10,15 @@ export async function addMissingSlackChannelMembers(
   event: SlackEventWithProjects<{ students: Pick<Student, 'slackId'>[], mentors: Pick<Mentor, 'slackId'>[] }>
 ): Promise<void> {
   const slack = getSlackClientForEvent(event);
+
+  if (event.slackMentorChannelId) {
+    const mentorIds = event.projects.flatMap(p => p.mentors).flatMap(m => m.slackId).filter(Boolean);
+    await slack.conversations.invite({
+      channel: event.slackMentorChannelId!,
+      users: mentorIds.join(','),
+    });
+  }
+
   const eligibleProjects = event.projects
     .filter(p => (
       p.slackChannelId

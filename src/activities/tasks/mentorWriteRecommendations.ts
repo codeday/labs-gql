@@ -141,6 +141,7 @@ export default async function mentorWriteRecommendations({ auth }: Context, args
 
     const mentorInformation = {
       'Recommendation For': `${mentor.givenName} ${mentor.surname}`,
+      'Pronouns': (mentor.profile as any)?.pronouns || 'they/them',
       'Count of Projects Mentored': allMentorship.flatMap(m => m.projects).length,
       'Students Mentored': allMentoredStudents.map(s => s.givenName).join(', '),
       'Count of Students Mentored': allMentoredStudents.length,
@@ -170,6 +171,7 @@ export default async function mentorWriteRecommendations({ auth }: Context, args
     recommendations.push({
       mentor: `${mentor.givenName} ${mentor.surname}`,
       linkedIn: (mentor.profile as any)?.linkedIn || '',
+      ...mentorInformation,
       prompt,
       result,
     });

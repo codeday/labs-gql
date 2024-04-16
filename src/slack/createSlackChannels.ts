@@ -1,7 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import Container from "typedi";
 import { getSlackClientForEvent } from "./getSlackClientForEvent";
-import { projectToSlackChannelName } from "./format";
+import { eventToChannelName, projectToSlackChannelName } from "./format";
 import { SlackMentorInfo, SlackEventWithProjects, SlackStudentInfo } from "./types";
 import { makeDebug } from '../utils';
 
@@ -17,6 +17,23 @@ export async function createSlackChannels(
   const prisma = Container.get(PrismaClient);
   const slack = getSlackClientForEvent(event);
 
+  if (!event.slackMentorChannelId) {
+    const mentorChannelName = `mentors-${eventToChannelName(event)}`;
+    DEBUG(`Attempting to create channel ${mentorChannelName}...`);
+    try {
+      const result = await slack.conversations.create(
+        { is_private: false, name: mentorChannelName }
+      );
+      if (!result.ok || !result.channel?.id) throw Error(JSON.stringify(result));
+      await prisma.event.update({
+        where: { id: event.id },
+        data: { slackMentorChannelId: result.channel.id }
+      });
+    } catch(ex) {
+      DEBUG(ex);
+    }
+  }
+
   for (const project of event.projects.filter(p => !p.slackChannelId)) {
     let id = null;
     let number = 0;
@@ -28,9 +45,11 @@ export async function createSlackChannels(
         const result = await slack.conversations.create(
           { is_private: false, name }
         );
-        if (!result.ok || !result.channel?.id) throw Error();
+        if (!result.ok || !result.channel?.id) throw Error(JSON.stringify(result));
         id = result.channel.id;
-      } catch(ex) {}
+      } catch(ex) {
+        DEBUG(ex);
+      }
       number++;
     }
 
