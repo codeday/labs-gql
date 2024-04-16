@@ -45,10 +45,16 @@ improve a developer's interpersonal skills and emotional intelligence.
 
 const GPT_PROMPT = `I am a manager for CodeDay and need your help to write a
 LinkedIn recommendation for one of our mentors. Please write a one-paragraph
-recommendation suitable for LinkedIn based on the information provided. The
-recommendation should start with a brief description of how I know the mentor
-(through their mentorship of our students). Please do not recommend them for
-any particular positions, just in general.`;
+recommendation suitable for LinkedIn based on the information provided. Use
+relatively informal language. The recommendation should follow the following
+format: 
+
+Explain that I know the mentor through their work mentoring our students.
+Briefly explain what CodeDay Labs is in 1 sentence.
+Give my recommendation for the mentor. (Please do not recommend them for any particular roles.)
+Describe what skills the mentor demonstrated as a result of the project.
+Summarize positive feedback from their students, if anything.
+`;
 
 const DEBUG = makeDebug('activities:tasks:mentorWriteRecommendations');
 
