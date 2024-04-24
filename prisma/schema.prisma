@@ -474,20 +474,20 @@ model Project {
   updatedAt DateTime @updatedAt
 
   // Data
-  description  String?       @db.Text
-  deliverables String?       @db.Text
-  track        Track
-  maxStudents  Int           @default(4)
-  status       ProjectStatus @default(DRAFT)
-  issueUrl     String?
+  description    String?       @db.Text
+  deliverables   String?       @db.Text
+  track          Track
+  maxStudents    Int           @default(4)
+  status         ProjectStatus @default(DRAFT)
+  issueUrl       String?
   issueFetchedAt DateTime?
-  
-  prUrl         String?
-  prStatus     PrStatus?
-  prFetchedAt DateTime?
+
+  prUrl             String?
+  prStatus          PrStatus?
+  prFetchedAt       DateTime?
   prStatusUpdatedAt DateTime?
 
-  complete     Boolean       @default(false)
+  complete Boolean @default(false)
 
   slackChannelId String?
   standupId      String?
@@ -564,9 +564,9 @@ model Repository {
   updatedAt DateTime @updatedAt
 
   // Data
-  logoUrl String?
-  name    String
-  url     String
+  logoUrl  String?
+  name     String
+  url      String
   usersExp Int?
 
   // Relations

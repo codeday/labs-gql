@@ -23,6 +23,9 @@ loadEnv();
   'OPENAI_API_KEY',
   'OPENAI_ORGANIZATION',
   'WEBHOOK_KEY',
+  'BADGR_USERNAME',
+  'BADGR_PASSWORD',
+  'BADGR_ISSUER',
 ].forEach((req) => { if (!process.env[req]) throw Error(`The ${req} environment variable is required.`); });
 
 const secondaryRegion = process.env.PRIMARY_REGION
@@ -40,6 +43,12 @@ const config = {
   uploader: {
     base: process.env.UPLOADER_BASE!,
     secret: process.env.UPLOADER_SECRET,
+  },
+  badgr: {
+    endpoint: process.env.BADGR_ENDPOINT || 'https://api.badgr.io',
+    username: process.env.BADGR_USERNAME!,
+    password: process.env.BADGR_PASSWORD!,
+    issuerEntityId: process.env.BADGR_ISSUER!,
   },
   app: {
     emailTemplateDir: path.join(__dirname, 'email', 'templates'),

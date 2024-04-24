@@ -7,11 +7,12 @@
   "scripts": {
     "start": "node dist",
     "clean": "rm -rf dist",
-    "build": "npm -s run clean && npm -s run prisma && npx tsc --skipLibCheck && cpy '**/*' '!**/*.ts' ../dist/ --cwd=src/ --no-overwrite --parents",
+    "build": "npm -s run clean && npm -s run swagger && npm -s run prisma && npx tsc --skipLibCheck && cpy '**/*' '!**/*.ts' ../dist/ --cwd=src/ --no-overwrite --parents",
     "prisma": "prisma format && prisma generate",
     "dev": "ts-node-dev --no-notify --respawn --transpile-only src",
     "debug": "ts-node-dev --no-notify --respawn src",
-    "send-event-recommendations": "ts-node scripts/sendEventRecommendations.ts"
+    "send-event-recommendations": "ts-node scripts/sendEventRecommendations.ts",
+    "swagger": "rm src/badgr/Api.ts; swagger-typescript-api -p https://api.badgr.io/docs/api/spec_v2.yaml -n Api2.ts -o ./src/badgr; echo 'type json = JSON;' | cat - src/badgr/Api2.ts > src/badgr/Api.ts; rm src/badgr/Api2.ts"
   },
   "dependencies": {
     "@codeday/uploader-node": "^1.0.1",
@@ -23,6 +24,7 @@
     "ajv": "^8.6.2",
     "apollo-server": "^2.24.1",
     "apollo-server-express": "^2.24.1",
+    "axios": "^1.6.8",
     "body-parser": "^1.20.2",
     "class-validator": "^0.13.1",
     "cron": "^3.1.4",
@@ -73,6 +75,7 @@
     "cpy-cli": "^3.1.1",
     "eslint": "^7.26.0",
     "prisma": "3",
+    "swagger-typescript-api": "^13.0.3",
     "ts-node": "^9.1.1",
     "ts-node-dev": "^1.1.6",
     "typescript": "^5.2.2"

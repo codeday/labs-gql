@@ -14,7 +14,7 @@ export function registerDi(): void {
   Container.set(OpenAIApi, new OpenAIApi({
     organization: config.openAi.organization,
     apiKey: config.openAi.apiKey,
-  }))
+  }));
   Container.set(Uploader, new Uploader(config.uploader.base, config.uploader.secret));;
   registerHandlebarsHelpers();
 }
