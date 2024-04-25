@@ -174,6 +174,30 @@ export class StudentResolver {
     return (await this.prisma.student.findFirst({ where }))?.id;
   }
 
+  @Authorized([AuthRole.APPLICANT_STUDENT, AuthRole.APPLICANT_MENTOR])
+  @Mutation(() => Boolean)
+  async cancelApplication(
+    @Ctx() { auth }: Context,
+  ): Promise<Boolean> {
+    const where: Prisma.MentorWhereInput & Prisma.StudentWhereInput = {
+      username: auth.username,
+      eventId: auth.eventId,
+      status: 'APPLIED',
+    };
+
+    let count = 0;
+
+    if (auth.type === AuthRole.APPLICANT_MENTOR) {
+      count = (await this.prisma.mentor.deleteMany({ where })).count;
+    } else {
+      count = (await this.prisma.student.deleteMany({ where })).count;
+    }
+
+    if (count === 0) throw new Error(`Not found.`);
+
+    return true;
+  }
+
   @Authorized(AuthRole.APPLICANT_STUDENT)
   @Mutation(() => Student)
   async applyStudent(
