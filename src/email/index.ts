@@ -73,7 +73,8 @@ export async function sendEmailsForGenerator(
 
   const emailId = await generator.getId();
   const contexts = await generator.getList(prisma, event);
-  if (!emailId || !contexts) return;
+
+  if (!emailId || !contexts || contexts.length === 0) return;
 
   const previousById = await prisma.emailSent.findMany({
     select: { mentorId: true, studentId: true, projectId: true },

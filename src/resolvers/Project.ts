@@ -50,6 +50,30 @@ export class ProjectResolver {
     });
   }
 
+  @Authorized(AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.MENTOR, AuthRole.OPEN_SOURCE_MANAGER, AuthRole.STUDENT)
+  @Mutation(() => Project)
+  async addProjectPr(
+    @Ctx() { auth }: Context,
+    @Arg('project', () => String) project: string,
+    @Arg('prUrl', () => String) prUrl: string,
+  ): Promise<PrismaProject> {
+    const dbProject = await this.prisma.project.findUnique({
+      where: { id: project },
+      include: {
+        mentors: { select: { id: true, username: true, givenName: true, surname: true, email: true } },
+        students: { select: { id: true, username: true, givenName: true, surname: true, email: true } },
+        event: { select: { matchPreferenceSubmissionOpen: true } } },
+    });
+    if (!dbProject) throw Error('Project not found.');
+    if (!auth.isAdmin && dbProject.eventId !== auth.eventId) throw Error('Cannot edit this project.');
+    if (
+      (auth.isMentor && !this.projectIncludesMentors(auth, dbProject.mentors))
+      || (auth.isStudent && !this.projectIncludesStudents(auth, dbProject.students))
+    ) throw Error('No permission to edit.');
+
+    return await this.prisma.project.update({ where: { id: dbProject.id }, data: { prUrl } });
+  }
+
   @Authorized(AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.MENTOR, AuthRole.OPEN_SOURCE_MANAGER)
   @Mutation(() => Project)
   async editProject(
@@ -75,8 +99,8 @@ export class ProjectResolver {
         event: { select: { matchPreferenceSubmissionOpen: true } } },
     });
     if (!dbProject) throw Error('Project not found.');
-    if (!auth.isMentor && dbProject.eventId !== auth.eventId) throw Error('Cannot edit this project.');
-    if (auth.isMentor && dbProject.status === ProjectStatus.MATCHED) throw Error('Matched projects cannot be edited.');
+    if (!auth.isAdmin && dbProject.eventId !== auth.eventId) throw Error('Cannot edit this project.');
+    if (!auth.isAdmin && !auth.isManager && dbProject.status === ProjectStatus.MATCHED) throw Error('Matched projects cannot be edited.');
     if (auth.isMentor && !this.projectIncludesMentors(auth, dbProject.mentors)) throw Error('No permission to edit.');
     let status = data.status;
     if (auth.isMentor && dbProject.event) {
@@ -229,6 +253,15 @@ export class ProjectResolver {
   private projectIncludesMentors(auth: AuthContext, mentors: {id: string, username: string | null }[]): boolean {
     // BUG(@tylermenezes): Workaround for Typescript bug with reducers
     return <boolean><unknown> mentors.reduce((accum, { id, username }): boolean => (
+      accum
+      || <boolean><unknown> (auth.username && auth.username === username)
+      || <boolean><unknown> (auth.id && auth.id === id)
+    ), false);
+  }
+
+  private projectIncludesStudents(auth: AuthContext, students: {id: string, username: string | null }[]): boolean {
+    // BUG(@tylermenezes): Workaround for Typescript bug with reducers
+    return <boolean><unknown> students.reduce((accum, { id, username }): boolean => (
       accum
       || <boolean><unknown> (auth.username && auth.username === username)
       || <boolean><unknown> (auth.id && auth.id === id)

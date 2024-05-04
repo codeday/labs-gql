@@ -17,6 +17,7 @@ export type PartialEvent = Pick<Event, 'id' | 'name' | 'emailSignature' | 'title
 interface EmailGeneratorTs {
   getId(): Promise<string | null>
   getList(client: PrismaClient, event: PartialEvent): Promise<EmailContext[] | null>
+  ALLOW_INACTIVE?: boolean;
 }
 
 export interface EmailGenerator extends EmailGeneratorTs {
