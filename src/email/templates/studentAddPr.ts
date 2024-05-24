@@ -11,7 +11,6 @@ export async function getId(): Promise<string | null> {
 }
 
 export async function getList(prisma: PrismaClient, event: PartialEvent): Promise<EmailContext[]> {
-  console.log('STUDENT ADD PR')
   const students = await prisma.student.findMany({
     where: {
       status: StudentStatus.ACCEPTED,
