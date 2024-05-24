@@ -9,9 +9,9 @@ Congratulations on your contribution to open-source in {{ event.name }}, and tha
 
 As a celebration of your contribution to the open-source ecosystem, we'd like to send you a physical "Open Source Contributor" lapel pin.
 
-[Provide your mailing address for your lapel pin here.](https://labs.codeday.org/dash/s/{{ tokenFor student }}/address)
+[Order your pin here,](https://shop.codeday.org/products/open-source-software-contributor-lapel-pin) and enter the following discount code at checkout: **YS141YY0R2HP** (If you already have an open-source contributor pin, you can use the same code to get any other $10 item for free.)
 
-![image example](https://images.ctfassets.net/d5pti1xheuyu/1T5MRiBnVoQnsuo4Y1cb4w/c404a11e41b27d509d1e2bdaa44836d1/oss-contributor-pin-example_copy.jpg)
+![image example](https://shop.codeday.org/cdn/shop/files/DSC3243.jpg?v=1716496419&width=400)
 
 Thank you,
 

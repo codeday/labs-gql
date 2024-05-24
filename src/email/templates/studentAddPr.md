@@ -11,7 +11,7 @@ Help us verify your contribution by [providing a link to your team's pull reques
 
 Once any member of your team provides this information, you'll all get an email to provide your mailing address for the lapel pin:
 
-![image example](https://images.ctfassets.net/d5pti1xheuyu/1T5MRiBnVoQnsuo4Y1cb4w/c404a11e41b27d509d1e2bdaa44836d1/oss-contributor-pin-example_copy.jpg)
+![image example](https://shop.codeday.org/cdn/shop/files/DSC3243.jpg?v=1716496419&width=400)
 
 Thank you,
 
