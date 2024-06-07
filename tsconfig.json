@@ -1,4 +1,7 @@
 {
+  "ts-node": {
+    "files": true
+  },
   "compilerOptions": {
     "target": "ES2019",
     "lib": [
@@ -22,6 +25,9 @@
   "include": [
     "types.d.ts",
     "src",
-    "types/uploader-node.d.ts"
+    "src/@types/uploader-node.d.ts"
+  ],
+  "files": [
+    "src/@types/uploader-node.d.ts"
   ]
 }

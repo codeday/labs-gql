@@ -2,9 +2,6 @@
 import { config as loadEnv } from 'dotenv';
 import SMTPConnection from 'nodemailer/lib/smtp-connection';
 import path from 'path';
-import { makeDebug } from './utils';
-
-const DEBUG = makeDebug('config');
 
 loadEnv();
 

@@ -23,3 +23,4 @@ export * from './nameToSlug';
 export * from './streamToBuffer';
 export * from './uploadResume';
 export * from './uploadToBuffer';
+export * from './anonymousId';
