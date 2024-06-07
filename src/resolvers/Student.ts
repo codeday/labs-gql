@@ -198,6 +198,41 @@ export class StudentResolver {
     return true;
   }
 
+  @Authorized([AuthRole.APPLICANT_STUDENT])
+  @Mutation(() => Boolean)
+  async changePartnerCodeApplication(
+    @Ctx() { auth }: Context,
+    @Arg('partnerCode', () => String) partnerCode: string,
+  ): Promise<Boolean> {
+
+    const partner = await this.prisma.partner.findFirst({
+      rejectOnNotFound: true,
+      where: {
+        eventId: auth.eventId!,
+        partnerCode: { equals: partnerCode.trim(), mode: 'insensitive' },
+      }
+    });
+
+    const { count } = await this.prisma.student.updateMany({
+      where: {
+        username: auth.username,
+        eventId: auth.eventId,
+        status: 'APPLIED',
+      },
+      data: {
+        ...(partner.minHours ? { minHours: partner.minHours } : {}),
+        ...(partner.weeks ? { weeks: partner.weeks } : {}),
+        ...(partner?.autoApprove ? { status: 'OFFERED' } : {}),
+        skipPreferences: partner.skipPreferences,
+        partnerCode: partner.partnerCode,
+      }
+    });
+
+    if (count === 0) throw new Error(`Not found.`);
+
+    return true;
+  }
+
   @Authorized(AuthRole.APPLICANT_STUDENT)
   @Mutation(() => Student)
   async applyStudent(
