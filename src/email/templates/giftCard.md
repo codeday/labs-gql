@@ -2,7 +2,7 @@ Hi there! {{ reason }}
 
 
 {{# if featuredProduct}}
-In recognition, we'd like to send you a [{{ featuredProduct }}]({{link}}). (Or you can get any other products in our store up to ${{ amount }} USD.)
+In recognition, we'd like to send you [{{ featuredProduct }}]({{link}}). (Or you can get any other products in our store up to ${{ amount }} USD.)
 {{else}}
 In recognition, we're sending you a ${{ amount }} giftcard for [the CodeDay Store]({{link}}).
 {{/if}}
