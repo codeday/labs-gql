@@ -23,6 +23,10 @@ loadEnv();
   'BADGR_USERNAME',
   'BADGR_PASSWORD',
   'BADGR_ISSUER',
+  'SHOPIFY_API_TOKEN',
+  'SHOPIFY_API_KEY',
+  'SHOPIFY_API_SECRET_KEY',
+  'SHOPIFY_STORE_DOMAIN',
 ].forEach((req) => { if (!process.env[req]) throw Error(`The ${req} environment variable is required.`); });
 
 const secondaryRegion = process.env.PRIMARY_REGION
@@ -46,6 +50,12 @@ const config = {
     username: process.env.BADGR_USERNAME!,
     password: process.env.BADGR_PASSWORD!,
     issuerEntityId: process.env.BADGR_ISSUER!,
+  },
+  shopify: {
+    apiToken: process.env.SHOPIFY_API_TOKEN!,
+    apiKey: process.env.SHOPIFY_API_KEY!,
+    apiSecretKey: process.env.SHOPIFY_API_SECRET_KEY!,
+    storeDomain: process.env.SHOPIFY_STORE_DOMAIN!,
   },
   app: {
     emailTemplateDir: path.join(__dirname, 'email', 'templates'),

@@ -141,3 +141,28 @@ export async function sendLoginLinks(
     html: Marked.parse(renderedTemplate),
   });
 }
+
+export async function sendGiftcard(
+  to: string,
+  event: Event,
+  amount: string,
+  code: string,
+  reason: string,
+  link: string,
+  featuredProduct?: string,
+): Promise<void> {
+  const email = await Container.get<Transporter>('email');
+
+  const tplString = await readFile(path.join(__dirname, 'templates', 'giftCard.md'));
+  const tpl = await handlebars.compile(tplString.toString());
+
+  const renderedTemplate = tpl({ amount, code, reason, link, event, featuredProduct });
+
+  await email.sendMail({
+    to,
+    from: config.email.from,
+    subject: 'CodeDay Gift Card',
+    text: renderedTemplate,
+    html: Marked.parse(renderedTemplate),
+  });
+}
