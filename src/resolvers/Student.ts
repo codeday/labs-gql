@@ -1,5 +1,5 @@
 import {
-  Resolver, Authorized, Query, Mutation, Arg, Ctx, Int,
+  Resolver, Authorized, Query, Mutation, Arg, Ctx
 } from 'type-graphql';
 import { Prisma, PrismaClient, Student as PrismaStudent, StudentStatus } from '@prisma/client';
 import { Inject, Service } from 'typedi';

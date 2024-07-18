@@ -53,11 +53,24 @@ export class Event {
   @Field(() => Date)
   mentorApplicationsEndAt: Date;
 
+  @Field(() => Date, { nullable: true })
+  matchingStartsAt?: Date
+
+  @Field(() => Date, { nullable: true })
+  matchingDueAt?: Date
+
+  @Field(() => Date, { nullable: true })
+  matchingEndsAt?: Date;
+
   @Field(() => Boolean)
   matchPreferenceSubmissionOpen: boolean;
 
   @Field(() => Date)
   startsAt: Date;
+
+  @Field(() => Date, { nullable: true })
+  projectWorkStartsAt?: Date;
+
 
   @Authorized([AuthRole.ADMIN])
   @Field(() => String)
@@ -70,11 +83,9 @@ export class Event {
   @Field(() => Boolean)
   isActive: boolean;
 
-  @Authorized(AuthRole.ADMIN)
   @Field(() => String, { nullable: true })
   slackWorkspaceId?: string
 
-  @Authorized(AuthRole.ADMIN)
   @Field(() => String, { nullable: true })
   slackUserGroupId: string | null
 

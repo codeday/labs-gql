@@ -78,11 +78,18 @@ export class EventResolver {
     const sourceStart = DateTime.fromJSDate(source.startsAt);
     const diff = newStart.diff(sourceStart);
 
+    function diffDate<T extends (Date | null)>(src: T): T {
+      return (
+        src
+          ? DateTime.fromJSDate(src).plus(diff).toJSDate()
+          : null
+      ) as T;
+    }
+
     const event = await this.prisma.event.create({
       data: {
         id: nameToSlug(name),
         name,
-        startsAt,
         title: source.title,
         emailSignature: source.emailSignature,
         certificationStatements: source.certificationStatements,
@@ -92,33 +99,23 @@ export class EventResolver {
         hasIntermediate: source.hasIntermediate,
         hasAdvanced: source.hasAdvanced,
 
-        studentApplicationsStartAt: (
-          DateTime.fromJSDate(source.studentApplicationsStartAt)
-            .plus(diff)
-            .toJSDate()
-        ),
-        studentApplicationsEndAt: (
-          DateTime.fromJSDate(source.studentApplicationsEndAt)
-            .plus(diff)
-            .toJSDate()
-        ),
+        studentApplicationsStartAt: diffDate(source.studentApplicationsStartAt),
+        studentApplicationsEndAt: diffDate(source.studentApplicationsEndAt),
         studentApplicationSchema: source.studentApplicationSchema as any,
         studentApplicationUi: source.studentApplicationUi as any,
         studentApplicationPostprocess: source.studentApplicationPostprocess as any,
 
-        mentorApplicationsStartAt: (
-          DateTime.fromJSDate(source.mentorApplicationsStartAt)
-            .plus(diff)
-            .toJSDate()
-        ),
-        mentorApplicationsEndAt: (
-          DateTime.fromJSDate(source.mentorApplicationsEndAt)
-            .plus(diff)
-            .toJSDate()
-        ),
+        mentorApplicationsStartAt: diffDate(source.mentorApplicationsStartAt),
+        mentorApplicationsEndAt: diffDate(source.mentorApplicationsEndAt),
         mentorApplicationSchema: source.mentorApplicationSchema as any,
         mentorApplicationUi: source.mentorApplicationUi as any,
         mentorApplicationPostprocess: source.mentorApplicationPostprocess as any,
+
+        matchingStartsAt: diffDate(source.matchingStartsAt),
+        matchingDueAt: diffDate(source.matchingDueAt),
+        matchingEndsAt: diffDate(source.matchingEndsAt),
+        startsAt,
+        projectWorkStartsAt: diffDate(source.projectWorkStartsAt),
 
         isActive: true,
         matchPreferenceSubmissionOpen: false,
@@ -183,8 +180,8 @@ export class EventResolver {
 
         await this.prisma.surveyOccurence.createMany({
           data: s.surveyOccurences.map(so => ({
-            visibleAt: DateTime.fromJSDate(so.dueAt).plus(diff).toJSDate(),
-            dueAt: DateTime.fromJSDate(so.dueAt).plus(diff).toJSDate(),
+            visibleAt: diffDate(so.dueAt),
+            dueAt: diffDate(so.dueAt),
             sentOverdueReminder: false,
             sentVisibleReminder: false,
             surveyId: survey.id,
@@ -221,8 +218,8 @@ export class EventResolver {
     if (source.meetings.length > 0) {
       await this.prisma.meeting.createMany({
         data: source.meetings.map(m => ({
-          visibleAt: DateTime.fromJSDate(m.visibleAt).plus(diff).toJSDate(),
-          dueAt: DateTime.fromJSDate(m.dueAt).plus(diff).toJSDate(),
+          visibleAt: diffDate(m.visibleAt),
+          dueAt: diffDate(m.dueAt),
           sentAgendaVisibleReminder: false,
           sentAgendaOverdueReminder: false,
           sentMeetingReminder: false,

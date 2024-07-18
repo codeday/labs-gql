@@ -13,6 +13,7 @@ export const slackEventInfoSelect = {
   slackWorkspaceAccessToken: true,
   slackWorkspaceId: true,
   slackUserGroupId: true,
+  slackMentorChannelId: true,
   id: true,
   name: true,
   projects: {

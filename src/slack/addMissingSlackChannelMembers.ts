@@ -1,6 +1,9 @@
 import { Mentor, Student } from "@prisma/client";
 import { getSlackClientForEvent } from "./getSlackClientForEvent";
 import { SlackEventWithProjects } from "./types";
+import { makeDebug } from "../utils";
+
+const DEBUG = makeDebug('slack:addMissingSlackChannelMembers');
 
 /**
  * Adds any newly joined students to their project Slack channels.
@@ -13,6 +16,7 @@ export async function addMissingSlackChannelMembers(
 
   if (event.slackMentorChannelId) {
     const mentorIds = event.projects.flatMap(p => p.mentors).flatMap(m => m.slackId).filter(Boolean);
+    DEBUG(`Adding ${mentorIds.length} mentors to slack mentor channel.`);
     await slack.conversations.invite({
       channel: event.slackMentorChannelId!,
       users: mentorIds.join(','),

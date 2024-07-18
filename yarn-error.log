@@ -1,5 +1,5 @@
 Arguments: 
-  /opt/homebrew/Cellar/node/22.0.0/bin/node /opt/homebrew/bin/yarn add createAdminApiClient
+  /opt/homebrew/Cellar/node/22.0.0/bin/node /opt/homebrew/bin/yarn add --dev @types/jwks-rsa
 
 PATH: 
   /opt/homebrew/opt/postgresql@15/bin:/opt/homebrew/opt/libpq/bin:/home/tylermenezes/.fly/bin:/usr/local/texlive/2021/bin/x86_64-linux:/home/tylermenezes/.bin:/home/tylermenezes/.local/bin:/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:~/.dotnet/tools:/Applications/iTerm.app/Contents/Resources/utilities:/home/tylermenezes/.gem/ruby/2.3.0/bin:/usr/local/n/versions/node/12.0.0/bin:/home/tylermenezes/Seafile/Dotfiles/.bin
@@ -14,7 +14,7 @@ Platform:
   darwin arm64
 
 Trace: 
-  Error: https://registry.yarnpkg.com/createAdminApiClient: Not found
+  Error: https://registry.yarnpkg.com/@types%2fjwks-rsa: Not found
       at params.callback [as _callback] (/opt/homebrew/lib/node_modules/yarn/lib/cli.js:66145:18)
       at self.callback (/opt/homebrew/lib/node_modules/yarn/lib/cli.js:140890:22)
       at Request.emit (node:events:520:28)
@@ -47,7 +47,6 @@ npm manifest:
       "@codeday/uploader-node": "^1.0.1",
       "@elastic/elasticsearch": "^7.13.0",
       "@prisma/client": "3",
-      "@shopify/shopify-api": "^11.0.1",
       "@slack/web-api": "^6.8.1",
       "@ts-stack/markdown": "1.4",
       "@types/redis": "^2.8.28",
@@ -74,10 +73,12 @@ npm manifest:
       "handlebars": "^4.7.7",
       "json-schema": "^0.3.0",
       "jsonwebtoken": "^8.5.1",
+      "jwks-rsa": "^3.1.0",
       "luxon": "^1.27.0",
       "node-fetch": "2",
       "nodemailer": "^6.6.0",
       "openai": "^4.24.2",
+      "randomstring": "^1.3.0",
       "redis": "^3.1.2",
       "reflect-metadata": "^0.1.13",
       "supports-color": "^9.4.0",
@@ -100,6 +101,7 @@ npm manifest:
       "@types/node": "^15.3.0",
       "@types/node-fetch": "2",
       "@types/nodemailer": "^6.4.1",
+      "@types/randomstring": "^1.3.0",
       "@types/tmp": "^0.2.3",
       "@types/url-search-params": "^1.1.0",
       "cpy-cli": "^3.1.1",
@@ -368,45 +370,6 @@ Lockfile:
     resolved "https://registry.yarnpkg.com/@protobufjs/utf8/-/utf8-1.1.0.tgz#a777360b5b39a1a2e5106f8e858f2fd2d060c570"
     integrity sha512-Vvn3zZrhQZkkBE8LSuW3em98c0FwgO4nxzv6OdSxPKJIEKY2bGbHn+mhGIPerzI4twdxaP8/0+06HBpwf345Lw==
   
-  "@shopify/admin-api-client@^1.0.0":
-    version "1.0.0"
-    resolved "https://registry.yarnpkg.com/@shopify/admin-api-client/-/admin-api-client-1.0.0.tgz#2d2eeb40e033578c00351a78dd441d970bb342a3"
-    integrity sha512-yNLFW+wCmXNnAof6MZKZNPN1CYpFc95UCtQmcqeYc5GLdwvIJVGefUXTPqoBR57jV7b9jF+E6is3mNotEbDlLA==
-    dependencies:
-      "@shopify/graphql-client" "^1.0.0"
-  
-  "@shopify/graphql-client@^1.0.0":
-    version "1.0.0"
-    resolved "https://registry.yarnpkg.com/@shopify/graphql-client/-/graphql-client-1.0.0.tgz#45d0aa526c6babb22e27f4e9201d3a41c039d6e5"
-    integrity sha512-K3F13BK6dB17yJASRE9Oyn7Etpj58R3cOwzFHB06yCLhWLGcI7JllK+HxZQTgtA3wbLonG3yxt5ns6XNKitphw==
-  
-  "@shopify/network@^3.3.0":
-    version "3.3.0"
-    resolved "https://registry.yarnpkg.com/@shopify/network/-/network-3.3.0.tgz#edaed928021846dd81b2c1f0eaef88a3c0c8b871"
-    integrity sha512-Lln7vglzLK9KiYhl9ucQFVM7ArlpUM21xkDriBX8kVrqsoBsi+4vFIjf1wjhNPT0J/zHMjky7jiTnxVfdm+xXw==
-  
-  "@shopify/shopify-api@^11.0.1":
-    version "11.0.1"
-    resolved "https://registry.yarnpkg.com/@shopify/shopify-api/-/shopify-api-11.0.1.tgz#538c1469dbf5a890fb943c6ff99c7167d576695d"
-    integrity sha512-FaeEWK6LTxMbP8/jUuk0teX+jomGkbcGyHL9ZzIqAUv5VpzTfSzCf1J4C8UHi7URf03tSXBPn1WChZ2K7bN/vg==
-    dependencies:
-      "@shopify/admin-api-client" "^1.0.0"
-      "@shopify/network" "^3.3.0"
-      "@shopify/storefront-api-client" "^1.0.0"
-      compare-versions "^6.1.0"
-      isbot "^5.1.6"
-      jose "^5.4.0"
-      node-fetch "^2.6.1"
-      tslib "^2.6.3"
-      uuid "^10.0.0"
-  
-  "@shopify/storefront-api-client@^1.0.0":
-    version "1.0.0"
-    resolved "https://registry.yarnpkg.com/@shopify/storefront-api-client/-/storefront-api-client-1.0.0.tgz#e96445e1401f99a2bc57809f26bc1a2695178a7d"
-    integrity sha512-TAyCsD+d/Fiwek3YM1/60pXpQTUUX99DM3HpcIed09By5/rAQbQhYWwf9rZDBIJnGXqS/fl3VO4Tqp+173tocw==
-    dependencies:
-      "@shopify/graphql-client" "^1.0.0"
-  
   "@sindresorhus/is@^3.1.2":
     version "3.1.2"
     resolved "https://registry.yarnpkg.com/@sindresorhus/is/-/is-3.1.2.tgz#548650de521b344e3781fbdb0ece4aa6f729afb8"
@@ -547,6 +510,16 @@ Lockfile:
       "@types/qs" "*"
       "@types/serve-static" "*"
   
+  "@types/express@^4.17.17":
+    version "4.17.21"
+    resolved "https://registry.yarnpkg.com/@types/express/-/express-4.17.21.tgz#c26d4a151e60efe0084b23dc3369ebc631ed192d"
+    integrity sha512-ejlPM315qwLpaQlQDTjPdsUFSc6ZsP4AN6AlWnogPjQ7CVi7PYF3YVz+CY3jE2pwYf7E/7HlDAN0rV2GxTG0HQ==
+    dependencies:
+      "@types/body-parser" "*"
+      "@types/express-serve-static-core" "^4.17.33"
+      "@types/qs" "*"
+      "@types/serve-static" "*"
+  
   "@types/fs-capacitor@^2.0.0":
     version "2.0.0"
     resolved "https://registry.yarnpkg.com/@types/fs-capacitor/-/fs-capacitor-2.0.0.tgz#17113e25817f584f58100fb7a08eed288b81956e"
@@ -603,6 +576,13 @@ Lockfile:
     version "8.5.9"
     resolved "https://registry.yarnpkg.com/@types/jsonwebtoken/-/jsonwebtoken-8.5.9.tgz#2c064ecb0b3128d837d2764aa0b117b0ff6e4586"
     integrity sha512-272FMnFGzAVMGtu9tkr29hRL6bZj4Zs1KZNeHLnKqAvp06tAIcarTMwOh8/8bz4FmKRcMxZhZNeUAQsNLoiPhg==
+    dependencies:
+      "@types/node" "*"
+  
+  "@types/jsonwebtoken@^9.0.2":
+    version "9.0.6"
+    resolved "https://registry.yarnpkg.com/@types/jsonwebtoken/-/jsonwebtoken-9.0.6.tgz#d1af3544d99ad992fb6681bbe60676e06b032bd3"
+    integrity sha512-/5hndP5dCjloafCXns6SZyESp3Ldq7YjH3zwzwczYnjxIT0Fqzk5ROSYVGfFyczIue7IUEj8hkvLbPoLQ18vQw==
     dependencies:
       "@types/node" "*"
   
@@ -733,6 +713,11 @@ Lockfile:
     version "6.9.9"
     resolved "https://registry.yarnpkg.com/@types/qs/-/qs-6.9.9.tgz#66f7b26288f6799d279edf13da7ccd40d2fa9197"
     integrity sha512-wYLxw35euwqGvTDx6zfY1vokBFnsK0HNrzc6xNHchxfO2hpuRg74GbkEW7e3sSmPvj0TjCDT1VCa6OtHXnubsg==
+  
+  "@types/randomstring@^1.3.0":
+    version "1.3.0"
+    resolved "https://registry.yarnpkg.com/@types/randomstring/-/randomstring-1.3.0.tgz#2953e8de350c27c10eb1aa011fbca8d88c327d79"
+    integrity sha512-kCP61wludjY7oNUeFiMxfswHB3Wn/aC03Cu82oQsNTO6OCuhVN/rCbBs68Cq6Nkgjmp2Sh3Js6HearJPkk7KQA==
   
   "@types/range-parser@*":
     version "1.2.6"
@@ -1642,11 +1627,6 @@ Lockfile:
     version "2.20.3"
     resolved "https://registry.yarnpkg.com/commander/-/commander-2.20.3.tgz#fd485e84c03eb4881c20722ba48035e8531aeb33"
     integrity sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ==
-  
-  compare-versions@^6.1.0:
-    version "6.1.0"
-    resolved "https://registry.yarnpkg.com/compare-versions/-/compare-versions-6.1.0.tgz#3f2131e3ae93577df111dba133e6db876ffe127a"
-    integrity sha512-LNZQXhqUvqUTotpZ00qLSaify3b4VFD588aRr8MKFw4CMUr98ytzCW5wDH5qx/DEY5kCDXcbcRuCqL0szEf2tg==
   
   component-emitter@^1.2.1:
     version "1.3.0"
@@ -3438,11 +3418,6 @@ Lockfile:
     resolved "https://registry.yarnpkg.com/isarray/-/isarray-2.0.5.tgz#8af1e4c1221244cc62459faf38940d4e644a5723"
     integrity sha512-xHjhDr3cNBK0BzdUJSPXZntQUx/mwMS5Rw4A7lPJ90XGAO6ISP/ePDNuo0vhqOZU+UD5JoodwCAAoZQd3FeAKw==
   
-  isbot@^5.1.6:
-    version "5.1.9"
-    resolved "https://registry.yarnpkg.com/isbot/-/isbot-5.1.9.tgz#4bba444c95abd7f8299764ee28b04ca592400d5a"
-    integrity sha512-NITFjA2Jpcv1qWCpzqZQoW/66H3xXbF+n4yJIXr/gIn/wgaSKOPXTTczswiKMYx+BVymG9lm30ZGPtFWqAD4hA==
-  
   isexe@^2.0.0:
     version "2.0.0"
     resolved "https://registry.yarnpkg.com/isexe/-/isexe-2.0.0.tgz#e8fbf374dc556ff8947a10dcb0572d633f2cfa10"
@@ -3481,10 +3456,10 @@ Lockfile:
       reflect.getprototypeof "^1.0.4"
       set-function-name "^2.0.1"
   
-  jose@^5.4.0:
-    version "5.4.1"
-    resolved "https://registry.yarnpkg.com/jose/-/jose-5.4.1.tgz#b471ee3963920ba5452fd1b1398c8ba72a7b2fcf"
-    integrity sha512-U6QajmpV/nhL9SyfAewo000fkiRQ+Yd2H0lBxJJ9apjpOgkOcBQJWOrMo917lxLptdS/n/o/xPzMkXhF46K8hQ==
+  jose@^4.14.6:
+    version "4.15.9"
+    resolved "https://registry.yarnpkg.com/jose/-/jose-4.15.9.tgz#9b68eda29e9a0614c042fa29387196c7dd800100"
+    integrity sha512-1vUQX+IdDMVPj4k8kOxgUqlcK518yluMuGZwqlr44FS1ppZB/5GWh4rZG89erpOBOJjU/OBsnCVFfapsRz6nEA==
   
   "js-tokens@^3.0.0 || ^4.0.0", js-tokens@^4.0.0:
     version "4.0.0"
@@ -3583,6 +3558,18 @@ Lockfile:
       ecdsa-sig-formatter "1.0.11"
       safe-buffer "^5.0.1"
   
+  jwks-rsa@^3.1.0:
+    version "3.1.0"
+    resolved "https://registry.yarnpkg.com/jwks-rsa/-/jwks-rsa-3.1.0.tgz#50406f23e38c9b2682cd437f824d7d61aa983171"
+    integrity sha512-v7nqlfezb9YfHHzYII3ef2a2j1XnGeSE/bK3WfumaYCqONAIstJbrEGapz4kadScZzEt7zYCN7bucj8C0Mv/Rg==
+    dependencies:
+      "@types/express" "^4.17.17"
+      "@types/jsonwebtoken" "^9.0.2"
+      debug "^4.3.4"
+      jose "^4.14.6"
+      limiter "^1.1.5"
+      lru-memoizer "^2.2.0"
+  
   jws@^3.2.2:
     version "3.2.2"
     resolved "https://registry.yarnpkg.com/jws/-/jws-3.2.2.tgz#001099f3639468c9414000e99995fa52fb478304"
@@ -3647,6 +3634,11 @@ Lockfile:
     resolved "https://registry.yarnpkg.com/libphonenumber-js/-/libphonenumber-js-1.10.48.tgz#3c426b4aa21dfe3210bfbda47d208acffa3631bf"
     integrity sha512-Vvcgt4+o8+puIBJZLdMshPYx9nRN3/kTT7HPtOyfYrSQuN9PGBF1KUv0g07fjNzt4E4GuA7FnsLb+WeAMzyRQg==
   
+  limiter@^1.1.5:
+    version "1.1.5"
+    resolved "https://registry.yarnpkg.com/limiter/-/limiter-1.1.5.tgz#8f92a25b3b16c6131293a0cc834b4a838a2aa7c2"
+    integrity sha512-FWWMIEOxz3GwUI4Ts/IvgVy6LPvoMPgjMdQ185nN6psJyBJ4yOpzqm695/h5umdLJg2vW3GR5iG11MAkR2AzJA==
+  
   lines-and-columns@^1.1.6:
     version "1.2.4"
     resolved "https://registry.yarnpkg.com/lines-and-columns/-/lines-and-columns-1.2.4.tgz#eca284f75d2965079309dc0ad9255abb2ebc1632"
@@ -3658,6 +3650,11 @@ Lockfile:
     integrity sha512-t7hw9pI+WvuwNJXwk5zVHpyhIqzg2qTlklJOf0mVxGSbe3Fp2VieZcduNYjaLDoy6p9uGpQEGWG87WpMKlNq8g==
     dependencies:
       p-locate "^4.1.0"
+  
+  lodash.clonedeep@^4.5.0:
+    version "4.5.0"
+    resolved "https://registry.yarnpkg.com/lodash.clonedeep/-/lodash.clonedeep-4.5.0.tgz#e23f3f9c4f8fbdde872529c1071857a086e5ccef"
+    integrity sha512-H5ZhCF25riFd9uB5UCkVKo61m3S/xZk1x4wA6yp/L3RFP6Z/eHH1ymQcGLo7J3GMPfm0V/7m1tryHuGVxpqEBQ==
   
   lodash.get@^4.4.2:
     version "4.4.2"
@@ -3771,12 +3768,20 @@ Lockfile:
     dependencies:
       js-tokens "^3.0.0 || ^4.0.0"
   
-  lru-cache@^6.0.0:
+  lru-cache@6.0.0, lru-cache@^6.0.0:
     version "6.0.0"
     resolved "https://registry.yarnpkg.com/lru-cache/-/lru-cache-6.0.0.tgz#6d6fe6570ebd96aaf90fcad1dafa3b2566db3a94"
     integrity sha512-Jo6dJ04CmSjuznwJSS3pUeWmd/H0ffTlkXXgwZi+eq1UCmqQwCh+eLsYOYCwY991i2Fah4h1BEMCx4qThGbsiA==
     dependencies:
       yallist "^4.0.0"
+  
+  lru-memoizer@^2.2.0:
+    version "2.3.0"
+    resolved "https://registry.yarnpkg.com/lru-memoizer/-/lru-memoizer-2.3.0.tgz#ef0fbc021bceb666794b145eefac6be49dc47f31"
+    integrity sha512-GXn7gyHAMhO13WSKrIiNfztwxodVsP8IoZ3XfrJV4yH2x0/OeTO/FIaAHTY5YekdGgW94njfuKmyyt1E0mR6Ug==
+    dependencies:
+      lodash.clonedeep "^4.5.0"
+      lru-cache "6.0.0"
   
   luxon@^1.27.0:
     version "1.28.1"
@@ -4497,6 +4502,18 @@ Lockfile:
     version "4.0.1"
     resolved "https://registry.yarnpkg.com/quick-lru/-/quick-lru-4.0.1.tgz#5b8878f113a58217848c6482026c73e1ba57727f"
     integrity sha512-ARhCpm70fzdcvNQfPoy49IaanKkTlRWF2JMzqhcJbhSFRZv7nPTvZJdcY7301IPmvW+/p0RgIWnQDLJxifsQ7g==
+  
+  randombytes@2.0.3:
+    version "2.0.3"
+    resolved "https://registry.yarnpkg.com/randombytes/-/randombytes-2.0.3.tgz#674c99760901c3c4112771a31e521dc349cc09ec"
+    integrity sha512-lDVjxQQFoCG1jcrP06LNo2lbWp4QTShEXnhActFBwYuHprllQV6VUpwreApsYqCgD+N1mHoqJ/BI/4eV4R2GYg==
+  
+  randomstring@^1.3.0:
+    version "1.3.0"
+    resolved "https://registry.yarnpkg.com/randomstring/-/randomstring-1.3.0.tgz#1bf9d730066899e70aee3285573f84708278683d"
+    integrity sha512-gY7aQ4i1BgwZ8I1Op4YseITAyiDiajeZOPQUbIq9TPGPhUm5FX59izIaOpmKbME1nmnEiABf28d9K2VSii6BBg==
+    dependencies:
+      randombytes "2.0.3"
   
   range-parser@~1.2.1:
     version "1.2.1"
@@ -5369,11 +5386,6 @@ Lockfile:
     resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.6.2.tgz#703ac29425e7b37cd6fd456e92404d46d1f3e4ae"
     integrity sha512-AEYxH93jGFPn/a2iVAwW87VuUIkR1FVUKB77NwMF7nBTDkDrrT/Hpt/IrCJ0QXhW27jTBDcf5ZY7w6RiqTMw2Q==
   
-  tslib@^2.6.3:
-    version "2.6.3"
-    resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.6.3.tgz#0438f810ad7a9edcde7a241c3d80db693c8cbfe0"
-    integrity sha512-xNvxJEOUiWPGhUuUdQgAJPKOOJfGnIyKySOc09XkKsgdUV/3E2zvwZYdejjmRgPCgcym1juLH3226yA7sEFJKQ==
-  
   tsutils@^3.17.1:
     version "3.21.0"
     resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-3.21.0.tgz#b48717d394cea6c1e096983eed58e9d61715b623"
@@ -5571,11 +5583,6 @@ Lockfile:
     version "1.0.1"
     resolved "https://registry.yarnpkg.com/utils-merge/-/utils-merge-1.0.1.tgz#9f95710f50a267947b2ccc124741c1028427e713"
     integrity sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==
-  
-  uuid@^10.0.0:
-    version "10.0.0"
-    resolved "https://registry.yarnpkg.com/uuid/-/uuid-10.0.0.tgz#5a95aa454e6e002725c79055fd42aaba30ca6294"
-    integrity sha512-8XkAphELsDnEGrDxUOHB3RGvXz6TeuYSGEZBOjtTtPm2lwhGBjLgOzLHB63IUWfBpNucQjND6d3AOudO+H3RWQ==
   
   uuid@^3.1.0:
     version "3.4.0"

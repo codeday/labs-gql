@@ -78,21 +78,27 @@ model Event {
 
   // Data
   name           String
-  startsAt       DateTime
   emailSignature String?
 
   title                   String
   defaultWeeks            Int      @default(4)
   certificationStatements String[]
 
-  studentApplicationsStartAt    DateTime
-  studentApplicationsEndAt      DateTime
+  // - Schedule
+  studentApplicationsStartAt DateTime
+  mentorApplicationsStartAt  DateTime
+  studentApplicationsEndAt   DateTime
+  mentorApplicationsEndAt    DateTime
+  matchingStartsAt           DateTime?
+  matchingDueAt              DateTime?
+  matchingEndsAt             DateTime?
+  startsAt                   DateTime
+  projectWorkStartsAt        DateTime?
+
   studentApplicationSchema      Json
   studentApplicationUi          Json
   studentApplicationPostprocess Json
 
-  mentorApplicationsStartAt    DateTime
-  mentorApplicationsEndAt      DateTime
   mentorApplicationSchema      Json
   mentorApplicationUi          Json
   mentorApplicationPostprocess Json
