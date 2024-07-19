@@ -180,7 +180,7 @@ export class EventResolver {
 
         await this.prisma.surveyOccurence.createMany({
           data: s.surveyOccurences.map(so => ({
-            visibleAt: diffDate(so.dueAt),
+            visibleAt: diffDate(so.visibleAt),
             dueAt: diffDate(so.dueAt),
             sentOverdueReminder: false,
             sentVisibleReminder: false,
