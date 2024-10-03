@@ -263,7 +263,6 @@ model Survey {
   updatedAt DateTime @updatedAt
 
   // Data
-  slug       String
   name       String
   intro      String?
   randomize  Boolean    @default(false)

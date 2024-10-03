@@ -28,7 +28,7 @@ export class MentorResolver {
     return this.prisma.mentor.findMany({
       where: {
         ...where?.toQuery(),
-        event: { id: auth.eventId },
+        ...(auth.eventId ? { event: { id: auth.eventId } } : {}),
       },
       skip,
       take,

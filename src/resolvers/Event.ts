@@ -137,7 +137,6 @@ export class EventResolver {
       for(const s of source.surveys) {
         const survey = await this.prisma.survey.create({
           data: {
-            slug: s.slug,
             name: s.name,
             intro: s.intro,
             randomize: s.randomize,

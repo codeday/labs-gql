@@ -19,7 +19,7 @@ export class AuthContext {
   // eslint-disable-next-line sonarjs/cognitive-complexity
   validate(): void {
     if (this.isAdmin && (this.username || this.id)) throw Error('Admin tokens may not specify a username or id.');
-    if (!this.eventId && !this.isUnspecified && !this.isOpenSourceManager) {
+    if (!this.eventId && !this.isUnspecified && !this.isOpenSourceManager && !this.isAdmin) {
       throw Error('Tokens must specify event id.');
     }
     if ((this.isApplicant || this.isManager || this.isReviewer || this.isUnspecified || this.isOpenSourceManager) && this.id) {
