@@ -12,7 +12,7 @@
     "dev": "ts-node-dev --no-notify --respawn --transpile-only src",
     "debug": "ts-node-dev --no-notify --respawn src",
     "send-event-recommendations": "ts-node scripts/sendEventRecommendations.ts",
-    "swagger": "rm src/badgr/Api.ts; swagger-typescript-api -p https://api.badgr.io/docs/api/spec_v2.yaml -n Api2.ts -o ./src/badgr; echo 'type json = JSON;' | cat - src/badgr/Api2.ts > src/badgr/Api.ts; rm src/badgr/Api2.ts"
+    "swagger": "rm src/badgr/Api.ts; swagger-typescript-api -p badgr-api-v2.yaml -n Api2.ts -o ./src/badgr; echo 'type json = JSON;' | cat - src/badgr/Api2.ts > src/badgr/Api.ts; rm src/badgr/Api2.ts"
   },
   "dependencies": {
     "@codeday/uploader-node": "^1.0.1",
@@ -78,7 +78,7 @@
     "cpy-cli": "^3.1.1",
     "eslint": "^7.26.0",
     "prisma": "3",
-    "swagger-typescript-api": "^13.0.3",
+    "swagger-typescript-api": "^13.0.22",
     "ts-node": "^9.1.1",
     "ts-node-dev": "^1.1.6",
     "typescript": "^5.2.2"
