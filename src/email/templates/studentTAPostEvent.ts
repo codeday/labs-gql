@@ -27,10 +27,12 @@ export async function getList(prisma: PrismaClient, event: PartialEvent): Promis
 
   return students
     .filter((student) => {
-      const weeksSinceStart = DateTime
-        .fromJSDate(student.event.startsAt)
-        .diffNow('weeks')
-        .weeks;
+      const weeksSinceStart = -1 * (
+        DateTime
+          .fromJSDate(student.event.startsAt)
+          .diffNow('weeks')
+          .weeks
+      );
       return Math.floor(weeksSinceStart) >= (student.weeks + 1);
     })
     .map((student): EmailContext => ({

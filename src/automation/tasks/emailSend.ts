@@ -2,6 +2,7 @@ import Container from "typedi";
 import { sendEmailsForGenerator, getEmailGenerators } from "../../email";
 import { makeDebug } from "../../utils";
 import { PrismaClient } from "@prisma/client";
+import { DateTime } from "luxon";
 
 const DEBUG = makeDebug('automation:tasks:emailSend');
 
@@ -14,8 +15,15 @@ export default async function emailSend() {
     select: { id: true, name: true, emailSignature: true, title: true, startsAt: true, defaultWeeks: true, isActive: true },
   });
   for (const event of events) {
+    const weeksSinceDefaultEnd = -1 * (
+      DateTime
+        .fromJSDate(event.startsAt)
+        .plus({ weeks: event.defaultWeeks })
+        .diffNow('week')
+        .weeks
+    );
     for (const generator of await getEmailGenerators()) {
-      if (generator.ALLOW_INACTIVE || event.isActive) {
+      if (event.isActive || (generator.ALLOW_INACTIVE && weeksSinceDefaultEnd < 8)) {
         await sendEmailsForGenerator(generator, event);
       }
     }

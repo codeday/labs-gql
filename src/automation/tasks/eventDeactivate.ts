@@ -7,7 +7,7 @@ const DEBUG = makeDebug('automation:tasks:eventDeactivate');
 
 export const JOBSPEC = '0 3 * * *';
 
-const GRACE_PERIOD_WEEKS = 5;
+const GRACE_PERIOD_WEEKS = 4;
 
 /**
  * Most automated functions check `isActive` to make sure they're not operating

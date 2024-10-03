@@ -32,10 +32,12 @@ export async function getList(prisma: PrismaClient, event: PartialEvent): Promis
 
   return mentors
     .filter((mentor) => {
-      const weeksSinceStart = DateTime
-        .fromJSDate(mentor.event.startsAt)
-        .diffNow('weeks')
-        .weeks;
+      const weeksSinceStart = -1 * (
+        DateTime
+          .fromJSDate(mentor.event.startsAt)
+          .diffNow('weeks')
+          .weeks
+      );
       return Math.floor(weeksSinceStart) >= Math.max(...mentor.projects.flatMap(p => p.students).map(s => s.weeks));
     })
     .map((mentor): EmailContext => ({

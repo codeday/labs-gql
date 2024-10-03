@@ -13,6 +13,12 @@ As a celebration of your contribution to the open-source ecosystem, we'd like to
 
 ![image example](https://shop.codeday.org/cdn/shop/files/DSC3243.jpg?v=1716496419&width=400)
 
+To help you stay healthy in your career, we have also partnered with Kinesis to offer you a significant discount on an ergonomic
+keyboard. If you're interested, just respond to this email with which keyboard you want, and we will request a discount code
+for you from Kinesis. (We don't receive any compensation from Kinesis, we just think ergonomics are important.)
+
+![kinesis](https://f1.codeday.org/kinesis-labs.jpg)
+
 Thank you,
 
 {{{ event.emailSignature }}}
