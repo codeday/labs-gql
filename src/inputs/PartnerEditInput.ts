@@ -1,6 +1,8 @@
 import { InputType, Field, Int } from 'type-graphql';
 import { Prisma } from '@prisma/client';
 import { Track } from '../enums';
+import { JSONSchema7 } from 'json-schema';
+import { GraphQLJSONObject } from 'graphql-type-json';
 
 @InputType()
 export class PartnerEditInput {
@@ -25,6 +27,12 @@ export class PartnerEditInput {
   @Field(() => [String], { nullable: true })
   forbidTags?: string[]
 
+  @Field(() => GraphQLJSONObject, { nullable: true })
+  contractSchema?: object
+
+  @Field(() => GraphQLJSONObject, { nullable: true })
+  contractUi?: object
+
   toQuery(): Prisma.PartnerUpdateInput {
     return {
       partnerCode: this.partnerCode.toUpperCase(),
@@ -42,6 +50,8 @@ export class PartnerEditInput {
       forbidTags: this.forbidTags
         ? { set: this.forbidTags.map((id): Prisma.TagWhereUniqueInput => ({ id })) }
         : undefined,
+      contractSchema: this.contractSchema ?? undefined,
+      contractUi: this.contractUi ?? undefined,
     };
   }
 }

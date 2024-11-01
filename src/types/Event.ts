@@ -98,6 +98,12 @@ export class Event {
   standupAndProsperToken: string | null
 
   @Field(() => GraphQLJSONObject, { nullable: true })
+  contractSchema?: JSONSchema7
+  
+  @Field(() => GraphQLJSONObject, { nullable: true })
+  contractUi?: Record<string, unknown>
+
+  @Field(() => GraphQLJSONObject, { nullable: true })
   mentorApplicationSchema?: JSONSchema7
   
   @Field(() => GraphQLJSONObject, { nullable: true })

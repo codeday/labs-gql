@@ -19,9 +19,11 @@ import { Project } from './Project';
 import { AuthRole, JwtToken } from '../context';
 import { sign } from 'jsonwebtoken';
 import config from '../config';
+import { GraphQLJSONObject } from 'graphql-type-json';
+import { JSONSchema7 } from 'json-schema';
 
 @ObjectType()
-export class Partner implements PrismaPartner {
+export class Partner {
   // Metadata
   @Field(() => String)
   id: string
@@ -50,6 +52,12 @@ export class Partner implements PrismaPartner {
 
   @Field(() => Boolean)
   autoApprove: boolean
+
+  @Field(() => GraphQLJSONObject, { nullable: true })
+  contractSchema?: JSONSchema7
+  
+  @Field(() => GraphQLJSONObject, { nullable: true })
+  contractUi?: Record<string, unknown>
 
   forceTags?: PrismaTag[] | null
 

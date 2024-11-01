@@ -152,6 +152,8 @@ export class ReviewResolver {
   async acceptStudentOffer(
     @Ctx() { auth }: Context,
     @Arg('timeManagementPlan', () => GraphQLJSONObject, { nullable: true }) timeManagementPlan?: object,
+    @Arg('eventContractData', () => GraphQLJSONObject, { nullable: true }) eventContractData?: object,
+    @Arg('partnerContractData', () => GraphQLJSONObject, { nullable: true }) partnerContractData?: object,
     @Arg('timezone', () => String, { nullable: true }) timezone?: string,
   ): Promise<PrismaStudent> {
     const student = await this.prisma.student.findUnique({
@@ -165,7 +167,7 @@ export class ReviewResolver {
 
     return this.prisma.student.update({
       where: auth.toWhere(),
-      data: { status: StudentStatus.ACCEPTED, timeManagementPlan, timezone },
+      data: { status: StudentStatus.ACCEPTED, timeManagementPlan, timezone, eventContractData, partnerContractData },
     });
   }
 

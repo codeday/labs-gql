@@ -83,6 +83,8 @@ model Event {
   title                   String
   defaultWeeks            Int      @default(4)
   certificationStatements String[]
+  contractSchema      Json?
+  contractUi          Json?
 
   // - Schedule
   studentApplicationsStartAt DateTime
@@ -413,6 +415,11 @@ model Student {
   interviewNotes     String?
   resumeUrl          String?
 
+
+  eventContractData   Json?
+  partnerContractData Json?
+
+
   slackId String?
 
   // Relations
@@ -451,6 +458,9 @@ model Partner {
   skipPreferences Boolean @default(false)
   onlyAffine      Boolean @default(false)
   autoApprove     Boolean @default(false)
+
+  contractSchema      Json?
+  contractUi          Json?
 
   forceTags  Tag[] @relation("PartnerForceTag")
   forbidTags Tag[] @relation("PartnerForbidTag")

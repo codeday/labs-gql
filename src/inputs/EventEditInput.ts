@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { GraphQLJSONObject } from "graphql-type-json";
+import { JSONSchema7 } from "json-schema";
 import { Field, InputType, Int } from "type-graphql";
 
 @InputType()
@@ -34,6 +35,12 @@ export class EventEditInput {
 
   @Field(() => Date, { nullable: true })
   studentApplicationsEndAt?: Date | null
+
+  @Field(() => GraphQLJSONObject, { nullable: true })
+  contractSchema?: object
+
+  @Field(() => GraphQLJSONObject, { nullable: true })
+  contractUi?: object
 
   @Field(() => GraphQLJSONObject, { nullable: true })
   // eslint-disable-next-line @typescript-eslint/ban-types
@@ -93,6 +100,9 @@ export class EventEditInput {
       mentorApplicationsEndAt: this.mentorApplicationsEndAt ?? undefined,
       mentorApplicationSchema: this.mentorApplicationSchema ?? undefined,
       mentorApplicationUi: this.mentorApplicationUi ?? undefined,
+
+      contractSchema: this.contractSchema ?? undefined,
+      contractUi: this.contractUi ?? undefined,
 
       matchPreferenceSubmissionOpen: this.matchPreferenceSubmissionOpen ?? undefined,
       matchComplete: this.matchComplete ?? undefined,

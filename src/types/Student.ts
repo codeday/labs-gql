@@ -11,6 +11,7 @@ import {
   Note as PrismaNote,
   Event as PrismaEvent,
   Artifact as PrismaArtifact,
+  Partner as PrismaPartner,
   StandupThread,
   StandupResult,
 } from '@prisma/client';
@@ -36,6 +37,7 @@ import { Artifact } from './Artifact';
 import { tokenFor } from '../email/helpers';
 import { SanitizableSurveyResponse, groupBy, sanitizeSurveyResponses } from '../utils';
 import { StandupRating } from './StandupRating';
+import { Partner } from './Partner';
 
 @ObjectType()
 export class Student implements PrismaStudent {
@@ -82,6 +84,14 @@ export class Student implements PrismaStudent {
 
   @Field(() => GraphQLJSON)
   profile: Prisma.JsonValue
+
+  @Authorized([AuthRole.PARTNER, AuthRole.ADMIN, AuthRole.MANAGER])
+  @Field(() => GraphQLJSON, { nullable: true })
+  eventContractData: Prisma.JsonValue | null
+
+  @Authorized([AuthRole.PARTNER, AuthRole.ADMIN, AuthRole.MANAGER])
+  @Field(() => GraphQLJSON, { nullable: true })
+  partnerContractData: Prisma.JsonValue | null
 
   @Field(() => Int)
   weeks: number
@@ -247,6 +257,25 @@ export class Student implements PrismaStudent {
     }
 
     return this.event;
+  }
+
+  partner?: PrismaPartner | null;
+
+  @Authorized([AuthRole.PARTNER, AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.STUDENT])
+  @Field(() => Partner, { name: 'partner', nullable: true })
+  async fetchPartner(
+    @Ctx() { auth }: Context,
+  ): Promise<PrismaPartner | null> {
+    if (auth.isStudent && auth.id !== this.id && auth.username !== this.username) {
+      throw new Error(`Cannot access information about other students.`);
+    }
+
+    if (!this.partnerCode) return null;
+    if (!this.partner) {
+      this.partner = (await Container.get(PrismaClient).partner.findFirst({ where: { partnerCode: this.partnerCode!, eventId: this.eventId } })) || null;
+    }
+
+    return this.partner;
   }
 
   targetSurveyResponses?: SanitizableSurveyResponse[]

@@ -99,6 +99,9 @@ export class EventResolver {
         hasIntermediate: source.hasIntermediate,
         hasAdvanced: source.hasAdvanced,
 
+        contractSchema: source.contractSchema as any,
+        contractUi: source.contractUi as any,
+
         studentApplicationsStartAt: diffDate(source.studentApplicationsStartAt),
         studentApplicationsEndAt: diffDate(source.studentApplicationsEndAt),
         studentApplicationSchema: source.studentApplicationSchema as any,
@@ -241,6 +244,8 @@ export class EventResolver {
           onlyAffine: p.onlyAffine,
           autoApprove: p.autoApprove,
           eventId: event.id,
+          contractSchema: p.contractSchema as any,
+          contractUi: p.contractUi as any,
         })),
       });
     }
