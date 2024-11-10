@@ -49,15 +49,19 @@ async function sendEmailForContext(
       },
       select: { id: true },
     });
+
+    const projectTrackingEmail = context.project && `${context.project.id}+${emailSentId}@${config.email.inboundDomain}`;
+    const from = frontMatter.from || (context.project ? projectTrackingEmail : config.email.from);
+
     await email.sendMail({
       ...frontMatter,
       html,
       text,
-      from: frontMatter.from || config.email.from,
+      from: from === projectTrackingEmail ? `"${event.name}" <${from}>` : from,
       bcc: [frontMatter.bcc].filter(Boolean) as string[],
       cc: [
         frontMatter.cc,
-        context.project && `${context.project.id}+${emailSentId}@${config.email.inboundDomain}`
+        context.project && from !== projectTrackingEmail && projectTrackingEmail,
       ].filter(Boolean) as string[],
     });
   } catch (ex) {

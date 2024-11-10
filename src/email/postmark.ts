@@ -3,6 +3,7 @@ import { makeDebug } from '../utils';
 import config from '../config';
 import Container from 'typedi';
 import { PrismaClient } from '@prisma/client';
+import { Transporter } from 'nodemailer';
 
 const DEBUG = makeDebug('email:postmark');
 
@@ -39,12 +40,19 @@ interface PostmarkRequest {
 
 export async function processPostmarkInboundEmail(req: Request, res: Response) {
   const prisma = Container.get(PrismaClient);
+  const postmark = await Container.get<Transporter>('email');
   const email = req.body as PostmarkRequest;
   DEBUG(`New project email from ${email.From}`);
 
-  const myToEmails = [...email.ToFull, ...email.CcFull, ...email.BccFull]
-    .map(e => e.Email)
-    .filter(e => e.split('@')[1] === config.email.inboundDomain);
+  const allToEmails = Array.from(
+    new Set([...email.ToFull, ...email.CcFull, ...email.BccFull].map(s => s.Email.toLowerCase()))
+  );
+
+  const myToEmails = allToEmails
+    .filter(e => e.split('@')[1] === config.email.inboundDomain)
+
+  const otherToEmails = allToEmails
+    .filter(e => e.split('@')[1] !== config.email.inboundDomain);
 
   if (myToEmails.length === 0) {
     DEBUG(`...not associated with a project.`);
@@ -59,8 +67,21 @@ export async function processPostmarkInboundEmail(req: Request, res: Response) {
       id: true,
       mentors: { select: { id: true, email: true } },
       students: { select: { id: true, email: true } },
+      event: { select: { emailSignature: true, name: true } },
     },
   });
+
+  if (otherToEmails.length === 0) {
+    DEBUG(`...email was only sent to us`);
+    await postmark.sendMail({
+      from: myToEmails[0] ? `"${project?.event?.name || 'CodeDay'}" <${myToEmails[0]}>` : config.email.from,
+      to: email.FromFull.Email,
+      subject: `Re: ${email.Subject}`,
+      html: `<p>No one received your message. It was only sent to this unmonitored mailbox. <strong>You likely forgot to reply-all.</strong></p>\n${project?.event?.emailSignature}\n<br /><br /><blockquote>${email.HtmlBody}</blockquote>`
+    });
+    return res.send('ok');
+  }
+
   if (!project) {
     DEBUG(`...project ${projectId} not found.`);
     return res.send('ok');
@@ -75,7 +96,7 @@ export async function processPostmarkInboundEmail(req: Request, res: Response) {
   const fromMentor = project.mentors.filter(m => m.email.toLowerCase().trim() === email.FromFull.Email.toLowerCase().trim())[0] || undefined;
   const fromStudent = project.students.filter(s => s.email.toLowerCase().trim() === email.FromFull.Email.toLowerCase().trim())[0] || undefined;
 
-  DEBUG(`... email ${email.FromFull.Email} matches: mentor - ${fromMentor?.id}, ${fromStudent?.id}`);
+  DEBUG(`... email ${email.FromFull.Email} matches: mentor - ${fromMentor?.id}, student - ${fromStudent?.id}`);
 
   await prisma.projectEmail.create({
     data: {

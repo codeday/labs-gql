@@ -1,6 +1,5 @@
 ---
 to: "{{ mentor.email }}"
-bcc: "labs@codeday.org"
 subject: "[Action Required] Virtual Mentoring Information for {{ event.name }}"
 ---
 
