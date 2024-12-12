@@ -25,6 +25,6 @@ subject: "[Action Required] {{ event.name }} Team Intro: {{{ join (mapToKey proj
   1. once your mentor replies to this email with a When2Meet, make sure to fill it out
 
 👉 **YOUR IMMEDIATE NEXT STEP IS TO REPLY-ALL TO THIS MESSAGE AS DESCRIBED ABOVE.**  
-(Please remember to click REPLY-ALL not just reply.)
+(Please remember to click REPLY-ALL not just reply. DO NOT remove this sending email address from the reply-all list.)
 
 {{{ event.emailSignature }}}
