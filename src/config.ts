@@ -27,6 +27,9 @@ loadEnv();
   'SHOPIFY_API_KEY',
   'SHOPIFY_API_SECRET_KEY',
   'SHOPIFY_STORE_DOMAIN',
+  'LINEAR_API_KEY',
+  'LINEAR_TEAM_ID',
+  'LINEAR_PROBLEM_LABEL_ID',
 ].forEach((req) => { if (!process.env[req]) throw Error(`The ${req} environment variable is required.`); });
 
 const secondaryRegion = process.env.PRIMARY_REGION
@@ -50,6 +53,11 @@ const config = {
     username: process.env.BADGR_USERNAME!,
     password: process.env.BADGR_PASSWORD!,
     issuerEntityId: process.env.BADGR_ISSUER!,
+  },
+  linear: {
+    apiKey: process.env.LINEAR_API_KEY!,
+    teamId: process.env.LINEAR_TEAM_ID!,
+    problemLabelId: process.env.LINEAR_PROBLEM_LABEL_ID!,
   },
   shopify: {
     apiToken: process.env.SHOPIFY_API_TOKEN!,

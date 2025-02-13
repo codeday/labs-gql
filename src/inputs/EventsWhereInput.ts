@@ -23,6 +23,9 @@ export class EventsWhereInput {
   @Field(() => Boolean, { nullable: true })
   mine?: boolean
 
+  @Field(() => String, { nullable: true })
+  partnerCode?: string
+
   private dateFilterToWhere(): Prisma.EventWhereInput {
     if (!this.state) return {};
 
@@ -59,6 +62,7 @@ export class EventsWhereInput {
       AND: [
         this.public ? { partnersOnly: false } : {},
         this.dateFilterToWhere(),
+        this.partnerCode ? { partners: { some: { partnerCode: { equals: this.partnerCode, mode: 'insensitive' } } } } : {},
         this.mine ? {
           OR: [
             { mentors: { some: { username: auth.username || '' } } },

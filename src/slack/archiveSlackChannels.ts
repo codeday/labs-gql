@@ -15,23 +15,20 @@ export async function archiveSlackChannels(
   const slack = getSlackClientForEvent(event);
   const archiveExtension = eventToChannelName(event);
 
-  if (event.slackMentorChannelId) {
-    await slack.conversations.archive({
-      channel: event.slackMentorChannelId,
-    });
-  }
-
-  for (const project of event.projects.filter(p => p.slackChannelId)) {
+  for (const slackChannelId of [...event.projects.filter(p => p.slackChannelId).map(p => p.slackChannelId!), event.slackMentorChannelId]) {
       const slackChannel = await slack.conversations.info(
-        { channel: project.slackChannelId! }
+        { channel: slackChannelId }
       );
-      if (!slackChannel.ok || !slackChannel.channel?.name_normalized) return;
+      
+      if (!slackChannel.ok || !slackChannel.channel?.name_normalized || slackChannel.channel.is_archived) continue;
 
-      DEBUG(`Joining ${slackChannel.channel.name_normalized}`);
-      try {
-        slack.conversations.join({ channel: project.slackChannelId! });
-      } catch (ex) {
-        DEBUG(ex);
+      if (!slackChannel.channel.is_member) {
+        DEBUG(`Joining ${slackChannel.channel.name_normalized}`);
+        try {
+          await slack.conversations.join({ channel: slackChannelId });
+        } catch (ex) {
+          DEBUG(ex);
+        }
       }
 
       const archivedName = slackChannel.channel.name_normalized
@@ -40,17 +37,17 @@ export async function archiveSlackChannels(
       DEBUG(`Renaming ${slackChannel.channel.name_normalized} as ${archivedName}`);
       try {
         await slack.conversations.rename({
-          channel: project.slackChannelId!,
+          channel: slackChannelId,
           name: archivedName,
         });
       } catch (ex) {
         DEBUG(ex);
       }
 
-      DEBUG(`Archiving ${project.slackChannelId}`);
+      DEBUG(`Archiving ${slackChannelId}`);
       try {
         await slack.conversations.archive({
-          channel: project.slackChannelId!
+          channel: slackChannelId
         });
       } catch (ex) {
         DEBUG(ex);

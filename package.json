@@ -17,6 +17,7 @@
   "dependencies": {
     "@codeday/uploader-node": "^1.0.1",
     "@elastic/elasticsearch": "^7.13.0",
+    "@linear/sdk": "^38.0.0",
     "@prisma/client": "3",
     "@slack/web-api": "^6.8.1",
     "@ts-stack/markdown": "1.4",

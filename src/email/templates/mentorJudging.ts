@@ -12,9 +12,20 @@ export async function getId(): Promise<string | null> {
 }
 
 export async function getList(prisma: PrismaClient, event: PartialEvent): Promise<EmailContext[]> {
+
+  const previousEmailSends = await prisma.emailSent.findMany({
+    where: {
+      emailId: (await getId())!,
+      mentorId: { not: null },
+    },
+    select: { mentor: { select: { email: true } } },
+  });
+  const previousEmails = previousEmailSends.map(e => e.mentor!.email);
+
   const mentors = await prisma.mentor.findMany({
     where: {
       status: MentorStatus.ACCEPTED,
+      email: { notIn: previousEmails },
       projects: {
         some: {
           status: ProjectStatus.MATCHED,

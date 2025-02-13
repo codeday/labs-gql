@@ -10,6 +10,15 @@ import {
 } from '@prisma/client';
 import { registerEnumType } from 'type-graphql';
 
+enum SupportTicketType {
+  IssueSolved = 'IssueSolved',
+  IssueCantReplicate = 'IssueCantReplicate',
+  MaintainerUnsupportive = 'MaintainerUnsupportive',
+  MentorUnresponsive = 'MentorUnresponsive',
+  Other = 'Other',
+}
+registerEnumType(SupportTicketType, { name: 'SupportTicketType' });
+
 registerEnumType(Track, { name: 'Track' });
 registerEnumType(MentorStatus, { name: 'MentorStatus' });
 registerEnumType(StudentStatus, { name: 'StudentStatus' });
@@ -28,4 +37,5 @@ export {
   TagType,
   PersonType,
   PrStatus,
+  SupportTicketType,
 };

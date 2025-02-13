@@ -10,17 +10,20 @@ export type StandupWithModel = StandupResult
 export async function getProjectStandupScore(
   standup: StandupWithModel,
 ): Promise<number> {
-  const vague = await getCompletion(
-    BINARY_CLASSIFICATION_CLASSES,
-    standup.event.standupAiModelVague,
-    textToCompletionPrompt(ModelType.Vague, standup.text),
-  );
-  if (vague === 'yes') return 1;
+  if (standup.text.length > 1000) return 3;
+  try {
+    const vague = await getCompletion(
+      BINARY_CLASSIFICATION_CLASSES,
+      standup.event.standupAiModelVague,
+      textToCompletionPrompt(ModelType.Vague, standup.text),
+    );
+    if (vague === 'yes') return 1;
 
-  const workload = await getCompletion(
-    BINARY_CLASSIFICATION_CLASSES,
-    standup.event.standupAiModelWorkload,
-    textToCompletionPrompt(ModelType.Workload, standup.text)
-  );
-  return workload === 'yes' ? 3 : 2;
+    const workload = await getCompletion(
+      BINARY_CLASSIFICATION_CLASSES,
+      standup.event.standupAiModelWorkload,
+      textToCompletionPrompt(ModelType.Workload, standup.text)
+    );
+    return workload === 'yes' ? 3 : 2;
+  } catch (ex) { return 2; }
 }

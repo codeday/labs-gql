@@ -17,6 +17,14 @@ export class ProjectResolver {
   @Inject(() => PrismaClient)
   private readonly prisma : PrismaClient;
 
+  @Authorized(AuthRole.PARTNER)
+  @Query(() => Partner)
+  async partner(
+    @Ctx() { auth }: Context,
+  ): Promise<PrismaPartner> {
+    return this.prisma.partner.findUnique({ where: { partnerCode_eventId: { partnerCode: auth.partnerCode!, eventId: auth.eventId! } }, rejectOnNotFound: true });
+  }
+
   @Authorized(AuthRole.ADMIN)
   @Query(() => [Partner])
   async partners(
