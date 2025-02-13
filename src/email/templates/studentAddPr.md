@@ -5,7 +5,7 @@ subject: "[ACTION REQUIRED] Provide PR link for {{ event.name }}"
 
 Hi {{ student.givenName }},
 
-Congratulations on completing {{ event.name }}! As a celebration of your contribution to the open-source ecosystem, we'd like to send you a physical "Open Source Contributor" lapel pin (as well as a virtual badge for your LinkedIn profile).
+Thanks for participating in {{ event.name }}! Once you have completed your contribution to the open-source ecosystem, we'd like to send you a physical "Open Source Contributor" lapel pin in celebration.
 
 Help us verify your contribution by [providing a link to your team's pull request here](https://labs.codeday.org/dash/s/{{ tokenFor student }}/add-pr). If you created a new project, provide a link to your team's open-source repository instead.
 
