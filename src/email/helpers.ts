@@ -99,7 +99,9 @@ function prettyDate(value: Date): string {
 }
 
 function diff(oldStr: string, newStr: string): string {
-  return diffWords(oldStr, newStr).map(part => {
+  const diff = diffWords(oldStr, newStr)
+  if (diff.length > 15) return `<div style="color: red">${oldStr}</div><br /><div style="color: green">${newStr}</div>`;
+  else return diff.map(part => {
     const color = part.added
       ? 'green'
       : part.removed && 'red';

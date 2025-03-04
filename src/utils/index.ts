@@ -25,3 +25,4 @@ export * from './uploadResume';
 export * from './uploadToBuffer';
 export * from './anonymousId';
 export * from './signToken';
+export * from './minMaxFunction';
