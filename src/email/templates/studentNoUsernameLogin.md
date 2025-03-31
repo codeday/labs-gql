@@ -1,4 +1,3 @@
-
 ---
 to: "{{ student.email }}"
 subject: "Login Link for {{ event.name }} Dashboard"
