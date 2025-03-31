@@ -9,13 +9,77 @@ import {
   IdOrUsernameInput, StudentApplyInput, StudentCreateInput, StudentEditInput, StudentFilterInput,
 } from '../inputs';
 import { StudentOnlySelf } from './decorators';
-import { eventAllowsApplicationStudent, idOrUsernameOrAuthToUniqueWhere, validateStudentEvent } from '../utils';
+import { eventAllowsApplicationStudent, idOrUsernameOrAuthToUniqueWhere, uploadToBuffer, validateStudentEvent } from '../utils';
+import { GraphQLUpload, FileUpload } from 'graphql-upload';
+import { parse } from 'csv-parse/sync';
 
 @Service()
 @Resolver(Student)
 export class StudentResolver {
   @Inject(() => PrismaClient)
   private readonly prisma : PrismaClient;
+
+  @Authorized(AuthRole.ADMIN, AuthRole.PARTNER)
+  @Mutation(() => [Student])
+  async bulkImportStudents(
+    @Ctx() { auth }: Context,
+    @Arg('file', () => GraphQLUpload) file: FileUpload
+  ): Promise<PrismaStudent[]> {
+    const contents = parse(
+      await uploadToBuffer(file),
+      {
+        columns: true,
+        skip_empty_lines: true,
+      }
+    );
+
+    const missing = contents.filter((student: any) => !student.givenName || !student.surname || !student.email)
+    if (missing.length > 0) {
+      throw new Error(`The following entries were invalid: ${JSON.stringify(missing)}`);
+    }
+
+    const event = await this.prisma.event.findUnique({ where: { id: auth.eventId! }, rejectOnNotFound: true });
+
+    const partner = auth.isPartner
+      ? await this.prisma.partner.findFirst({ where: { partnerCode: auth.partnerCode, eventId: auth.eventId! } })
+      : null;
+
+    const partnerStudentCount = auth.isPartner
+      ? await this.prisma.student.count({ where: { partnerCode: auth.partnerCode, eventId: auth.eventId! } })
+      : 0;
+
+    const students: PrismaStudent[] = [];
+    let addedCount = 0;
+
+    for (const student of contents) {
+      const { givenName, surname, email, username, track, minHours, partnerCode, ...rest } = student;
+      const thisPartner = auth.isPartner
+        ? partner
+        : (auth.isAdmin && partnerCode ? await this.prisma.partner.findFirst({ where: { partnerCode: partnerCode.toUpperCase(), eventId: auth.eventId! } }) : null);
+
+      students.push(await this.prisma.student.create({
+        data: {
+          event: { connect: { id: auth.eventId! } },
+          partnerCode: auth.partnerCode || (auth.isAdmin ? partnerCode?.toUpperCase?.() : null) || null,
+          givenName,
+          surname,
+          email,
+          username: username || null,
+          track: track || 'BEGINNER',
+          minHours: thisPartner?.minHours || 10,
+          weeks: thisPartner?.weeks || event.defaultWeeks,
+          profile: rest,
+          status: auth.isAdmin
+            ? StudentStatus.OFFERED
+            : (partner?.maxStudents && partner.maxStudents >= (partnerStudentCount + ++addedCount)
+              ? StudentStatus.OFFERED
+              : StudentStatus.APPLIED),
+        },
+      }));
+    }
+
+    return students;
+  }
 
   @Authorized(AuthRole.ADMIN, AuthRole.PARTNER, AuthRole.MANAGER, AuthRole.MENTOR, AuthRole.STUDENT)
   @Query(() => [Student])

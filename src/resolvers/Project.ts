@@ -9,9 +9,11 @@ import {
   IdOrUsernameInput, ProjectCreateInput, ProjectEditInput,
 } from '../inputs';
 import { MentorOnlySelf } from './decorators';
-import { idOrUsernameOrAuthToUniqueWhere, idOrUsernameToUniqueWhere, validateMentorEvent, validateProjectEvent, validateStudentEvent } from '../utils';
+import { idOrUsernameOrAuthToUniqueWhere, idOrUsernameToUniqueWhere, uploadToBuffer, validateMentorEvent, validateProjectEvent, validateStudentEvent } from '../utils';
 import { ProjectCountWhereInput } from '../inputs/ProjectCountWhereInput';
 import { sendProjectUpdate } from '../email';
+import { GraphQLUpload, FileUpload } from 'graphql-upload';
+import { parse } from 'csv-parse/sync';
 
 @Service()
 @Resolver(Project)
@@ -24,6 +26,55 @@ export class ProjectResolver {
     @Arg('where', () => ProjectCountWhereInput, { nullable: true }) where?: ProjectCountWhereInput,
   ): Promise<number> {
     return this.prisma.project.count({ where: where?.toQuery() });
+  }
+
+  @Authorized(AuthRole.ADMIN)
+  @Mutation(() => Boolean)
+  async importMatches(
+    @Ctx() { auth }: Context,
+    @Arg('file', () => GraphQLUpload) file: FileUpload
+  ): Promise<boolean> {
+    const contents = parse(
+      await uploadToBuffer(file),
+      {
+        columns: true,
+        skip_empty_lines: true,
+      }
+    );
+
+    if (contents.find((line: any) => !line.projectId || !line.studentId)) {
+      throw new Error('Invalid CSV. Make sure each line has a projectId and studentId.');
+    }
+
+    const event = await this.prisma.event.findUnique({
+      where: { id: auth.eventId! },
+      select: {
+        projects: { select: { id: true } },
+        students: { select: { id: true } },
+      },
+      rejectOnNotFound: true,
+    });
+
+    const projectIds = event.projects.map((p: { id: string }) => p.id);
+    const studentIds = event.students.map((s: { id: string }) => s.id);
+
+    const missingProjects = contents.filter((line: any) => !projectIds.includes(line.projectId));
+    const missingStudents = contents.filter((line: any) => !studentIds.includes(line.studentId));
+
+    if (missingProjects.length > 0 || missingStudents.length > 0) {
+      throw new Error(`Invalid CSV. Invalid projects: ${JSON.stringify(missingProjects)}. Invalid students: ${JSON.stringify(missingStudents)}.`);
+    }
+    
+    for (const match of contents) {
+      await this.prisma.project.update({
+        where: { id: match.projectId },
+        data: {
+          students: { connect: { id: match.studentId } },
+        },
+      });
+    }
+
+    return true;
   }
 
   @Authorized(AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.MENTOR, AuthRole.OPEN_SOURCE_MANAGER)

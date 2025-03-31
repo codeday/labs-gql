@@ -398,7 +398,7 @@ model Student {
   // Data
   givenName          String
   surname            String
-  username           String
+  username           String?
   githubUsername     String?
   email              String
   profile            Json
@@ -458,6 +458,7 @@ model Partner {
   skipPreferences Boolean @default(false)
   onlyAffine      Boolean @default(false)
   autoApprove     Boolean @default(false)
+  maxStudents     Int?
 
   contractSchema      Json?
   contractUi          Json?

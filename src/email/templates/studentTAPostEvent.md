@@ -27,9 +27,9 @@ Did you have problems getting your code to build, or understanding how your code
 contributed to an existing OSS project (not something you created from scratch), CodeDay will pay for
 improvements to documentation for new contributors in your assigned open-source project:
 
-- $8 for small bug fixes in documentation (such as a broken link, missing or inaccurate instructions, etc).
-- $16 for contributing a new section to existing documentation.
-- $32 for creating a new contributing guide/tutorial, architecture overview, or other significant new documentation which your project did not previously have.
+- $32 for small bug fixes in documentation (such as a broken link, missing or inaccurate instructions, etc).
+- $64 for contributing a new section to existing documentation.
+- $128 for creating a new contributing guide/tutorial, architecture overview, or other significant new documentation which your project did not previously have.
 
 You can receive each payment type once per project, after your pull request is merged into the project's
 repository. (For larger contributions, we recommend you check with the project maintainers first.)

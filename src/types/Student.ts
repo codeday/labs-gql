@@ -52,7 +52,7 @@ export class Student implements PrismaStudent {
   updatedAt: Date
 
   // Data
-  @Field(() => String)
+  @Field(() => String, { nullable: true })
   username: string
 
   @Field(() => String)
