@@ -7,6 +7,7 @@ import { Context, AuthRole, AuthContext } from '../context';
 import { Project } from '../types';
 import {
   IdOrUsernameInput, ProjectCreateInput, ProjectEditInput,
+  ProjectFilterInput,
 } from '../inputs';
 import { MentorOnlySelf } from './decorators';
 import { idOrUsernameOrAuthToUniqueWhere, idOrUsernameToUniqueWhere, uploadToBuffer, validateMentorEvent, validateProjectEvent, validateStudentEvent } from '../utils';
@@ -298,6 +299,24 @@ export class ProjectResolver {
     return this.prisma.project.update({
       where: { id: project },
       data: { mentors: { disconnect: [idOrUsernameToUniqueWhere(auth, mentor)] } },
+    });
+  }
+
+  @Authorized(AuthRole.ADMIN, AuthRole.MANAGER)
+  @Query(() => [Project])
+  async projects(
+    @Ctx() { auth }: Context,
+    @Arg('where', () => ProjectFilterInput, { nullable: true }) where?: ProjectFilterInput,
+    @Arg('skip', () => Number, { nullable: true }) skip?: number,
+    @Arg('take', () => Number, { nullable: true }) take?: number,
+  ): Promise<PrismaProject[]> {
+    return this.prisma.project.findMany({
+      where: {
+        ...where?.toQuery(),
+        ...(auth.eventId ? { event: { id: auth.eventId } } : {}),
+      },
+      skip,
+      take,
     });
   }
 

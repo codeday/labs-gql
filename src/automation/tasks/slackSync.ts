@@ -31,9 +31,21 @@ export default async function slackSync(): Promise<void> {
     DEBUG(`Syncing Slack for ${event.id}.`);
     try {
       await linkExistingSlackMembers(event);
+    } catch (ex) {
+      DEBUG(ex);
+    }
+    try {
       await linkExistingSlackChannels(event);
-      await updateSlackUserGroups(event);
+    } catch (ex) {
+      DEBUG(ex);
+    }
+    try {
       await addMissingSlackChannelMembers(event);
+    } catch (ex) {
+      DEBUG(ex);
+    }
+    try {
+      await updateSlackUserGroups(event);
     } catch (ex) {
       DEBUG(ex);
     }

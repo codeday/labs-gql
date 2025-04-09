@@ -24,3 +24,4 @@ export * from './RepositoryCreateInput';
 export * from './RepositoryEditInput';
 export * from './RepositoryWhereInput';
 export * from './EventEditInput';
+export * from './ProjectFilterInput';
