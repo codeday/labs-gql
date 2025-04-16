@@ -2,6 +2,7 @@ import Express, { Request, Response } from 'express';
 import http from 'http';
 import { ApolloServer } from 'apollo-server-express';
 import bodyParser from 'body-parser';
+import basicAuth from 'express-basic-auth';
 import { graphqlUploadExpress } from 'graphql-upload';
 import ws from 'ws';
 import { execute, subscribe } from 'graphql';
@@ -11,6 +12,7 @@ import { createSchema } from './schema';
 import { createContext as context } from './context';
 import config from './config';
 import { processPostmarkInboundEmail } from './email';
+import { getPrometheusMetrics } from './metrics';
 
 const DEBUG = makeDebug('server');
 
@@ -42,14 +44,20 @@ export async function startServer(): Promise<void> {
     DEBUG(`Listening on http://0.0.0.0:${config.port}`);
   });
 
-  const webhookServer = Express();
-  webhookServer.get('/', (_, res) => res.send('ok'));
-  webhookServer.post(
+  const restServer = Express();
+  restServer.get('/', (_, res) => res.send('ok'));
+  restServer.post(
     `/${config.webhook.key}/email`,
     bodyParser.json(),
     processPostmarkInboundEmail
   );
-  webhookServer.listen(config.portWebhoook, () => {
-    DEBUG(`Webhooks listening on http://0.0.0.0:${config.portWebhoook}`);
+  restServer.get('/metrics', basicAuth({ users: { 'metrics': config.metrics.key } }), async (_, res) => {
+    res.setHeader('Content-Type', 'text/plain');
+    res.send(await getPrometheusMetrics());
   });
+  restServer.listen(config.portRest, () => {
+    DEBUG(`REST listening on http://0.0.0.0:${config.portRest}`);
+  });
+
+
 }

@@ -30,6 +30,7 @@ loadEnv();
   'LINEAR_API_KEY',
   'LINEAR_TEAM_ID',
   'LINEAR_PROBLEM_LABEL_ID',
+  'METRICS_KEY',
 ].forEach((req) => { if (!process.env[req]) throw Error(`The ${req} environment variable is required.`); });
 
 const secondaryRegion = process.env.PRIMARY_REGION
@@ -39,10 +40,14 @@ const secondaryRegion = process.env.PRIMARY_REGION
 const config = {
   debug: process.env.NODE_ENV !== 'production',
   port: process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 5000,
-  portWebhoook: process.env.PORT_WEBHOOK ? Number.parseInt(process.env.PORT_WEBHOOK) : 5001,
+  version: process.env.FLY_MACHINE_VERSION || 'unknown',
+  portRest: process.env.PORT_REST ? Number.parseInt(process.env.PORT_REST) : 5001,
   secondaryRegion,
   webhook: {
     key: process.env.WEBHOOK_KEY!,
+  },
+  metrics: {
+    key: process.env.METRICS_KEY!,
   },
   uploader: {
     base: process.env.UPLOADER_BASE!,
