@@ -99,25 +99,64 @@ export async function sendEmailsForGenerator(
   for (const context of newContexts) await sendEmailForContext(emailId, generator, context, event);
 }
 
+export async function sendTemplateEmail(
+  templateName: string,
+  context: object,
+  subject: string,
+  to: { email: string, id: string, event: PartialEvent }[],
+): Promise<void> {
+  DEBUG(`Sending ${templateName} email.`);
+  const email = Container.get<Transporter>('email');
+
+  const templateFile = await readFile(path.join(__dirname, 'templates', `${templateName}.md`))
+  const template = await handlebars.compile(templateFile.toString());
+
+  for (const person of to) {
+    const renderedTemplate = template({ ...context, to: person });
+
+    await email.sendMail({
+      to: [person.email],
+      from: config.email.from,
+      subject,
+      text: renderedTemplate,
+      html: Marked.parse(renderedTemplate),
+    });
+  }
+}
+
+export async function sendTemplateEmailRaw(
+  templateName: string,
+  context: object,
+  subject: string,
+  to: string[],
+): Promise<void> {
+  DEBUG(`Sending ${templateName} email.`);
+  const email = Container.get<Transporter>('email');
+
+  const templateFile = await readFile(path.join(__dirname, 'templates', `${templateName}.md`))
+  const template = await handlebars.compile(templateFile.toString());
+  const renderedTemplate = template(context);
+
+  await email.sendMail({
+    to,
+    from: config.email.from,
+    subject,
+    text: renderedTemplate,
+    html: Marked.parse(renderedTemplate),
+  });
+}
+
 export async function sendProjectUpdate(
   to: string[],
   oldProject: Project,
   newProject: Project,
 ): Promise<void> {
-  DEBUG(`Sending project update notification.`);
-  const email = await Container.get<Transporter>('email');
-
-  const projectUpdateEmail = await readFile(path.join(__dirname, 'templates', 'projectUpdate.md'));
-  const tplProjectUpdateEmail = await handlebars.compile(projectUpdateEmail.toString());
-  const renderedTemplate = tplProjectUpdateEmail({ oldProject, newProject });
-
-  await email.sendMail({
-    to,
-    from: config.email.from,
-    subject: 'Project Information Updated',
-    text: renderedTemplate,
-    html: Marked.parse(renderedTemplate),
-  });
+  return sendTemplateEmailRaw(
+    'projectUpdate',
+    { oldProject, newProject },
+    'Project Information Updated',
+    to
+  );
 }
 
 export async function sendLoginLinks(

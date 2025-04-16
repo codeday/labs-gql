@@ -3,6 +3,7 @@ import { PickNonNullable } from "../utils";
 
 export type SlackMentorInfo = { mentors: Pick<Mentor, 'id' | 'email' | 'givenName' | 'surname' | 'slackId'>[] };
 export type SlackStudentInfo = { students: Pick<Student, 'id' | 'email' | 'slackId'>[] };
+export type SlackProjectWithEvent = Pick<Project, 'slackChannelId'> & { event: PickNonNullable<Event, 'slackWorkspaceAccessToken' | 'slackWorkspaceId'> };
 
 export type SlackEventWithProjects<T> =
   PickNonNullable<Event, 'slackWorkspaceAccessToken' | 'slackWorkspaceId' | 'slackMentorChannelId' | 'name' | 'id'>

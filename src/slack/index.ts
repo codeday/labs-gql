@@ -6,3 +6,4 @@ export * from './linkExistingSlackChannels';
 export * from './linkExistingSlackMembers';
 export * from './types';
 export * from './updateSlackUserGroups';
+export * from './sendSlackProjectMessage';

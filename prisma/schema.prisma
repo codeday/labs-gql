@@ -760,6 +760,9 @@ model StandupThread {
 
   event   Event  @relation(fields: [eventId], references: [id])
   eventId String @default("codeday-labs-2022")
+
+  sentMissingReminderSlack Boolean @default(false)
+  sentMissingReminderEmail Boolean @default(false)
 }
 
 model StandupResult {
