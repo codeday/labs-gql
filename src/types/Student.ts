@@ -14,6 +14,7 @@ import {
   Partner as PrismaPartner,
   StandupThread,
   StandupResult,
+  File as PrismaFile,
 } from '@prisma/client';
 import {
   ObjectType, Field, Authorized, Int, Ctx,
@@ -38,6 +39,7 @@ import { tokenFor } from '../email/helpers';
 import { SanitizableSurveyResponse, groupBy, sanitizeSurveyResponses } from '../utils';
 import { StandupRating } from './StandupRating';
 import { Partner } from './Partner';
+import { File } from './File';
 
 @ObjectType()
 export class Student implements PrismaStudent {
@@ -391,5 +393,22 @@ export class Student implements PrismaStudent {
         humanRated: ratingsByThread[t.id]?.humanRated || false,
         rating: t.id in ratingsByThread ? ratingsByThread[t.id].rating : 0,
       }));
+  }
+
+  files?: PrismaFile[] | null
+
+  @Authorized([AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.STUDENT])
+  @Field(() => [File], { name: 'files' })
+  async fetchFiles(@Ctx() { auth }: Context): Promise<PrismaFile[]> {
+    if (auth.isStudent && auth.id !== this.id && auth.username !== this.username) {
+      throw new Error(`Cannot access information about other students.`);
+    }
+    
+    if (!this.files) {
+      this.files = await Container.get(PrismaClient).file.findMany({
+        where: { studentId: this.id },
+      });
+    }
+    return this.files;
   }
 }

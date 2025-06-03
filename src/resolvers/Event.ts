@@ -66,6 +66,7 @@ export class EventResolver {
         meetings: true,
         artifactTypes: true,
         partners: true,
+        fileTypes: true,
         studentTrainingGroup: {
           include: {
             entries: true,
@@ -135,6 +136,22 @@ export class EventResolver {
         standupAiModelWorkloadPending: source.standupAiModelWorkloadPending,
       },
     });
+
+    if (source.fileTypes.length > 0) {
+      for(const ft of source.fileTypes) {
+        await this.prisma.fileType.create({
+          data: {
+            slug: ft.slug,
+            type: ft.type,
+            generationCondition: ft.generationCondition,
+            generationTarget: ft.generationTarget,
+            templateId: ft.templateId,
+            layers: ft.layers as any,
+            event: { connect: { id: event.id } },
+          },
+        });
+      }
+    }
 
     if (source.surveys.length > 0) {
       for(const s of source.surveys) {

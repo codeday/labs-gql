@@ -5,6 +5,7 @@ import {
   Event as PrismaEvent,
   Artifact as PrismaArtifact,
   SurveyResponse as PrismaSurveyResponse,
+  File as PrismaFile,
   PrismaClient,
 } from '@prisma/client';
 import {
@@ -18,6 +19,7 @@ import { Project } from './Project';
 import { SurveyResponse } from './SurveyResponse';
 import { Event } from './Event';
 import { Artifact } from './Artifact';
+import { File } from './File';
 
 @ObjectType()
 export class Mentor implements PrismaMentor {
@@ -146,5 +148,20 @@ export class Mentor implements PrismaMentor {
     }
 
     return this.surveyResponsesAbout;
+  }
+
+  files?: PrismaFile[] | null
+
+  @Authorized([AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.MENTOR])
+  @Field(() => [File], { name: 'files' })
+  async fetchFiles(@Ctx() { auth }: Context): Promise<PrismaFile[]> {
+    if (auth.type === AuthRole.MENTOR && auth.id !== this.id) throw Error('Unauthorized.');
+    
+    if (!this.files) {
+      this.files = await Container.get(PrismaClient).file.findMany({
+        where: { mentorId: this.id },
+      });
+    }
+    return this.files;
   }
 }

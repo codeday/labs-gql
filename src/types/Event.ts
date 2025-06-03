@@ -3,8 +3,9 @@ import { AuthRole, Context } from '../context';
 import { GraphQLJSONObject } from 'graphql-type-json';
 import { JSONSchema7 } from 'json-schema';
 import Container from 'typedi';
-import { PrismaClient, ArtifactType as PrismaArtifactType } from '@prisma/client';
+import { PrismaClient, ArtifactType as PrismaArtifactType, FileType as PrismaFileType } from '@prisma/client';
 import { ArtifactType } from './ArtifactType';
+import { FileType } from './FileType';
 
 @ObjectType()
 export class Event {
@@ -143,5 +144,17 @@ export class Event {
       });
     }
     return this.artifactTypes;
+  }
+
+  fileTypes?: PrismaFileType[] | null
+
+  @Field(() => [FileType], { name: 'fileTypes' })
+  async fetchFileTypes(): Promise<PrismaFileType[]> {
+    if (!this.fileTypes) {
+      this.fileTypes = await Container.get(PrismaClient).fileType.findMany({
+        where: { eventId: this.id },
+      });
+    }
+    return this.fileTypes;
   }
 }

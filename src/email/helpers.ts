@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import handlebars from 'handlebars';
-import { Mentor, Student, Project } from '@prisma/client';
+import { Mentor, Student, Project, Event } from '@prisma/client';
 import { sign } from 'jsonwebtoken';
 import config from '../config';
 import { JwtToken, AuthRole, AuthByTarget } from '../context';
@@ -94,8 +94,20 @@ function nextWeek(value: Date): Date {
   return DateTime.fromJSDate(value).plus({ weeks: 1 }).toJSDate();
 }
 
+function endDate(event: Event, obj: Student | (Mentor & { students?: Student[] })): Date {
+  if ('weeks' in obj) return DateTime.fromJSDate(event.startsAt).plus({ weeks: obj.weeks || event.defaultWeeks || 4 }).toJSDate();
+  return DateTime
+    .fromJSDate(event.startsAt)
+    .plus({ weeks: (obj.students ? Math.max(0, ...obj.students.map(s => s.weeks)) : obj.maxWeeks) || event.defaultWeeks || 4 })
+    .toJSDate();
+}
+
 function prettyDate(value: Date): string {
   return DateTime.fromJSDate(value).toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY);
+}
+
+function shortDate(value: Date): string {
+  return DateTime.fromJSDate(value).toLocaleString({ month: 'short', day: 'numeric' });
 }
 
 function diff(oldStr: string, newStr: string): string {
@@ -126,6 +138,8 @@ export function registerHandlebarsHelpers(): void {
   handlebars.registerHelper('plural', plural);
   handlebars.registerHelper('mentorManagers', mentorManagers);
   handlebars.registerHelper('lowercase', lowercase);
+  handlebars.registerHelper('endDate', endDate);
   handlebars.registerHelper('nextWeek', nextWeek);
   handlebars.registerHelper('prettyDate', prettyDate);
+  handlebars.registerHelper('shortDate', shortDate);
 }

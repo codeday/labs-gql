@@ -14,3 +14,5 @@ export * from './StandupRating';
 export * from './Repository';
 export * from './Artifact';
 export * from './ArtifactType';
+export * from './File';
+export * from './FileType';

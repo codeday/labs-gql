@@ -31,6 +31,7 @@ loadEnv();
   'LINEAR_TEAM_ID',
   'LINEAR_PROBLEM_LABEL_ID',
   'METRICS_KEY',
+  'PLACID_API_TOKEN',
 ].forEach((req) => { if (!process.env[req]) throw Error(`The ${req} environment variable is required.`); });
 
 const secondaryRegion = process.env.PRIMARY_REGION
@@ -69,6 +70,9 @@ const config = {
     apiKey: process.env.SHOPIFY_API_KEY!,
     apiSecretKey: process.env.SHOPIFY_API_SECRET_KEY!,
     storeDomain: process.env.SHOPIFY_STORE_DOMAIN!,
+  },
+  placid: {
+    apiToken: process.env.PLACID_API_TOKEN!,
   },
   app: {
     emailTemplateDir: path.join(__dirname, 'email', 'templates'),

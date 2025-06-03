@@ -138,6 +138,7 @@ model Event {
   standupResults StandupResult[]
   meetings       Meeting[]
   artifactTypes  ArtifactType[]
+  fileTypes FileType[]
 }
 
 model TrainingGroup {
@@ -381,6 +382,7 @@ model Mentor {
   targetSurveyResponses   SurveyResponse[] @relation("TargetMentor")
   projectEmails           ProjectEmail[]
   artifacts               Artifact[]
+  files                   File[]
 
   event   Event  @relation(fields: [eventId], references: [id])
   eventId String @default("codeday-labs-2022")
@@ -436,6 +438,7 @@ model Student {
   trainingEntryResponses  TrainingEntryResponse[]
   projectEmails           ProjectEmail[]
   artifacts               Artifact[]
+  files                   File[]
 
   event   Event  @relation(fields: [eventId], references: [id])
   eventId String @default("codeday-labs-2022")
@@ -528,6 +531,7 @@ model Project {
   standupThreads StandupThread[]
   standupResults StandupResult[]
   artifacts      Artifact[]
+  files          File[]
 }
 
 model ArtifactType {
@@ -788,4 +792,67 @@ model StandupResult {
 
   event   Event  @relation(fields: [eventId], references: [id])
   eventId String @default("codeday-labs-2022")
+}
+
+enum FileTypeType {
+  IMAGE
+  PDF
+  VIDEO
+}
+
+enum FileTypeGenerationCondition {
+  ACCEPTED
+  STARTED
+  COMPLETED
+}
+
+enum FileTypeGenerationTarget {
+  MENTOR
+  STUDENT
+  PROJECT
+}
+
+model FileType {
+  // Metadata
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Data
+  templateId String
+  type FileTypeType
+  layers Json
+  generationCondition FileTypeGenerationCondition
+  generationTarget FileTypeGenerationTarget
+  slug String
+
+  // Relations
+  files File[]
+
+  event Event @relation(fields: [eventId], references: [id])
+  eventId String
+}
+
+model File {
+  // Metadata
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Data
+  url  String?
+  pollingUrl String?
+
+  // Relations
+  project   Project? @relation(fields: [projectId], references: [id])
+  projectId String?
+
+  mentor   Mentor? @relation(fields: [mentorId], references: [id])
+  mentorId String?
+
+  student   Student? @relation(fields: [studentId], references: [id])
+  studentId String?
+
+  fileType   FileType @relation(fields: [fileTypeId], references: [id])
+  fileTypeId String
 }

@@ -8,6 +8,7 @@ import {
   SurveyResponse as PrismaSurveyResponse,
   Repository as PrismaRepository,
   Artifact as PrismaArtifact,
+  File as PrismaFile,
   PrismaClient,
   Prisma,
 } from '@prisma/client';
@@ -24,6 +25,7 @@ import { SurveyResponse } from './SurveyResponse';
 import { Partner } from './Partner';
 import { Repository } from './Repository';
 import { Artifact } from './Artifact';
+import { File } from './File';
 import { AuthRole, Context } from '../context';
 
 @ObjectType()
@@ -214,4 +216,32 @@ export class Project implements PrismaProject {
 
   @Field(() => PrStatus, { nullable: true })
   prStatus: PrStatus | null
+
+  files?: PrismaFile[] | null
+
+  @Authorized([AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.MENTOR, AuthRole.STUDENT])
+  @Field(() => [File], { name: 'files' })
+  async fetchFiles(@Ctx() { auth }: Context): Promise<PrismaFile[]> {
+    // Check if user is a mentor or student on this project
+    if (!auth.isAdmin && !auth.isManager) {
+      const [projectMentors, projectStudents] = await Promise.all([
+        this.fetchMentors(),
+        this.fetchStudents(),
+      ]);
+      
+      const isMentorOnProject = auth.isMentor && projectMentors.some(m => m.id === auth.id);
+      const isStudentOnProject = auth.isStudent && projectStudents.some(s => s.id === auth.id);
+      
+      if (!isMentorOnProject && !isStudentOnProject) {
+        throw new Error('Unauthorized.');
+      }
+    }
+    
+    if (!this.files) {
+      this.files = await Container.get(PrismaClient).file.findMany({
+        where: { projectId: this.id },
+      });
+    }
+    return this.files;
+  }
 }

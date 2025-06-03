@@ -25,3 +25,5 @@ export * from './RepositoryEditInput';
 export * from './RepositoryWhereInput';
 export * from './EventEditInput';
 export * from './ProjectFilterInput';
+export * from './FileTypeCreateInput';
+export * from './FileTypeEditInput';
