@@ -9,6 +9,8 @@ export type EventWithStandupAndProsper =
 export interface Standup {
   channel: string
   standupId: string
+  time: string
+  timezone: string
 }
 
 export interface StandupThread {
@@ -50,6 +52,10 @@ export class StandupAndPropser {
     );
 
     return await result.json();
+  }
+
+  async getStandup(standupId: string): Promise<Standup> {
+    return (await this.get<Standup>(`/standups/${standupId}`));
   }
 
   async getStandups(): Promise<Standup[]> {

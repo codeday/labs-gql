@@ -11,7 +11,10 @@ const DEBUG = makeDebug('standupAndProsper:projectImportStandupThreads');
 export async function projectImportStandupThreads(project: ProjectWithStandups) {
   const prisma = Container.get(PrismaClient);
   const sap = getClientForEvent(project.event);
-  const threads = await sap.getStandupThreads(project.standupId);
+  const [standup, threads] = await Promise.all([
+    sap.getStandup(project.standupId),
+    sap.getStandupThreads(project.standupId)
+  ]);
 
   const previousDbThreads = project.standupThreads.map(t => t.id);
 
@@ -35,9 +38,11 @@ export async function projectImportStandupThreads(project: ProjectWithStandups) 
         .filter(t => !previousDbThreads.includes(t.threadId))
         .map(t => ({
           id: t.threadId,
-          dueAt: DateTime.fromISO(t.scheduledDate).toJSDate(),
+          dueAt: DateTime.fromISO(`${t.scheduledDate}T${standup.time}`, { zone: standup.timezone }).toJSDate(),
           eventId: project.event.id,
           projectId: project.id,
+          sentMissingReminderSlack: false,
+          sentMissingReminderEmail: false,
         })),
     });
 
