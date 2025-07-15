@@ -5,6 +5,7 @@ import shuffle from 'knuth-shuffle-seeded';
 import { sendTemplateEmail } from "../../email";
 import { makeDebug } from '../../utils';
 import { DateTime } from "luxon";
+import { Transporter } from "nodemailer";
 
 const DEBUG = makeDebug('automation:tasks:standupMissingReminderSend');
 
@@ -26,7 +27,7 @@ export default async function standupMissingReminderSend() {
         isActive: true,
       },
       project: { status: ProjectStatus.MATCHED },
-      dueAt: { lte: new Date() },
+      dueAt: { lte: DateTime.now().minus({ minutes: 30 }).toJSDate() },
       OR: [
         { sentMissingReminderSlack: false },
         { sentMissingReminderEmail: false },

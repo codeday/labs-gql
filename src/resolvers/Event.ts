@@ -67,6 +67,7 @@ export class EventResolver {
         artifactTypes: true,
         partners: true,
         fileTypes: true,
+        scheduledAnnouncements: true,
         studentTrainingGroup: {
           include: {
             entries: true,
@@ -128,6 +129,8 @@ export class EventResolver {
 
         slackWorkspaceId: source.slackWorkspaceId,
         slackWorkspaceAccessToken: source.slackWorkspaceAccessToken,
+        slackAnnouncementChannelId: source.slackAnnouncementChannelId,
+        slackMentorChannelId: null,
         slackUserGroupId: null,
         standupAndProsperToken: source.standupAndProsperToken,
         standupAiModelVague: source.standupAiModelVague,
@@ -287,6 +290,20 @@ export class EventResolver {
           quizUi: e.quizUi as any || undefined,
           quizScore: e.quizScore as any || undefined,
           trainingGroupId: studentTrainingGroup.id,
+        })),
+      });
+    }
+
+    if (source.scheduledAnnouncements.length > 0) {
+      await this.prisma.scheduledAnnouncement.createMany({
+        data: source.scheduledAnnouncements.map(sa => ({
+          sendAt: diffDate(sa.sendAt),
+          subject: sa.subject,
+          body: sa.body,
+          medium: sa.medium,
+          target: sa.target,
+          isSent: false, // Reset sent status for cloned announcements
+          eventId: event.id,
         })),
       });
     }

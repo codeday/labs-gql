@@ -17,14 +17,46 @@ export async function linkExistingSlackMembers(
   const searchStudents = Object.fromEntries(
     event.projects
       .flatMap(p => p.students)
+      .filter(s => !s.slackId)
       .map(s => [s.email, s])
   );
 
   const searchMentors = Object.fromEntries(
     event.projects
       .flatMap(p => p.mentors)
+      .filter(s => !s.slackId)
       .map(s => [s.email, s])
   );
+
+  const previousStudents = await prisma.student.findMany({
+    where: { slackId: { not: null }, email: { in: Object.keys(searchStudents) } },
+    select: { email: true, slackId: true},
+  });
+
+  const previousMentors = await prisma.mentor.findMany({
+    where: { slackId: { not: null }, email: { in: Object.keys(searchMentors) } },
+    select: { email: true, slackId: true},
+  });
+
+  for (const pStudent of previousStudents) {
+    if (pStudent.email in searchStudents) {
+      await prisma.student.update({
+        where: { id: searchStudents[pStudent.email].id },
+        data: { slackId: pStudent.slackId },
+      });
+      delete searchStudents[pStudent.email];
+    }
+  }
+
+  for (const pMentor of previousMentors) {
+    if (pMentor.email in searchMentors) {
+      await prisma.mentor.update({
+        where: { id: searchMentors[pMentor.email].id },
+        data: { slackId: pMentor.slackId },
+      });
+      delete searchMentors[pMentor.email];
+    }
+  }
 
   const allMembers = await slack.paginate(
     'users.list',

@@ -27,3 +27,5 @@ export * from './EventEditInput';
 export * from './ProjectFilterInput';
 export * from './FileTypeCreateInput';
 export * from './FileTypeEditInput';
+export * from './ScheduledAnnouncementCreateInput';
+export * from './ScheduledAnnouncementEditInput';

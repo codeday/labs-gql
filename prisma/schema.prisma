@@ -83,8 +83,8 @@ model Event {
   title                   String
   defaultWeeks            Int      @default(4)
   certificationStatements String[]
-  contractSchema      Json?
-  contractUi          Json?
+  contractSchema          Json?
+  contractUi              Json?
 
   // - Schedule
   studentApplicationsStartAt DateTime
@@ -116,6 +116,7 @@ model Event {
 
   slackWorkspaceId              String?
   slackUserGroupId              String?
+  slackAnnouncementChannelId    String?
   slackMentorChannelId          String?
   slackWorkspaceAccessToken     String?
   standupAndProsperToken        String?
@@ -127,18 +128,19 @@ model Event {
   studentTrainingGroup   TrainingGroup? @relation(fields: [studentTrainingGroupId], references: [id])
   studentTrainingGroupId String?
 
-  surveys        Survey[]
-  mentors        Mentor[]
-  students       Student[]
-  projects       Project[]
-  partners       Partner[]
-  notes          Note[]
-  resources      Resource[]
-  standupThreads StandupThread[]
-  standupResults StandupResult[]
-  meetings       Meeting[]
-  artifactTypes  ArtifactType[]
-  fileTypes FileType[]
+  surveys                Survey[]
+  mentors                Mentor[]
+  students               Student[]
+  projects               Project[]
+  partners               Partner[]
+  notes                  Note[]
+  resources              Resource[]
+  standupThreads         StandupThread[]
+  standupResults         StandupResult[]
+  meetings               Meeting[]
+  artifactTypes          ArtifactType[]
+  fileTypes              FileType[]
+  scheduledAnnouncements ScheduledAnnouncement[]
 }
 
 model TrainingGroup {
@@ -463,8 +465,8 @@ model Partner {
   autoApprove     Boolean @default(false)
   maxStudents     Int?
 
-  contractSchema      Json?
-  contractUi          Json?
+  contractSchema Json?
+  contractUi     Json?
 
   forceTags  Tag[] @relation("PartnerForceTag")
   forbidTags Tag[] @relation("PartnerForbidTag")
@@ -819,17 +821,17 @@ model FileType {
   updatedAt DateTime @updatedAt
 
   // Data
-  templateId String
-  type FileTypeType
-  layers Json
+  templateId          String
+  type                FileTypeType
+  layers              Json
   generationCondition FileTypeGenerationCondition
-  generationTarget FileTypeGenerationTarget
-  slug String
+  generationTarget    FileTypeGenerationTarget
+  slug                String
 
   // Relations
   files File[]
 
-  event Event @relation(fields: [eventId], references: [id])
+  event   Event  @relation(fields: [eventId], references: [id])
   eventId String
 }
 
@@ -840,7 +842,7 @@ model File {
   updatedAt DateTime @updatedAt
 
   // Data
-  url  String?
+  url        String?
   pollingUrl String?
 
   // Relations
@@ -855,4 +857,34 @@ model File {
 
   fileType   FileType @relation(fields: [fileTypeId], references: [id])
   fileTypeId String
+}
+
+enum ScheduledAnnouncementMedium {
+  SLACK
+  EMAIL
+}
+
+enum ScheduledAnnouncementTarget {
+  MENTOR
+  STUDENT
+  TEAM
+}
+
+model ScheduledAnnouncement {
+  // Metadata
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Data
+  sendAt  DateTime
+  subject String?
+  body    String
+  medium  ScheduledAnnouncementMedium
+  target  ScheduledAnnouncementTarget
+  isSent  Boolean                     @default(false)
+
+  // Relations
+  event   Event  @relation(fields: [eventId], references: [id])
+  eventId String
 }
