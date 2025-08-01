@@ -18,4 +18,7 @@ export class AutocompleteResult {
 
   @Field(() => String)
   id: String;
+  
+  @Field(() => String)
+  eventId: String;
 }

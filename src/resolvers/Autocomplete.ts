@@ -21,6 +21,7 @@ export class AutocompleteResolver {
     @Arg('types', () => AutocompleteFilterTypeInput) types: AutocompleteFilterTypeInput,
     @Arg('status', () => [StudentStatus], { defaultValue: [StudentStatus.ACCEPTED] }) status: StudentStatus[],
     @Arg('q', () => String) q: string,
+    @Arg('universal', () => Boolean, { nullable: true, defaultValue: false}) universal?: boolean, 
   ): Promise<AutocompleteResult[]> {
     const lookups: (() => Promise<AutocompleteResult[]>)[] = [];
 
@@ -28,7 +29,7 @@ export class AutocompleteResolver {
       lookups.push(async () => 
         (await this.prisma.student.findMany({
           where: {
-            eventId: auth.eventId,
+            eventId: (universal === true) ? undefined : auth.eventId,
             AND: [
               {
                 OR: status.map(s => ({
@@ -48,6 +49,7 @@ export class AutocompleteResolver {
           .map(s => ({
             name: `${s.givenName} ${s.surname} (${s.email})`,
             id: s.id,
+            eventId: s.eventId,
             type: AutocompleteType.STUDENT,
           }) as AutocompleteResult)
       );
@@ -57,7 +59,7 @@ export class AutocompleteResolver {
       lookups.push(async () =>
         (await this.prisma.mentor.findMany({
           where: {
-            eventId: auth.eventId,
+            eventId: (universal === true) ? undefined : auth.eventId,
             status: 'ACCEPTED',
             OR: [
               { givenName: { contains: q, mode: 'insensitive'} },
@@ -69,6 +71,7 @@ export class AutocompleteResolver {
           .map(m => ({
             name: `${m.givenName} ${m.surname} (${m.email})`,
             id: m.id,
+            eventId: m.eventId,
             type: AutocompleteType.MENTOR,
           }) as AutocompleteResult)
       );
@@ -78,14 +81,18 @@ export class AutocompleteResolver {
       lookups.push(async () =>
         (await this.prisma.project.findMany({
           where: {
-            eventId: auth.eventId,
+            eventId: (universal === true) ? undefined : auth.eventId,
             status: { in: ['ACCEPTED', 'MATCHED' ]},
-            description: { contains: q, mode: 'insensitive'}
+            OR: [
+            { description: { contains: q, mode: 'insensitive'} },
+            { issueUrl: { contains: q, mode: 'insensitive' } },
+            ]
           },
         }))
-          .map(m => ({
-            name: `${m.description?.slice(0,40)}...`,
-            id: m.id,
+          .map(p => ({
+            name: `${p.description?.slice(0,40)}...`,
+            id: p.id,
+            eventId: p.eventId,
             type: AutocompleteType.PROJECT,
           }) as AutocompleteResult)
       );
