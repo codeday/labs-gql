@@ -5,6 +5,9 @@ import { GtLtEq } from './GtLtEq';
 
 @InputType()
 export class ProjectFilterInput {
+  @Field(() => String, {nullable: true})
+  id?: string
+
   @Field(() => String, { nullable: true })
   assignedToManager?: string
 
@@ -22,6 +25,7 @@ export class ProjectFilterInput {
 
   toQuery(): Prisma.ProjectWhereInput {
     return {
+      ...(this.id ? { id: this.id } : {}),
       ...(this.status ? { status: this.status } : {}),
       ...(this.studentWeeks ? { students: { some: { weeks: this.studentWeeks } } } : {}),
       ...(this.track ? { track: this.track } : {}),
