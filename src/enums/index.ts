@@ -18,6 +18,7 @@ enum SupportTicketType {
   IssueCantReplicate = 'IssueCantReplicate',
   MaintainerUnsupportive = 'MaintainerUnsupportive',
   MentorUnresponsive = 'MentorUnresponsive',
+  StudentNeedsResource = 'StudentNeedsResource',
   Other = 'Other',
 }
 registerEnumType(SupportTicketType, { name: 'SupportTicketType' });

@@ -6,6 +6,8 @@ import { Inject, Service } from 'typedi';
 import { Context, AuthRole } from '../context';
 import { Note } from '../types/Note';
 import { IdOrUsernameOrEmailInput } from '../inputs';
+import { SupportTicketType } from '../enums';
+import { createSupportTicket } from '../linear/createSupportTicket';
 
 @Service()
 @Resolver(Note)
@@ -20,15 +22,20 @@ export class NoteResolver {
     @Arg('student', () => IdOrUsernameOrEmailInput) studentWhere: IdOrUsernameOrEmailInput,
     @Arg('note', () => String) note: string,
     @Arg('caution', () => Float) caution: number,
+    @Arg('supportTicketType', () => SupportTicketType, { nullable: true }) supportTicketType?: SupportTicketType,
   ): Promise<PrismaNote> {
     const student = await this.prisma.student.findFirst({
       where: {
         ...studentWhere.toQuery(),
         event: { id: auth.eventId },
       },
-      select: { id: true },
+      select: { id: true, projects: { include: { mentors: true, students: true, event: true }} },
       rejectOnNotFound: true,
     });
+
+    if (supportTicketType && student.projects.length > 0) {
+      await createSupportTicket(supportTicketType, student.projects[0], note, auth.username!);
+    }
 
     return this.prisma.note.create({
       data: {

@@ -28,3 +28,4 @@ export * from './signToken';
 export * from './minMaxFunction';
 export * from './math';
 export * from './array';
+export * from './fullName';
