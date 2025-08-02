@@ -11,8 +11,9 @@ import { searchLabel } from "./searchLabel";
 export async function createSupportTicket(
     type: SupportTicketType,
     project: Project & {  event: Event | null, mentors: Mentor[], students: Student[] },
-    description?: string,
-    reportedBy?: Student | Mentor | string,
+    students?: Student[] | null,
+    description?: string | null,
+    reportedBy?: Student | Mentor | string | null,
 ) {
     const linear = Container.get(LinearClient);
     if (await hasExistingIssue(type, project)) {
@@ -21,20 +22,23 @@ export async function createSupportTicket(
 
     const lines = [
         `[${searchLabel(type, project)}]`,
+        ...(students ? [`Students with issue: ${students.map(fullName).join(', ')}`] : []),
+        ...(reportedBy ? [`Reported by: ${typeof reportedBy === 'string' ? reportedBy : fullName(reportedBy)}`] : []),
+        ...(description ? [`\n## Description: ${description}`] : []),
+        `\n ## Project Details`,
         ...(project.event ? [`Session: ${project.event.name}`] : []),
+        ...(project.issueUrl ? [`Issue Link: ${project.issueUrl}`] : []),
         `Mentors: ${project.mentors.map(fullName).join(', ')}`,
         `Students: ${project.students.map(fullName).join(', ')}`,
         ...(project.slackChannelId ? [`Slack Link: https://codedayorg.slack.com/archives/${project.slackChannelId}`] : []),
-        ...(reportedBy ? [`Reported by: ${typeof reportedBy === 'string' ? reportedBy : fullName(reportedBy)}`] : []),
-        ...(description ? [`\n## Description: ${description}`] : []),
-        `\n## Project Description\n${project.issueUrl}\n${project.description}`,
+        `\n### Description\n${project.description}`,
     ];
 
     await linear.createIssue({
       priority: 2,
       labelIds: [config.linear.problemLabelId],
       teamId: config.linear.teamId,
-      title: `${supportTicketTypeToTitle(type)} for ${project.mentors.map(fullName).join(', ')}`,
+      title: `${supportTicketTypeToTitle(type)} for${students ? ` s:${students.map(fullName).join('/')}` : ''} m:${project.mentors.map(fullName).join('/')}`,
       description: lines.join(`\n`),
     });
 }

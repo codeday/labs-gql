@@ -10,6 +10,8 @@ export function supportTicketTypeToTitle(type: SupportTicketType) {
       return 'Maintainer Issue';
     case SupportTicketType.MentorUnresponsive:
       return 'Unresponsive Mentor';
+    case SupportTicketType.StudentNeedsResource:
+      return 'Student Needs Resource';
     default:
       return 'Other';
   }

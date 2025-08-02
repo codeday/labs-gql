@@ -29,12 +29,18 @@ export class NoteResolver {
         ...studentWhere.toQuery(),
         event: { id: auth.eventId },
       },
-      select: { id: true, projects: { include: { mentors: true, students: true, event: true }} },
+      include: { projects: { include: { mentors: true, students: true, event: true }} },
       rejectOnNotFound: true,
     });
 
     if (supportTicketType && student.projects.length > 0) {
-      await createSupportTicket(supportTicketType, student.projects[0], note, auth.username!);
+      await createSupportTicket(
+        supportTicketType,
+        student.projects[0],
+        [student],
+        note,
+        auth.username!
+      );
     }
 
     return this.prisma.note.create({

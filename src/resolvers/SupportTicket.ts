@@ -42,7 +42,7 @@ export class SupportTicketResolver {
       },
     });
 
-    await createSupportTicket(type, project, description, reporter);
+    await createSupportTicket(type, project, null, description, reporter);
 
     return true;
   }

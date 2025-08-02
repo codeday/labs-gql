@@ -5,12 +5,19 @@ import { LinearClient } from "@linear/sdk";
 import config from "../config";
 import { searchLabel } from "./searchLabel";
 
+const SINGLETON_ISSUE_TYPES = [
+    SupportTicketType.IssueSolved,
+    SupportTicketType.IssueCantReplicate,
+    SupportTicketType.MaintainerUnsupportive,
+    SupportTicketType.MentorUnresponsive,
+];
+
 export async function hasExistingIssue(
     type: SupportTicketType,
     project: Project,
 ): Promise<boolean> {
     const linear = Container.get(LinearClient);
-    if (type === SupportTicketType.Other) return false;
+    if (SINGLETON_ISSUE_TYPES.includes(type)) return false;
     const issues = await linear.issues({
         filter: {
             team: { id: { eq: config.linear.teamId } },
