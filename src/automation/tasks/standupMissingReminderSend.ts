@@ -51,7 +51,7 @@ export default async function standupMissingReminderSend() {
           },
           slackChannelId: true,
           event: {
-            select: { slackWorkspaceAccessToken: true, slackWorkspaceId: true, name: true },
+            select: { slackWorkspaceAccessToken: true, slackWorkspaceId: true, name: true, startsAt: true },
           },
         }
       },
@@ -61,8 +61,18 @@ export default async function standupMissingReminderSend() {
   const randomSlackMessage = shuffle(MISSING_STANDUP_SLACK_MESSAGES)[0];
 
   for (const standup of standups) {
+    const weeksSinceStart = Math.abs(
+      DateTime
+      .fromJSDate(standup.dueAt)
+      .diff(DateTime.fromJSDate(standup.project.event!.startsAt), 'weeks')
+      .weeks
+    );
+
     const presentStudentIds = new Set(standup.results.map(r => r.student.id));
-    const missingStudents = standup.project.students.filter(s => !presentStudentIds.has(s.id));
+    const missingStudents = standup.project.students.filter(s => (
+      !presentStudentIds.has(s.id)
+      && s.weeks > weeksSinceStart
+    ));
 
     DEBUG(`Sending missing standup reminders to ${missingStudents.length} for ${standup.id} (project: ${standup.projectId})`)
     await prisma.standupThread.update({
@@ -77,7 +87,7 @@ export default async function standupMissingReminderSend() {
       try {
         await sendTemplateEmail(
           'standupMissingReminder',
-          {  standup },
+          {  standup, weeksSinceStart },
           `Missing ${standup.project.event?.name || ''} Standup for ${DateTime.fromJSDate(standup.dueAt).toFormat('yyyy-MM-dd')}`,
           missingStudents
         );
