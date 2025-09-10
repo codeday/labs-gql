@@ -87,11 +87,11 @@ export class Student implements PrismaStudent {
   @Field(() => GraphQLJSON)
   profile: Prisma.JsonValue
 
-  @Authorized([AuthRole.PARTNER, AuthRole.ADMIN, AuthRole.MANAGER])
+  @Authorized([AuthRole.PARTNER, AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.MENTOR])
   @Field(() => GraphQLJSON, { nullable: true })
   eventContractData: Prisma.JsonValue | null
 
-  @Authorized([AuthRole.PARTNER, AuthRole.ADMIN, AuthRole.MANAGER])
+  @Authorized([AuthRole.PARTNER, AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.MENTOR])
   @Field(() => GraphQLJSON, { nullable: true })
   partnerContractData: Prisma.JsonValue | null
 
