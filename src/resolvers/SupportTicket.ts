@@ -22,6 +22,7 @@ export class SupportTicketResolver {
     @Arg('projectId', () => String) projectId: string,
     @Arg('type', () => SupportTicketType) type: SupportTicketType,
     @Arg('description', () => String, { nullable: true }) description?: string,
+    @Arg('preventingProgress', () => Boolean) preventingProgress?: boolean,
   ): Promise<boolean> {
     const reporter = auth.personType === PersonType.STUDENT
       ? (await this.prisma.student.findUnique({ where: idOrUsernameOrAuthToUniqueWhere(auth), rejectOnNotFound: true }))
@@ -41,6 +42,10 @@ export class SupportTicketResolver {
         event: true,
       },
     });
+
+    if (preventingProgress) {
+      description = "***PROGRESS IS BEING PREVENTED***\n" + description
+    }
 
     await createSupportTicket(type, project, null, description, reporter);
 

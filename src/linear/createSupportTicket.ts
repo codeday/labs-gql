@@ -14,6 +14,7 @@ export async function createSupportTicket(
     students?: Student[] | null,
     description?: string | null,
     reportedBy?: Student | Mentor | string | null,
+    preventingProgress?: boolean,
 ) {
     const linear = Container.get(LinearClient);
     if (await hasExistingIssue(type, project)) {
@@ -35,7 +36,7 @@ export async function createSupportTicket(
     ];
 
     await linear.createIssue({
-      priority: 2,
+      priority: preventingProgress ? 1 : 2,
       labelIds: [config.linear.problemLabelId],
       teamId: config.linear.teamId,
       title: `${supportTicketTypeToTitle(type)} for${students ? ` s:${students.map(fullName).join('/')}` : ''} m:${project.mentors.map(fullName).join('/')}`,
