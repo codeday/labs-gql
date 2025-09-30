@@ -37,7 +37,9 @@ export async function createSupportTicket(
 
     await linear.createIssue({
       priority: preventingProgress ? 1 : 2,
-      labelIds: [config.linear.problemLabelId],
+      labelIds: preventingProgress 
+        ? [config.linear.problemLabelId, config.linear.blockingLabelId]
+        : [config.linear.problemLabelId],
       teamId: config.linear.teamId,
       title: `${supportTicketTypeToTitle(type)} for${students ? ` s:${students.map(fullName).join('/')}` : ''} m:${project.mentors.map(fullName).join('/')}`,
       description: lines.join(`\n`),

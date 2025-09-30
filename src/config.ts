@@ -64,6 +64,7 @@ const config = {
     apiKey: process.env.LINEAR_API_KEY!,
     teamId: process.env.LINEAR_TEAM_ID!,
     problemLabelId: process.env.LINEAR_PROBLEM_LABEL_ID!,
+    blockingLabelId: process.env.LINEAR_BLOCKING_LABEL_ID!,
   },
   shopify: {
     apiToken: process.env.SHOPIFY_API_TOKEN!,
