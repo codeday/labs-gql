@@ -30,14 +30,22 @@ export async function getList(prisma: PrismaClient, event: PartialEvent): Promis
   function localIntervalToUtc(day: string, interval: Interval, tz: string) {
     const weekdays: Record<string, number> = { monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6, sunday: 7 };
     const baseDay = weekdays[day.toLowerCase()] ?? 1;
-    const start = DateTime.fromObject(
-      { year: 2024, month: 1, day: baseDay, hour: Math.floor(interval.start / 60), minute: interval.start % 60 },
-      { zone: tz }
-    ).toUTC();
-    const end = DateTime.fromObject(
-      { year: 2024, month: 1, day: baseDay, hour: Math.floor(interval.end / 60), minute: interval.end % 60 },
-      { zone: tz }
-    ).toUTC();
+    const start = DateTime.fromObject({
+      year: 2024,
+      month: 1,
+      day: baseDay,
+      hour: Math.floor(interval.start / 60),
+      minute: interval.start % 60,
+      zone: tz
+    }).toUTC();
+    const end = DateTime.fromObject({
+      year: 2024,
+      month: 1,
+      day: baseDay,
+      hour: Math.floor(interval.end / 60),
+      minute: interval.end % 60,
+      zone: tz
+    }).toUTC();
     return { start, end };
   }
 
