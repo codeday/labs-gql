@@ -47,7 +47,7 @@ export class SupportTicketResolver {
       description = "***PROGRESS IS BEING PREVENTED***\n" + description
     }
 
-    await createSupportTicket(type, project, null, description, reporter);
+    await createSupportTicket(type, project, null, description, reporter, preventingProgress);
 
     return true;
   }
