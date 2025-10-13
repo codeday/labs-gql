@@ -27,6 +27,11 @@ export async function getList(prisma: PrismaClient, event: PartialEvent): Promis
   type Interval = { start: number; end: number };
   type Person = { timezone: string; timeManagementPlan?: Record<string, Interval[]> };
 
+  function isValidTimezone(tz: string){
+  const dt = DateTime.now().setZone(tz);
+  return dt.isValid;
+}
+
   function localIntervalToUtc(day: string, interval: Interval, tz: string) {
     const weekdays: Record<string, number> = { monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6, sunday: 7 };
     const baseDay = weekdays[day.toLowerCase()] ?? 1;
@@ -74,18 +79,30 @@ export async function getList(prisma: PrismaClient, event: PartialEvent): Promis
   function findCommonTimeslots(students: Person[]): Record<string, Record<string, string[]>> {
     const days = ["monday","tuesday","wednesday","thursday","friday","saturday","sunday"];
     const result: Record<string, Record<string, string[]>> = {};
-    for (const day of days) {
-      const intervalsUTCPerStudent = students.map(s =>
-        (s.timeManagementPlan?.[day] ?? []).map(iv => localIntervalToUtc(day, iv, s.timezone))
-      );
-      const overlapUTC = intersectIntervals(intervalsUTCPerStudent);
-      if (overlapUTC.length > 0) {
-        result[day] = {};
-        students.forEach(s => {
-          result[day][s.timezone] = overlapUTC.map(iv => formatInterval(iv, s.timezone));
-        });
+    try {
+      const validStudents = students.filter(student => isValidTimezone(student.timezone));
+
+      if (validStudents.length === 0) {
+      return result;
       }
+      
+      for (const day of days) {
+        const intervalsUTCPerStudent = validStudents.map(s =>
+          (s.timeManagementPlan?.[day] ?? []).map(iv => localIntervalToUtc(day, iv, s.timezone))
+        );
+        const overlapUTC = intersectIntervals(intervalsUTCPerStudent);
+        if (overlapUTC.length > 0) {
+          result[day] = {};
+          validStudents.forEach(s => {
+            result[day][s.timezone] = overlapUTC.map(iv => formatInterval(iv, s.timezone));
+          });
+        }
+      }
+    } catch (error) {
+      console.warn('Error occurred while finding common timeslots:', error);
+      return {};
     }
+    
     return result;
   }
 
