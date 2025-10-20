@@ -2,7 +2,6 @@ import { MentorStatus, StudentStatus, PrismaClient } from '@prisma/client';
 import { ProjectStatus } from '../../enums';
 import { EmailContext } from '../spec';
 import { PartialEvent } from '../loader';
-import { DateTime } from 'luxon';
 
 export async function getId(): Promise<string> {
   return `matchTeamIntro`;
@@ -19,7 +18,7 @@ export async function getList(prisma: PrismaClient, event: PartialEvent): Promis
     },
     include: {
       mentors: { where: { status: MentorStatus.ACCEPTED } },
-      students: { where: { status: StudentStatus.ACCEPTED }, select: { timezone: true, timeManagementPlan: true } },
+      students: { where: { status: StudentStatus.ACCEPTED } },
     },
   });
 
