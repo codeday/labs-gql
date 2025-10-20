@@ -17,7 +17,15 @@ subject: "[Action Required] {{ event.name }} Team Intro: {{{ join (mapToKey proj
 
 **ACTION REQUIRED -- NEXT STEPS:**
 
+{{#if commonTimeslots}}
+**Suggested Meeting Times (all students available):**
+{{#each commonTimeslots}}
+  - {{@key}}: {{#each this}}{{#each this}}{{this}} ({{@../key}}){{#unless @last}} || {{/unless}}{{/each}}{{/each}}
+{{/each}}
+{{else}}
 - **Mentors:** Send a [When2meet](https://www.when2meet.com/) for recurring meeting availability
+{{/if}}
+
 - **Students:**{{# if project.issueUrl }}
   1. Exactly one member of your team should post "I'm working on this" in [the issue]({{project.issueUrl}}) AS SOON AS POSSIBLE to claim it. (If someone else from your team has already done this, you don't need to do it.){{/if}}
   1. reply to this email and introduce yourself (e.g. where you go to school, career goals, or anything else you want to share with your mentor)
