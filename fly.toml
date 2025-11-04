@@ -3,7 +3,7 @@
 app = "codeday-labs-gql"
 kill_signal = "SIGINT"
 kill_timeout = 5
-primary_region = "sea"
+primary_region = "lax"
 
 [[services]]
   protocol = "tcp"
@@ -35,5 +35,3 @@ primary_region = "sea"
   DEBUG = "codeday:labs:*"
   DEBUG_HIDE_DATE = "1"
   DEBUG_COLORS = "1"
-  UPLOADER_BASE = "http://codeday-uploader.internal"
-  BADGR_ISSUER = "Y9pbP-8PRCG1cptG5F8uUw"

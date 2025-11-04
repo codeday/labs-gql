@@ -19,7 +19,7 @@ export async function getList(prisma: PrismaClient, event: PartialEvent): Promis
     },
     include: {
       mentors: { where: { status: MentorStatus.ACCEPTED } },
-      students: { where: { status: StudentStatus.ACCEPTED }, select: { timezone: true, timeManagementPlan: true } },
+      students: { where: { status: StudentStatus.ACCEPTED } },
     },
   });
 
