@@ -21,8 +21,8 @@
   "dependencies": {
     "@apollo/server": "^4.11.0",
     "@codeday/uploader-node": "^1.0.1",
-    "@elastic/elasticsearch": "^9.2.0",
-    "@linear/sdk": "^64.0.0",
+    "@elastic/elasticsearch": "^8.15.0",
+    "@linear/sdk": "^38.0.0",
     "@prisma/client": "^5.14.0",
     "@slack/web-api": "^7.1.0",
     "@ts-stack/markdown": "1.4",
