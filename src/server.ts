@@ -3,7 +3,7 @@ import http from 'http';
 import { ApolloServer } from 'apollo-server-express';
 import bodyParser from 'body-parser';
 import basicAuth from 'express-basic-auth';
-import { graphqlUploadExpress } from 'graphql-upload-minimal';
+import { graphqlUploadExpress } from 'graphql-upload';
 import ws from 'ws';
 import { execute, subscribe } from 'graphql';
 import { makeDebug } from './utils';
@@ -21,7 +21,9 @@ export async function startServer(): Promise<void> {
   const apollo = new ApolloServer({
     schema,
     context,
-    introspection: config.debug,
+    playground: config.debug,
+    introspection: true,
+    uploads: false,
   });
 
   const app = Express();
