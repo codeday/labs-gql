@@ -86,34 +86,14 @@ export default async function mentorWriteRecommendations({ auth }: Context, args
       slackWorkspaceId: { not: null },
       slackWorkspaceAccessToken: { not: null },
     },
+    rejectOnNotFound: true,
   }) as PickNonNullable<Event, 'id' | 'slackWorkspaceId' | 'slackWorkspaceAccessToken' | 'name'>;
 
-const mentors = await prisma.mentor.findMany({
-  where: {
-    eventId: auth.eventId,
-    status: 'ACCEPTED',
-    projects: { some: { status: 'MATCHED' } },
-  },
-  include: {
-    event: true,
-    projects: { where: { status: 'MATCHED' }, include: { students: { where: { status: 'ACCEPTED' } } } },
-    targetSurveyResponses: { where: { authorStudentId: { not: null } } },
-  }
-});
-
-const recommendations = []
-for (const mentor of mentors) {
-  DEBUG(`Creating recommendation for ${mentor.givenName} ${mentor.surname}.`);
-  const previousParticipation = await prisma.mentor.findMany({
+  const mentors = await prisma.mentor.findMany({
     where: {
-      eventId: { not: auth.eventId },
+      eventId: auth.eventId,
       status: 'ACCEPTED',
       projects: { some: { status: 'MATCHED' } },
-      OR: [
-        { email: mentor.email },
-        { givenName: mentor.givenName, surname: mentor.surname },
-        ...(mentor.username ? [{ username: mentor.username }] : [{}]),
-      ],
     },
     include: {
       event: true,
@@ -122,74 +102,95 @@ for (const mentor of mentors) {
     }
   });
 
-  const allMentorship = [
-    mentor,
-    ...previousParticipation,
-  ]
-    .map(m => ({
-      ...m,
-      startsAtDateString: DateTime.fromJSDate(m.event.startsAt).toLocaleString(DateTime.DATE_MED),
-      endsAtDateString: DateTime.fromJSDate(m.event.startsAt).plus({ weeks: m.maxWeeks || 5 }).toLocaleString(DateTime.DATE_MED)
-    }));
+  const recommendations = []
+  for (const mentor of mentors) {
+    DEBUG(`Creating recommendation for ${mentor.givenName} ${mentor.surname}.`);
+    const previousParticipation = await prisma.mentor.findMany({
+      where: {
+        eventId: { not: auth.eventId },
+        status: 'ACCEPTED',
+        projects: { some: { status: 'MATCHED' } },
+        OR: [
+          { email: mentor.email },
+          { givenName: mentor.givenName, surname: mentor.surname },
+          ...(mentor.username ? [{ username: mentor.username }] : [{}]),
+        ],
+      },
+      include: {
+        event: true,
+        projects: { where: { status: 'MATCHED' }, include: { students: { where: { status: 'ACCEPTED' } } } },
+        targetSurveyResponses: { where: { authorStudentId: { not: null } } },
+      }
+    });
 
-  const allSurveyResponsesAbout = allMentorship.flatMap(p => p.targetSurveyResponses);
-  const surveyResponsesFreeResponse = allSurveyResponsesAbout
-    .flatMap(sr => Object.entries(sr.response as object))
-    .filter(([, v]) => typeof v === 'string' && v.length > 20)
-    .map(([k, v]) => `- ${k}: ${v.replace(/(\r\n|\n|\r)/gm, " ")}`)
-    .slice(0, 20)
-    .join(`\n`);
+    const allMentorship = [
+      mentor,
+      ...previousParticipation,
+    ]
+      .map(m => ({
+        ...m,
+        startsAtDateString: DateTime.fromJSDate(m.event.startsAt).toLocaleString(DateTime.DATE_MED),
+        endsAtDateString: DateTime.fromJSDate(m.event.startsAt).plus({ weeks: m.maxWeeks || 5 }).toLocaleString(DateTime.DATE_MED)
+      }));
 
-  const allMentoredStudents = allMentorship
-    .flatMap(m => m.projects)
-    .flatMap(p => p.students);
+    const allSurveyResponsesAbout = allMentorship.flatMap(p => p.targetSurveyResponses);
+    const surveyResponsesFreeResponse = allSurveyResponsesAbout
+      .flatMap(sr => Object.entries(sr.response as object))
+      .filter(([, v]) => typeof v === 'string' && v.length > 20)
+      .map(([k, v]) => `- ${k}: ${v.replace(/(\r\n|\n|\r)/gm, " ")}`)
+      .slice(0, 20)
+      .join(`\n`);
 
-  const mentorInformation = {
-    'Recommendation For': `${mentor.givenName} ${mentor.surname}`,
-    'Pronouns': (mentor.profile as any)?.pronouns || 'they/them',
-    'Count of Projects Mentored': allMentorship.flatMap(m => m.projects).length,
-    'Students Mentored': allMentoredStudents.map(s => s.givenName).join(', '),
-    'Count of Students Mentored': allMentoredStudents.length,
-    'Mentorship Dates': allMentorship
-      .map(m => `${m.startsAtDateString}-${m.endsAtDateString}`)
-      .join(', '),
-    ...(surveyResponsesFreeResponse.length < 10 ? {} : {
-      'What Students Had to Say': `\n` + surveyResponsesFreeResponse,
-    }),
-  };
+    const allMentoredStudents = allMentorship
+      .flatMap(m => m.projects)
+      .flatMap(p => p.students);
 
-  const prompt = GPT_PROMPT + `\n\n` + Object.entries(mentorInformation)
-    .map(([k, v]) => `${k}: ${v}`)
-    .join(`\n`);
+    const mentorInformation = {
+      'Recommendation For': `${mentor.givenName} ${mentor.surname}`,
+      'Pronouns': (mentor.profile as any)?.pronouns || 'they/them',
+      'Count of Projects Mentored': allMentorship.flatMap(m => m.projects).length,
+      'Students Mentored': allMentoredStudents.map(s => s.givenName).join(', '),
+      'Count of Students Mentored': allMentoredStudents.length,
+      'Mentorship Dates': allMentorship
+        .map(m => `${m.startsAtDateString}-${m.endsAtDateString}`)
+        .join(', '),
+      ...(surveyResponsesFreeResponse.length < 10 ? {} : {
+        'What Students Had to Say': `\n` + surveyResponsesFreeResponse,
+      }),
+    };
 
-  DEBUG(prompt);
-  const completion = await openAi.chat.completions.create({
-    messages: [
-      { role: 'system', content: GPT_SYSTEM },
-      { role: 'user', content: prompt },
-    ],
-    model: 'gpt-4',
+    const prompt = GPT_PROMPT + `\n\n` + Object.entries(mentorInformation)
+      .map(([k, v]) => `${k}: ${v}`)
+      .join(`\n`);
+
+    DEBUG(prompt);
+    const completion = await openAi.chat.completions.create({
+      messages: [
+        { role: 'system', content: GPT_SYSTEM },
+        { role: 'user', content: prompt },
+      ],
+      model: 'gpt-4',
+    });
+    const result = completion.choices[0].message.content;
+    DEBUG(result);
+
+    recommendations.push({
+      mentor: `${mentor.givenName} ${mentor.surname}`,
+      linkedIn: (mentor.profile as any)?.linkedIn || '',
+      ...mentorInformation,
+      prompt,
+      result,
+    });
+  }
+
+  const csv = stringify(recommendations, { header: true });
+  const slack = getSlackClientForEvent(event);
+
+  await slack.files.upload({
+    channels: args.channel,
+    initial_comment: `Mentor recommendations for ${event.name}`,
+    content: csv,
+    filename: `recommendations-${event.id}.csv`,
+    filetype: 'text/csv',
   });
-  const result = completion.choices[0].message.content;
-  DEBUG(result);
-
-  recommendations.push({
-    mentor: `${mentor.givenName} ${mentor.surname}`,
-    linkedIn: (mentor.profile as any)?.linkedIn || '',
-    ...mentorInformation,
-    prompt,
-    result,
-  });
-}
-
-const csv = stringify(recommendations, { header: true });
-const slack = getSlackClientForEvent(event);
-
-await slack.files.upload({
-  channels: args.channel,
-  initial_comment: `Mentor recommendations for ${event.name}`,
-  content: csv,
-  filename: `recommendations-${event.id}.csv`,
-  filetype: 'text/csv',
-});
 }

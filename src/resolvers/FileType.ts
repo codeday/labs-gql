@@ -59,7 +59,7 @@ export class FileTypeResolver {
 
     const fileType = await this.prisma.fileType.findUniqueOrThrow({
       where: { id },
-
+      rejectOnNotFound: true,
     });
 
     // Check if the user has access to the event
@@ -83,6 +83,7 @@ export class FileTypeResolver {
 
     const fileType = await this.prisma.fileType.findUniqueOrThrow({
       where: { id },
+      rejectOnNotFound: true,
     });
 
     // Check if the user has access to the event

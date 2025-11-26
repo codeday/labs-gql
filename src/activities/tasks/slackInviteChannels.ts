@@ -38,34 +38,35 @@ export default async function slackInviteChannels({ auth }: Context, args: Parti
       slackWorkspaceId: { not: null },
       slackWorkspaceAccessToken: { not: null },
     },
+    rejectOnNotFound: true,
   }) as PickNonNullable<Event, 'slackWorkspaceId' | 'slackWorkspaceAccessToken' | 'slackMentorChannelId'>;
 
-const projects = await prisma.project.findMany({
-  where: {
-    slackChannelId: { not: null },
-    eventId: auth.eventId!,
-    ...(args.partnerCode
-      ? { students: { some: { partnerCode: { equals: args.partnerCode, mode: 'insensitive' } } } }
-      : {}
-    )
-  },
-  select: { slackChannelId: true },
-});
-
-const slack = getSlackClientForEvent(event);
-
-for (const project of projects) {
-  DEBUG(`Inviting ${args.user} to ${project.slackChannelId}`);
-  try {
-    await slack.conversations.invite({ channel: project.slackChannelId!, users: args.user });
-  } catch (ex) { }
-}
-
-if (event.slackMentorChannelId && !args.partnerCode) {
-  DEBUG(`Inviting ${args.user} to mentor channel (${event.slackMentorChannelId})`);
-  await slack.conversations.invite({
-    channel: event.slackMentorChannelId!,
-    users: args.user,
+  const projects = await prisma.project.findMany({
+    where: {
+      slackChannelId: { not: null },
+      eventId: auth.eventId!,
+      ...(args.partnerCode
+        ? { students: { some: { partnerCode: { equals: args.partnerCode, mode: 'insensitive' } } } }
+        : {}
+      )
+    },
+    select: { slackChannelId: true },
   });
-}
+
+  const slack = getSlackClientForEvent(event);
+
+  for (const project of projects) {
+    DEBUG(`Inviting ${args.user} to ${project.slackChannelId}`);
+    try {
+      await slack.conversations.invite({ channel: project.slackChannelId!, users: args.user });
+    } catch (ex) { }
+  }
+
+  if (event.slackMentorChannelId && !args.partnerCode) {
+    DEBUG(`Inviting ${args.user} to mentor channel (${event.slackMentorChannelId})`);
+    await slack.conversations.invite({
+      channel: event.slackMentorChannelId!,
+      users: args.user,
+    });
+  }
 }

@@ -36,64 +36,66 @@ export class ArtifactResolver {
           : { [auth.personType === 'MENTOR' ? 'mentors' : 'students']: { some: { id: auth.id } } }
         ),
       },
+      rejectOnNotFound: true,
     });
 
-  const artifactType = artifactTypeId && await this.prisma.artifactType.findFirstOrThrow({
-    where: {
-      eventId: auth.eventId,
-      id: artifactTypeId,
-    },
-  });
+    const artifactType = artifactTypeId && await this.prisma.artifactType.findFirstOrThrow({
+      where: {
+        eventId: auth.eventId,
+        id: artifactTypeId,
+      },
+      rejectOnNotFound: true,
+    });
 
-  const groupArtifact = artifactType ? !artifactType.personType : _groupArtifact;
+    const groupArtifact = artifactType ? !artifactType.personType : _groupArtifact;
 
-  const nameTypeCriteria: Prisma.ArtifactWhereInput = artifactType
-    ? { artifactTypeId: { equals: artifactTypeId } }
-    : { name: { equals: name!, mode: 'insensitive' } };
+    const nameTypeCriteria: Prisma.ArtifactWhereInput = artifactType
+      ? { artifactTypeId: { equals: artifactTypeId } }
+      : { name: { equals: name!, mode: 'insensitive' } };
 
-  const whereCriteria: Prisma.ArtifactWhereInput = groupArtifact
-    ? { projectId: project.id }
-    : {
-      projectId: project.id,
-      [auth.personType === 'MENTOR' ? 'mentorId' : 'studentId']: auth.id,
-    };
+    const whereCriteria: Prisma.ArtifactWhereInput = groupArtifact
+      ? { projectId: project.id }
+      : {
+        projectId: project.id,
+        [auth.personType === 'MENTOR' ? 'mentorId' : 'studentId']: auth.id,
+      };
 
-  const nameData = artifactType ? artifactType.name : name!;
+    const nameData = artifactType ? artifactType.name : name!;
 
-  const connectData = groupArtifact
-    ? { projectId: project.id }
-    : {
-      projectId: project.id,
-      [auth.personType === 'MENTOR' ? 'mentorId' : 'studentId']: auth.id,
-    };
+    const connectData = groupArtifact
+      ? { projectId: project.id }
+      : {
+        projectId: project.id,
+        [auth.personType === 'MENTOR' ? 'mentorId' : 'studentId']: auth.id,
+      };
 
-  if(await this.prisma.artifact.count({
-    where: {
-      ...nameTypeCriteria,
-      ...whereCriteria,
+    if (await this.prisma.artifact.count({
+      where: {
+        ...nameTypeCriteria,
+        ...whereCriteria,
+      }
+    })) {
+      await this.prisma.artifact.updateMany({
+        where: {
+          ...nameTypeCriteria,
+          ...whereCriteria,
+        },
+        data: {
+          name: nameData,
+          link,
+          ...connectData,
+        },
+      });
+    } else {
+      await this.prisma.artifact.create({
+        data: {
+          name: nameData,
+          link,
+          ...connectData,
+        },
+      })
     }
-  })) {
-  await this.prisma.artifact.updateMany({
-    where: {
-      ...nameTypeCriteria,
-      ...whereCriteria,
-    },
-    data: {
-      name: nameData,
-      link,
-      ...connectData,
-    },
-  });
-} else {
-  await this.prisma.artifact.create({
-    data: {
-      name: nameData,
-      link,
-      ...connectData,
-    },
-  })
-}
 
-return true;
+    return true;
   }
 }

@@ -30,6 +30,7 @@ export class NoteResolver {
         event: { id: auth.eventId },
       },
       include: { projects: { include: { mentors: true, students: true, event: true } } },
+      rejectOnNotFound: true,
     });
 
     if (supportTicketType && student.projects.length > 0) {

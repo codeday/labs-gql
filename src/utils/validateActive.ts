@@ -10,7 +10,7 @@ export async function validateActive(auth: AuthContext) {
     const me = await Container.get(PrismaClient).student.findUniqueOrThrow({
       where: auth.toWhere(),
       include: { event: true },
-
+      rejectOnNotFound: true,
     });
 
     if (me.status !== StudentStatus.ACCEPTED) throw new Error(`Not an active participant.`);
@@ -21,6 +21,7 @@ export async function validateActive(auth: AuthContext) {
     const me = await Container.get(PrismaClient).mentor.findUniqueOrThrow({
       where: auth.toWhere(),
       include: { event: true, projects: { where: { status: { in: [ProjectStatus.MATCHED, ProjectStatus.ACCEPTED] } } } },
+      rejectOnNotFound: true,
     });
     if (me.status !== MentorStatus.ACCEPTED) throw new Error(`Not an active mentor.`);
     if (me.projects.length === 0) throw new Error(`No active projects.`);

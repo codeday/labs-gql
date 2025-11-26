@@ -49,36 +49,37 @@ export default async function slackSendEmailResponseReminder({ auth }: Context, 
       slackWorkspaceId: { not: null },
       slackWorkspaceAccessToken: { not: null },
     },
+    rejectOnNotFound: true,
   }) as PickNonNullable<Event, 'slackWorkspaceId' | 'slackWorkspaceAccessToken' | 'name'>;
 
-const students = await prisma.student.findMany({
-  where: {
-    eventId: auth.eventId!,
-    projectEmails: args.emailId
-      ? { none: { emailSent: { emailId: args.emailId } } }
-      : { none: {} },
-    slackId: { not: null },
-    ...(args.partnerCode
-      ? { students: { some: { partnerCode: { equals: args.partnerCode, mode: 'insensitive' } } } }
-      : {}
-    )
-  },
-  select: { slackId: true }
-});
-
-const slack = getSlackClientForEvent(event);
-
-DEBUG(`Reminding ${students.length} students about ${args.emailId} email responses in ${args.channel}.`);
-if (students.length > 0) {
-  await slack.chat.postMessage({
-    blocks: [{
-      type: 'section',
-      text: {
-        type: 'mrkdwn',
-        text: `[${event.name}]\n${args.intro}\n` + students.map(s => `- <@${s.slackId}>`).join(`\n`),
-      }
-    }],
-    channel: args.channel,
+  const students = await prisma.student.findMany({
+    where: {
+      eventId: auth.eventId!,
+      projectEmails: args.emailId
+        ? { none: { emailSent: { emailId: args.emailId } } }
+        : { none: {} },
+      slackId: { not: null },
+      ...(args.partnerCode
+        ? { students: { some: { partnerCode: { equals: args.partnerCode, mode: 'insensitive' } } } }
+        : {}
+      )
+    },
+    select: { slackId: true }
   });
-}
+
+  const slack = getSlackClientForEvent(event);
+
+  DEBUG(`Reminding ${students.length} students about ${args.emailId} email responses in ${args.channel}.`);
+  if (students.length > 0) {
+    await slack.chat.postMessage({
+      blocks: [{
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: `[${event.name}]\n${args.intro}\n` + students.map(s => `- <@${s.slackId}>`).join(`\n`),
+        }
+      }],
+      channel: args.channel,
+    });
+  }
 }

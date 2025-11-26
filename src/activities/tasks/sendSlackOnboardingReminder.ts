@@ -52,35 +52,36 @@ export default async function slackSendOnboardingReminder({ auth }: Context, arg
       slackWorkspaceId: { not: null },
       slackWorkspaceAccessToken: { not: null },
     },
+    rejectOnNotFound: true,
   }) as PickNonNullable<Event, 'slackWorkspaceId' | 'slackWorkspaceAccessToken' | 'name'>;
 
-const students = await prisma.student.findMany({
-  where: {
-    eventId: auth.eventId!,
-    slackId: { not: null },
-    ...(args.partnerCode
-      ? { students: { some: { partnerCode: { equals: args.partnerCode, mode: 'insensitive' } } } }
-      : {}
-    )
-  },
-  select: { slackId: true, tagTrainingSubmissions: { select: { id: true } } }
-});
-const filteredStudents = students.filter(s => !s.tagTrainingSubmissions || s.tagTrainingSubmissions.length < (args.min! as number));
-
-const slack = getSlackClientForEvent(event);
-
-
-DEBUG(`Reminding ${filteredStudents.length} students about 0-${args.min - 1} onboarding assignments in ${args.channel}.`);
-if (filteredStudents.length > 0) {
-  await slack.chat.postMessage({
-    blocks: [{
-      type: 'section',
-      text: {
-        type: 'mrkdwn',
-        text: `[${event.name}]\n${args.intro}\n` + filteredStudents.map(s => `- <@${s.slackId}>`).join(`\n`),
-      }
-    }],
-    channel: args.channel,
+  const students = await prisma.student.findMany({
+    where: {
+      eventId: auth.eventId!,
+      slackId: { not: null },
+      ...(args.partnerCode
+        ? { students: { some: { partnerCode: { equals: args.partnerCode, mode: 'insensitive' } } } }
+        : {}
+      )
+    },
+    select: { slackId: true, tagTrainingSubmissions: { select: { id: true } } }
   });
-}
+  const filteredStudents = students.filter(s => !s.tagTrainingSubmissions || s.tagTrainingSubmissions.length < (args.min! as number));
+
+  const slack = getSlackClientForEvent(event);
+
+
+  DEBUG(`Reminding ${filteredStudents.length} students about 0-${args.min - 1} onboarding assignments in ${args.channel}.`);
+  if (filteredStudents.length > 0) {
+    await slack.chat.postMessage({
+      blocks: [{
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: `[${event.name}]\n${args.intro}\n` + filteredStudents.map(s => `- <@${s.slackId}>`).join(`\n`),
+        }
+      }],
+      channel: args.channel,
+    });
+  }
 }

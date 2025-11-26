@@ -49,7 +49,7 @@ export class SlackResolver {
   ) {
     const event = await this.prisma.event.findUniqueOrThrow({
       where: { id: auth.eventId },
-
+      rejectOnNotFound: true,
     });
 
     const token = await this.decodeJwt(tokenStr);

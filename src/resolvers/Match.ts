@@ -24,10 +24,10 @@ export class MatchResolver {
     @Ctx() { auth }: Context,
     @Arg('tags', () => [String]) tagIds: string[],
   ): Promise<Match[]> {
-    const event = await this.prisma.event.findUniqueOrThrow({ where: { id: auth.eventId! } });
+    const event = await this.prisma.event.findUniqueOrThrow({ where: { id: auth.eventId! }, rejectOnNotFound: true });
     if (!event.matchPreferenceSubmissionOpen) throw new Error('Match preference submission is not open.');
 
-    const student = await this.prisma.student.findUniqueOrThrow({ where: auth.toWhere() });
+    const student = await this.prisma.student.findUniqueOrThrow({ where: auth.toWhere(), rejectOnNotFound: true });
 
     if (!student || student.status !== StudentStatus.ACCEPTED) throw Error('You have not been accepted.');
     if (student.skipPreferences) {
@@ -59,7 +59,7 @@ export class MatchResolver {
     @Arg('projects', () => [String]) projectIdsArg: string[],
   ): Promise<Preference[]> {
     const { auth } = ctx;
-    const event = await this.prisma.event.findUniqueOrThrow({ where: { id: auth.eventId! } });
+    const event = await this.prisma.event.findUniqueOrThrow({ where: { id: auth.eventId! }, rejectOnNotFound: true });
     if (!event.matchPreferenceSubmissionOpen) throw new Error('Match preference submission is not open.');
 
     const student = await this.prisma.student.findUniqueOrThrow({ where: auth.toWhere() });

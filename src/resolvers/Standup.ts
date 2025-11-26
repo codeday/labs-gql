@@ -22,7 +22,7 @@ export class StandupResolver {
       const previousStandup = await this.prisma.standupResult.findUniqueOrThrow({
         where: { id: where },
         select: { student: { select: { partnerCode: true } } },
-
+        rejectOnNotFound: true,
       });
 
       if (auth.partnerCode !== previousStandup.student.partnerCode) {
@@ -55,6 +55,7 @@ export class StandupResolver {
     const standup = await this.prisma.standupResult.findUniqueOrThrow({
       where: { id: where },
       select: { text: true, student: { select: { partnerCode: true, id: true } } },
+      rejectOnNotFound: true,
     });
 
     if (auth.type === AuthRole.PARTNER) {

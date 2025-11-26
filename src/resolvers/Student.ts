@@ -38,7 +38,7 @@ export class StudentResolver {
       throw new Error(`The following entries were invalid: ${JSON.stringify(missing)}`);
     }
 
-    const event = await this.prisma.event.findUniqueOrThrow({ where: { id: auth.eventId! } });
+    const event = await this.prisma.event.findUniqueOrThrow({ where: { id: auth.eventId! }, rejectOnNotFound: true });
 
     const partner = auth.isPartner
       ? await this.prisma.partner.findFirstOrThrow({ where: { partnerCode: auth.partnerCode, eventId: auth.eventId! } })
@@ -175,7 +175,7 @@ export class StudentResolver {
         await this.prisma.student.findUniqueOrThrow({
           where: idOrUsernameOrAuthToUniqueWhere(auth),
           include,
-
+          rejectOnNotFound: true,
         })
       ];
     }
@@ -270,6 +270,7 @@ export class StudentResolver {
   ): Promise<Boolean> {
 
     const partner = await this.prisma.partner.findFirstOrThrow({
+      rejectOnNotFound: true,
       where: {
         eventId: auth.eventId!,
         partnerCode: { equals: partnerCode.trim(), mode: 'insensitive' },

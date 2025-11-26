@@ -22,7 +22,7 @@ export class ProjectResolver {
   async partner(
     @Ctx() { auth }: Context,
   ): Promise<PrismaPartner> {
-    return this.prisma.partner.findUniqueOrThrow({ where: { partnerCode_eventId: { partnerCode: auth.partnerCode!, eventId: auth.eventId! } } });
+    return this.prisma.partner.findUniqueOrThrow({ where: { partnerCode_eventId: { partnerCode: auth.partnerCode!, eventId: auth.eventId! } }, rejectOnNotFound: true });
   }
 
   @Authorized(AuthRole.ADMIN)
@@ -102,6 +102,7 @@ export class ProjectResolver {
           eventId: auth.eventId!,
         }
       },
+      rejectOnNotFound: true,
     });
 
     return await this.prisma.student.update({

@@ -105,7 +105,7 @@ export class SurveyResolver {
         ...wherePersonType,
         eventId: auth.eventId!,
       },
-
+      rejectOnNotFound: true,
     });
   }
 
@@ -123,7 +123,7 @@ export class SurveyResolver {
         id: occurrence,
         survey: { personType: auth.personType!, eventId: auth.eventId! },
       },
-
+      rejectOnNotFound: true,
       include: { survey: true },
     });
 
@@ -190,6 +190,7 @@ export class SurveyResolver {
         authorMentor: true,
         surveyOccurence: { include: { survey: true } },
       },
+      rejectOnNotFound: true,
     });
 
     if (auth.isPartner) {
