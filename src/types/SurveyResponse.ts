@@ -46,7 +46,7 @@ export class SurveyResponse {
   @Field(() => SurveyOccurence, { name: 'surveyOccurence' })
   async fetchSurveyOccurence(): Promise<PrismaSurveyOccurence> {
     if (!this.surveyOccurence) {
-      this.surveyOccurence = (await Container.get(PrismaClient).surveyOccurence.findUnique({
+      this.surveyOccurence = (await Container.get(PrismaClient).surveyOccurence.findUniqueOrThrow({
         where: { id: this.surveyOccurenceId },
         include: { survey: true },
       }))!;
@@ -62,7 +62,7 @@ export class SurveyResponse {
   @Field(() => Student, { nullable: true, name: 'authorStudent' })
   async fetchAuthorStudent(): Promise<PrismaStudent | undefined> {
     if (!this.authorStudent && this.authorStudentId) {
-      this.authorStudent = (await Container.get(PrismaClient).student.findUnique({
+      this.authorStudent = (await Container.get(PrismaClient).student.findUniqueOrThrow({
         where: { id: this.authorStudentId },
       })) || undefined;
     }
@@ -77,7 +77,7 @@ export class SurveyResponse {
   @Field(() => Mentor, { nullable: true, name: 'authorMentor' })
   async fetchAuthorMentor(): Promise<PrismaMentor | undefined> {
     if (!this.authorMentor && this.authorMentorId) {
-      this.authorMentor = (await Container.get(PrismaClient).mentor.findUnique({
+      this.authorMentor = (await Container.get(PrismaClient).mentor.findUniqueOrThrow({
         where: { id: this.authorMentorId },
       })) || undefined;
     }
@@ -92,7 +92,7 @@ export class SurveyResponse {
   @Field(() => Student, { nullable: true, name: 'student' })
   async fetchStudent(): Promise<PrismaStudent | undefined> {
     if (!this.student && this.studentId) {
-      this.student = (await Container.get(PrismaClient).student.findUnique({
+      this.student = (await Container.get(PrismaClient).student.findUniqueOrThrow({
         where: { id: this.studentId },
       })) || undefined;
     }
@@ -107,7 +107,7 @@ export class SurveyResponse {
   @Field(() => Mentor, { nullable: true, name: 'mentor' })
   async fetchMentor(): Promise<PrismaMentor | undefined> {
     if (!this.mentor && this.mentorId) {
-      this.mentor = (await Container.get(PrismaClient).mentor.findUnique({
+      this.mentor = (await Container.get(PrismaClient).mentor.findUniqueOrThrow({
         where: { id: this.mentorId },
       })) || undefined;
     }
@@ -122,7 +122,7 @@ export class SurveyResponse {
   @Field(() => Project, { nullable: true, name: 'project' })
   async fetchProject(): Promise<PrismaProject | undefined> {
     if (!this.project && this.projectId) {
-      this.project = (await Container.get(PrismaClient).project.findUnique({
+      this.project = (await Container.get(PrismaClient).project.findUniqueOrThrow({
         where: { id: this.projectId },
       })) || undefined;
     }

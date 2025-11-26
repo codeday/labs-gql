@@ -3,7 +3,6 @@ import http from 'http';
 import { ApolloServer } from 'apollo-server-express';
 import bodyParser from 'body-parser';
 import basicAuth from 'express-basic-auth';
-import { graphqlUploadExpress } from 'graphql-upload-minimal';
 import ws from 'ws';
 import { execute, subscribe } from 'graphql';
 import { makeDebug } from './utils';
@@ -25,7 +24,7 @@ export async function startServer(): Promise<void> {
   });
 
   const app = Express();
-  app.use(graphqlUploadExpress({ maxFileSize: 100 * 1024 * 1024, maxFiles: 3 }));
+  await apollo.start();
   apollo.applyMiddleware({ app });
 
   const httpServer = http.createServer(app);

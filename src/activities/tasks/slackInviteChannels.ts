@@ -17,7 +17,7 @@ export const SCHEMA = {
   type: 'object',
   required: ['user'],
   properties: {
-    user: { 
+    user: {
       type: 'string',
       title: 'User ID'
     },
@@ -30,9 +30,9 @@ export const SCHEMA = {
 
 export default async function slackInviteChannels({ auth }: Context, args: Partial<SlackInviteChannelsArgs> | undefined): Promise<void> {
   if (!args || !args.user) throw new Error(`Must specify user in arguments.`);
-  
+
   const prisma = Container.get(PrismaClient);
-  const event = await prisma.event.findFirst({
+  const event = await prisma.event.findFirstOrThrow({
     where: {
       id: auth.eventId!,
       slackWorkspaceId: { not: null },
@@ -40,27 +40,27 @@ export default async function slackInviteChannels({ auth }: Context, args: Parti
     },
     rejectOnNotFound: true,
   }) as PickNonNullable<Event, 'slackWorkspaceId' | 'slackWorkspaceAccessToken' | 'slackMentorChannelId'>;
-  
+
   const projects = await prisma.project.findMany({
     where: {
       slackChannelId: { not: null },
       eventId: auth.eventId!,
       ...(args.partnerCode
-          ? { students: { some: { partnerCode: { equals: args.partnerCode, mode: 'insensitive' } } } }
-          : {}
-        )
+        ? { students: { some: { partnerCode: { equals: args.partnerCode, mode: 'insensitive' } } } }
+        : {}
+      )
     },
     select: { slackChannelId: true },
   });
-  
+
   const slack = getSlackClientForEvent(event);
-  
+
   for (const project of projects) {
     DEBUG(`Inviting ${args.user} to ${project.slackChannelId}`);
     try {
       await slack.conversations.invite({ channel: project.slackChannelId!, users: args.user });
-    } catch (ex) {}
-  } 
+    } catch (ex) { }
+  }
 
   if (event.slackMentorChannelId && !args.partnerCode) {
     DEBUG(`Inviting ${args.user} to mentor channel (${event.slackMentorChannelId})`);

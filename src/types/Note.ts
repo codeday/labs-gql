@@ -39,7 +39,7 @@ export class Note implements PrismaNote {
   @Field(() => Student, { nullable: true, name: 'student' })
   async fetchStudent(): Promise<PrismaStudent | undefined> {
     if (!this.student) {
-      this.student = (await Container.get(PrismaClient).student.findUnique({
+      this.student = (await Container.get(PrismaClient).student.findUniqueOrThrow({
         where: { id: this.studentId },
       })) || undefined;
     }
@@ -54,7 +54,7 @@ export class Note implements PrismaNote {
   @Field(() => Event, { name: 'event' })
   async fetchEvent(): Promise<PrismaEvent> {
     if (!this.event) {
-      this.event = (await Container.get(PrismaClient).event.findUnique({ where: { id: this.eventId } }))!;
+      this.event = (await Container.get(PrismaClient).event.findUniqueOrThrow({ where: { id: this.eventId } }))!;
     }
 
     return this.event;

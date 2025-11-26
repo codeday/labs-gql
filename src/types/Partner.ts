@@ -55,7 +55,7 @@ export class Partner {
 
   @Field(() => GraphQLJSONObject, { nullable: true })
   contractSchema?: JSONSchema7
-  
+
   @Field(() => GraphQLJSONObject, { nullable: true })
   contractUi?: Record<string, unknown>
 
@@ -125,7 +125,7 @@ export class Partner {
   @Field(() => Event, { name: 'event' })
   async fetchEvent(): Promise<PrismaEvent> {
     if (!this.event) {
-      this.event = (await Container.get(PrismaClient).event.findUnique({ where: { id: this.id } }))!;
+      this.event = (await Container.get(PrismaClient).event.findUniqueOrThrow({ where: { id: this.id } }))!;
     }
 
     return this.event;
@@ -134,12 +134,12 @@ export class Partner {
   @Field(() => Number)
   async studentCount(): Promise<number> {
     return await Container.get(PrismaClient).student.count({
-        where: {
-          partnerCode: this.partnerCode,
-          eventId: this.eventId,
-          status: { notIn: [ 'CANCELED', 'REJECTED' ]},
-        },
-      });
+      where: {
+        partnerCode: this.partnerCode,
+        eventId: this.eventId,
+        status: { notIn: ['CANCELED', 'REJECTED'] },
+      },
+    });
   }
 
   @Authorized(AuthRole.ADMIN)

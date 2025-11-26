@@ -61,7 +61,7 @@ export async function processPostmarkInboundEmail(req: Request, res: Response) {
 
   DEBUG(`...project email addresses:`, myToEmails.join(','));
   const projectId = myToEmails[0].split('@')[0].split('+')[0];
-  const project = await prisma.project.findUnique({
+  const project = await prisma.project.findUniqueOrThrow({
     where: { id: projectId },
     select: {
       id: true,
@@ -86,9 +86,9 @@ export async function processPostmarkInboundEmail(req: Request, res: Response) {
     DEBUG(`...project ${projectId} not found.`);
     return res.send('ok');
   }
-  
+
   const emailSentId = myToEmails[0].split('+')[1] || undefined;
-  const emailSent = !emailSentId ? undefined : await prisma.emailSent.findUnique({
+  const emailSent = !emailSentId ? undefined : await prisma.emailSent.findUniqueOrThrow({
     where: { id: emailSentId },
     select: { id: true },
   });

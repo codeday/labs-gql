@@ -15,7 +15,7 @@ import { eventAllowsApplicationMentor, idOrUsernameOrAuthToUniqueWhere, idOrUser
 @Resolver(Mentor)
 export class MentorResolver {
   @Inject(() => PrismaClient)
-  private readonly prisma : PrismaClient;
+  private readonly prisma: PrismaClient;
 
   @Authorized(AuthRole.ADMIN, AuthRole.MANAGER)
   @Query(() => [Mentor])
@@ -42,7 +42,7 @@ export class MentorResolver {
     @Ctx() { auth }: Context,
     @Arg('where', () => IdOrUsernameInput, { nullable: true }) where?: IdOrUsernameInput,
   ): Promise<PrismaMentor | null> {
-    const mentor = await this.prisma.mentor.findUnique({
+    const mentor = await this.prisma.mentor.findUniqueOrThrow({
       where: idOrUsernameOrAuthToUniqueWhere(auth, where),
       include: { event: true },
     });
@@ -58,7 +58,7 @@ export class MentorResolver {
     @Ctx() { auth }: Context,
     @Arg('where', () => IdOrUsernameInput, { nullable: true }) where?: IdOrUsernameInput,
   ): Promise<PrismaMentor | null> {
-    const currentMentor = await this.prisma.mentor.findUnique({
+    const currentMentor = await this.prisma.mentor.findUniqueOrThrow({
       where: idOrUsernameOrAuthToUniqueWhere(auth, where),
       select: {
         event: { select: { id: true } },
@@ -69,7 +69,7 @@ export class MentorResolver {
     if (!currentMentor) return null;
     if (!auth.isMentor && currentMentor.event.id !== auth.eventId) return null;
 
-    return await this.prisma.mentor.findFirst({
+    return await this.prisma.mentor.findFirstOrThrow({
       where: {
         eventId: { not: currentMentor?.event.id },
         OR: [
@@ -100,7 +100,7 @@ export class MentorResolver {
     @Ctx() { auth }: Context,
     @Arg('data', () => MentorApplyInput) data: MentorApplyInput,
   ): Promise<PrismaMentor> {
-    const event = await this.prisma.event.findUnique({ where: { id: auth.eventId } });
+    const event = await this.prisma.event.findUniqueOrThrow({ where: { id: auth.eventId } });
     if (!event) throw Error('Event does not exist.');
     if (!eventAllowsApplicationMentor(event)) throw Error('Mentor applications are not open for this event.');
 

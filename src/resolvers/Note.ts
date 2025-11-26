@@ -13,7 +13,7 @@ import { createSupportTicket } from '../linear/createSupportTicket';
 @Resolver(Note)
 export class NoteResolver {
   @Inject(() => PrismaClient)
-  private readonly prisma : PrismaClient;
+  private readonly prisma: PrismaClient;
 
   @Authorized(AuthRole.ADMIN, AuthRole.MANAGER)
   @Mutation(() => Note)
@@ -24,12 +24,12 @@ export class NoteResolver {
     @Arg('caution', () => Float) caution: number,
     @Arg('supportTicketType', () => SupportTicketType, { nullable: true }) supportTicketType?: SupportTicketType,
   ): Promise<PrismaNote> {
-    const student = await this.prisma.student.findFirst({
+    const student = await this.prisma.student.findFirstOrThrow({
       where: {
         ...studentWhere.toQuery(),
         event: { id: auth.eventId },
       },
-      include: { projects: { include: { mentors: true, students: true, event: true }} },
+      include: { projects: { include: { mentors: true, students: true, event: true } } },
       rejectOnNotFound: true,
     });
 

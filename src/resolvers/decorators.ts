@@ -15,7 +15,7 @@ export function MentorOnlySelf(argName: string): MethodDecorator {
     if (where) {
       let compare: { id?: string | null, username?: string | null } | null = where;
       if (!((auth.username && where.username) || (auth.id && where.id))) {
-        compare = await Container.get(PrismaClient).mentor.findUnique({
+        compare = await Container.get(PrismaClient).mentor.findUniqueOrThrow({
           where: where.toQuery(),
           select: { username: true, id: true },
         });
@@ -38,7 +38,7 @@ export function StudentOnlySelf(argName: string): MethodDecorator {
     if (where) {
       let compare: { id?: string | null, username?: string | null } | null = where;
       if (!((auth.username && where.username) || (auth.id && where.id))) {
-        compare = await Container.get(PrismaClient).student.findUnique({
+        compare = await Container.get(PrismaClient).student.findUniqueOrThrow({
           where: where.toQuery(),
           select: { username: true, id: true },
         });

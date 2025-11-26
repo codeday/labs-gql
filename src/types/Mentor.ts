@@ -76,7 +76,7 @@ export class Mentor implements PrismaMentor {
 
   @Authorized([AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.MENTOR])
   @Field(() => String, { name: 'projectPreferences', nullable: true })
-  fetchProjectPreferences(@Ctx() { auth }: Context ): string | null {
+  fetchProjectPreferences(@Ctx() { auth }: Context): string | null {
     if (auth.type === AuthRole.MENTOR && auth.id !== this.id) throw Error('Unauthorized.');
     return this.projectPreferences;
   }
@@ -86,7 +86,7 @@ export class Mentor implements PrismaMentor {
   @Field(() => Event, { name: 'event' })
   async fetchEvent(): Promise<PrismaEvent> {
     if (!this.event) {
-      this.event = (await Container.get(PrismaClient).event.findUnique({ where: { id: this.eventId } }))!;
+      this.event = (await Container.get(PrismaClient).event.findUniqueOrThrow({ where: { id: this.eventId } }))!;
     }
 
     return this.event;
@@ -105,7 +105,7 @@ export class Mentor implements PrismaMentor {
     @Arg('key', () => String) key: string,
   ): Prisma.JsonValue | null {
     if (typeof this.profile !== 'object' || this.profile === null) return null;
-    return (this.profile as {[k: string]: Prisma.JsonValue | undefined})[key] || null;
+    return (this.profile as { [k: string]: Prisma.JsonValue | undefined })[key] || null;
   }
 
   @Authorized([AuthRole.PARTNER, AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.MENTOR])
@@ -156,7 +156,7 @@ export class Mentor implements PrismaMentor {
   @Field(() => [File], { name: 'files' })
   async fetchFiles(@Ctx() { auth }: Context): Promise<PrismaFile[]> {
     if (auth.type === AuthRole.MENTOR && auth.id !== this.id) throw Error('Unauthorized.');
-    
+
     if (!this.files) {
       this.files = await Container.get(PrismaClient).file.findMany({
         where: { mentorId: this.id },

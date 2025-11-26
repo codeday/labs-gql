@@ -419,10 +419,8 @@ model Student {
   interviewNotes     String?
   resumeUrl          String?
 
-
   eventContractData   Json?
   partnerContractData Json?
-
 
   slackId String?
 
@@ -447,6 +445,7 @@ model Student {
 
   notes          Note[]
   standupResults StandupResult[]
+
   @@unique([username, eventId])
   @@unique([email, eventId])
 }

@@ -44,7 +44,7 @@ export class ScheduledAnnouncementResolver {
     @Arg('data', () => ScheduledAnnouncementCreateInput) data: ScheduledAnnouncementCreateInput,
   ): Promise<PrismaScheduledAnnouncement> {
     // Validate that the event exists and user has access
-    const event = await this.prisma.event.findUnique({
+    const event = await this.prisma.event.findUniqueOrThrow({
       where: { id: data.eventId },
       select: { id: true },
     });
@@ -70,7 +70,7 @@ export class ScheduledAnnouncementResolver {
     @Arg('data', () => ScheduledAnnouncementEditInput) data: ScheduledAnnouncementEditInput,
   ): Promise<PrismaScheduledAnnouncement> {
     // Validate that the announcement exists and user has access
-    const announcement = await this.prisma.scheduledAnnouncement.findUnique({
+    const announcement = await this.prisma.scheduledAnnouncement.findUniqueOrThrow({
       where: { id },
       select: { id: true, eventId: true },
     });
@@ -96,7 +96,7 @@ export class ScheduledAnnouncementResolver {
     @Arg('id', () => String) id: string,
   ): Promise<boolean> {
     // Validate that the announcement exists and user has access
-    const announcement = await this.prisma.scheduledAnnouncement.findUnique({
+    const announcement = await this.prisma.scheduledAnnouncement.findUniqueOrThrow({
       where: { id },
       select: { id: true, eventId: true },
     });

@@ -9,7 +9,7 @@ import { AuthRole, Context } from '../context';
 @Resolver(String)
 export class StandupResolver {
   @Inject(() => PrismaClient)
-  private readonly prisma : PrismaClient;
+  private readonly prisma: PrismaClient;
 
   @Authorized(AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.PARTNER)
   @Mutation(() => Boolean)
@@ -19,7 +19,7 @@ export class StandupResolver {
     @Arg('rating', () => Number) rating: number,
   ): Promise<boolean> {
     if (auth.type === AuthRole.PARTNER) {
-      const previousStandup = await this.prisma.standupResult.findUnique({
+      const previousStandup = await this.prisma.standupResult.findUniqueOrThrow({
         where: { id: where },
         select: { student: { select: { partnerCode: true } } },
         rejectOnNotFound: true,
@@ -52,7 +52,7 @@ export class StandupResolver {
     @Ctx() { auth }: Context,
     @Arg('where', () => String) where: string,
   ): Promise<string> {
-    const standup = await this.prisma.standupResult.findUnique({
+    const standup = await this.prisma.standupResult.findUniqueOrThrow({
       where: { id: where },
       select: { text: true, student: { select: { partnerCode: true, id: true } } },
       rejectOnNotFound: true,
@@ -63,7 +63,7 @@ export class StandupResolver {
         throw new Error('No permission to view this student\'s standups.');
       }
     } else if (auth.isMentor) {
-      const id = auth.id ?? (await this.prisma.mentor.findUnique({ where: { username_eventId: { username: auth.username!, eventId: auth.eventId! }}}))?.id!;
+      const id = auth.id ?? (await this.prisma.mentor.findUniqueOrThrow({ where: { username_eventId: { username: auth.username!, eventId: auth.eventId! } } }))?.id!;
       const projectCount = await this.prisma.project.count({
         where: {
           mentors: { some: { id: id } },
@@ -74,7 +74,7 @@ export class StandupResolver {
         throw new Error(`Cannot access this standup.`)
       }
     } else if (auth.isStudent) {
-      const id = auth.id ?? (await this.prisma.student.findUnique({ where: { username_eventId: { username: auth.username!, eventId: auth.eventId! }}}))?.id!;
+      const id = auth.id ?? (await this.prisma.student.findUniqueOrThrow({ where: { username_eventId: { username: auth.username!, eventId: auth.eventId! } } }))?.id!;
       if (standup.student.id !== id) {
         throw new Error(`Cannot access this standup.`);
       }
