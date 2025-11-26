@@ -44,9 +44,9 @@ export default async function slackSendOnboardingReminder({ auth }: Context, arg
   if (!args || !args.min) throw new Error(`Must specify minimum number of onboarding assignments in arguments.`);
 
   if (typeof args.min === 'string') args.min = Number.parseInt(args.min);
-
+  
   const prisma = Container.get(PrismaClient);
-  const event = await prisma.event.findFirstOrThrow({
+  const event = await prisma.event.findFirst({
     where: {
       id: auth.eventId!,
       slackWorkspaceId: { not: null },
@@ -60,16 +60,16 @@ export default async function slackSendOnboardingReminder({ auth }: Context, arg
       eventId: auth.eventId!,
       slackId: { not: null },
       ...(args.partnerCode
-        ? { students: { some: { partnerCode: { equals: args.partnerCode, mode: 'insensitive' } } } }
-        : {}
-      )
+          ? { students: { some: { partnerCode: { equals: args.partnerCode, mode: 'insensitive' } } } }
+          : {}
+        )
     },
     select: { slackId: true, tagTrainingSubmissions: { select: { id: true } } }
   });
   const filteredStudents = students.filter(s => !s.tagTrainingSubmissions || s.tagTrainingSubmissions.length < (args.min! as number));
-
+  
   const slack = getSlackClientForEvent(event);
-
+  
 
   DEBUG(`Reminding ${filteredStudents.length} students about 0-${args.min - 1} onboarding assignments in ${args.channel}.`);
   if (filteredStudents.length > 0) {

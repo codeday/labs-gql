@@ -15,14 +15,14 @@ import { idOrUsernameOrEmailOrAuthToUniqueWhere, validateStudentEvent } from '..
 @Resolver(Partner)
 export class ProjectResolver {
   @Inject(() => PrismaClient)
-  private readonly prisma: PrismaClient;
+  private readonly prisma : PrismaClient;
 
   @Authorized(AuthRole.PARTNER)
   @Query(() => Partner)
   async partner(
     @Ctx() { auth }: Context,
   ): Promise<PrismaPartner> {
-    return this.prisma.partner.findUniqueOrThrow({ where: { partnerCode_eventId: { partnerCode: auth.partnerCode!, eventId: auth.eventId! } }, rejectOnNotFound: true });
+    return this.prisma.partner.findUnique({ where: { partnerCode_eventId: { partnerCode: auth.partnerCode!, eventId: auth.eventId! } }, rejectOnNotFound: true });
   }
 
   @Authorized(AuthRole.ADMIN)
@@ -95,9 +95,9 @@ export class ProjectResolver {
       throw new Error('You must specify a partner code.');
     }
 
-    const partner = await this.prisma.partner.findUniqueOrThrow({
+    const partner = await this.prisma.partner.findUnique({
       where: {
-        partnerCode_eventId: {
+        partnerCode_eventId: { 
           partnerCode: partnerCode.toUpperCase(),
           eventId: auth.eventId!,
         }

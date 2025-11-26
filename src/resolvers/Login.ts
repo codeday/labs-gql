@@ -15,7 +15,7 @@ import { idOrUsernameOrAuthToUniqueWhere, signTokenAdmin, signTokenPartner, sign
 @Resolver(Boolean)
 export class LoginResolver {
   @Inject(() => PrismaClient)
-  private readonly prisma: PrismaClient;
+  private readonly prisma : PrismaClient;
 
   @Mutation(() => Boolean)
   async requestLoginLink(
@@ -38,12 +38,12 @@ export class LoginResolver {
     if (auth.isAdmin) return this.prisma.event.findMany().then(events => events.map(event => ({ event, token: signTokenAdmin(event) })));
     else if (auth.isManager) return this.prisma.event.findMany().then(events => events.map(event => ({ event, token: signTokenAdmin(event) })));
     else if (auth.isStudent) {
-      const student = await this.prisma.student.findUniqueOrThrow({ where: idOrUsernameOrAuthToUniqueWhere(auth), rejectOnNotFound: true });
+      const student = await this.prisma.student.findUnique({ where: idOrUsernameOrAuthToUniqueWhere(auth), rejectOnNotFound: true });
       return await this.prisma.student
         .findMany({ where: { OR: [{ email: { equals: student.email, mode: 'insensitive' } }, { username: student.username }] }, include: { event: true } })
         .then(students => students.map(student => ({ event: student.event, token: signTokenUser(student) })));
     } else if (auth.isMentor) {
-      const mentor = await this.prisma.mentor.findUniqueOrThrow({ where: idOrUsernameOrAuthToUniqueWhere(auth), rejectOnNotFound: true });
+      const mentor = await this.prisma.mentor.findUnique({ where: idOrUsernameOrAuthToUniqueWhere(auth), rejectOnNotFound: true });
       return this.prisma.mentor
         .findMany({ where: { OR: [{ email: { equals: mentor.email, mode: 'insensitive' } }, { username: mentor.username }] }, include: { event: true } })
         .then(mentors => mentors.map(mentor => ({ event: mentor.event, token: signTokenUser(mentor) })));

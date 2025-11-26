@@ -36,12 +36,12 @@ export class TagTrainingSubmission implements PrismaTagTrainingSubmission {
   @Field(() => Tag, { name: 'tag' })
   async fetchTag(): Promise<PrismaTag> {
     if (this.tag) return this.tag;
-    return <PrismaTag><unknown>Container.get(PrismaClient).tag.findUniqueOrThrow({ where: { id: this.tagId } });
+    return <PrismaTag><unknown>Container.get(PrismaClient).tag.findUnique({ where: { id: this.tagId } });
   }
 
   @Field(() => Student, { name: 'student' })
   async fetchStudent(): Promise<PrismaStudent> {
     if (this.tag) return this.student;
-    return <PrismaStudent><unknown>Container.get(PrismaClient).tag.findUniqueOrThrow({ where: { id: this.tagId } });
+    return <PrismaStudent><unknown>Container.get(PrismaClient).tag.findUnique({ where: { id: this.tagId } });
   }
 }

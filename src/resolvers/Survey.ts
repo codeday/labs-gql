@@ -22,7 +22,7 @@ const DEBUG = makeDebug('resolvers:Survey');
 @Resolver(Survey)
 export class SurveyResolver {
   @Inject(() => PrismaClient)
-  private readonly prisma: PrismaClient;
+  private readonly prisma : PrismaClient;
 
   @Authorized(AuthRole.ADMIN)
   @Mutation(() => Survey)
@@ -99,7 +99,7 @@ export class SurveyResolver {
     };
     if (!auth.isAdmin) await validateActive(auth);
 
-    return this.prisma.survey.findFirstOrThrow({
+    return this.prisma.survey.findFirst({
       where: {
         id: survey,
         ...wherePersonType,
@@ -118,7 +118,7 @@ export class SurveyResolver {
   ): Promise<boolean> {
     await validateActive(auth);
 
-    const { survey } = await this.prisma.surveyOccurence.findFirstOrThrow({
+    const { survey } = await this.prisma.surveyOccurence.findFirst({
       where: {
         id: occurrence,
         survey: { personType: auth.personType!, eventId: auth.eventId! },
@@ -139,13 +139,13 @@ export class SurveyResolver {
     // Figure out ID if a username is provided
     let authorId: string | null = null;
     if (auth.isMentor) {
-      authorId = auth.id ?? (await this.prisma.mentor.findUniqueOrThrow({ where: { username_eventId: { username: auth.username!, eventId: auth.eventId! } } }))?.id!;
+      authorId = auth.id ?? (await this.prisma.mentor.findUnique({ where: { username_eventId: { username: auth.username!, eventId: auth.eventId! }}}))?.id!;
     } else {
-      authorId = auth.id ?? (await this.prisma.student.findUniqueOrThrow({ where: { username_eventId: { username: auth.username!, eventId: auth.eventId! } } }))?.id!;
+      authorId = auth.id ?? (await this.prisma.student.findUnique({ where: { username_eventId: { username: auth.username!, eventId: auth.eventId! }}}))?.id!;
     }
 
     if (!authorId) throw new Error(`Must provide an authorship token when creating a survey.`);
-
+    
     await this.prisma.surveyResponse.createMany({
       data: responses
         .map((response) => ({
@@ -181,7 +181,7 @@ export class SurveyResolver {
     @Ctx() { auth }: Context,
     @Arg('where', () => String) where: string,
   ): Promise<PrismaSurveyResponse> {
-    const surveyResponse = await this.prisma.surveyResponse.findUniqueOrThrow({
+    const surveyResponse = await this.prisma.surveyResponse.findUnique({
       where: { id: where },
       include: {
         student: true,
@@ -201,7 +201,7 @@ export class SurveyResolver {
         throw new Error('No permission to view this student\'s survey responses.');
       }
     } else if (auth.isMentor) {
-      const id = auth.id ?? (await this.prisma.mentor.findUniqueOrThrow({ where: { username_eventId: { username: auth.username!, eventId: auth.eventId! } } }))?.id!;
+      const id = auth.id ?? (await this.prisma.mentor.findUnique({ where: { username_eventId: { username: auth.username!, eventId: auth.eventId! }}}))?.id!;
       const projectCount = await this.prisma.project.count({
         where: {
           mentors: { some: { id: id } },
@@ -215,7 +215,7 @@ export class SurveyResolver {
         throw new Error(`Cannot access this survey response.`)
       }
     } else if (auth.isStudent) {
-      const id = auth.id ?? (await this.prisma.student.findUniqueOrThrow({ where: { username_eventId: { username: auth.username!, eventId: auth.eventId! } } }))?.id!;
+      const id = auth.id ?? (await this.prisma.student.findUnique({ where: { username_eventId: { username: auth.username!, eventId: auth.eventId! }}}))?.id!;
       if (surveyResponse.authorStudentId !== id && surveyResponse.studentId !== id) {
         throw new Error(`Cannot access this survey response.`);
       }

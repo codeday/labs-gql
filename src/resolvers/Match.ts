@@ -16,7 +16,7 @@ import { getProjectMatches } from '../search';
 @Resolver(Match)
 export class MatchResolver {
   @Inject(() => PrismaClient)
-  private readonly prisma: PrismaClient;
+  private readonly prisma : PrismaClient;
 
   @Authorized(AuthRole.STUDENT)
   @Query(() => [Match], { nullable: true })
@@ -24,10 +24,10 @@ export class MatchResolver {
     @Ctx() { auth }: Context,
     @Arg('tags', () => [String]) tagIds: string[],
   ): Promise<Match[]> {
-    const event = await this.prisma.event.findUniqueOrThrow({ where: { id: auth.eventId! }, rejectOnNotFound: true });
+    const event = await this.prisma.event.findUnique({ where: { id: auth.eventId! }, rejectOnNotFound: true });
     if (!event.matchPreferenceSubmissionOpen) throw new Error('Match preference submission is not open.');
 
-    const student = await this.prisma.student.findUniqueOrThrow({ where: auth.toWhere(), rejectOnNotFound: true });
+    const student = await this.prisma.student.findUnique({ where: auth.toWhere(), rejectOnNotFound: true });
 
     if (!student || student.status !== StudentStatus.ACCEPTED) throw Error('You have not been accepted.');
     if (student.skipPreferences) {
@@ -45,7 +45,7 @@ export class MatchResolver {
   async projectPreferences(
     @Ctx() { auth }: Context,
   ): Promise<Preference[]> {
-    return <Preference[]><unknown>this.prisma.projectPreference.findMany({
+    return <Preference[]><unknown> this.prisma.projectPreference.findMany({
       where: { student: auth.toWhereMany() },
       include: { project: { include: { tags: true, mentors: true } } },
       orderBy: [{ ranking: 'asc' }],
@@ -59,10 +59,10 @@ export class MatchResolver {
     @Arg('projects', () => [String]) projectIdsArg: string[],
   ): Promise<Preference[]> {
     const { auth } = ctx;
-    const event = await this.prisma.event.findUniqueOrThrow({ where: { id: auth.eventId! }, rejectOnNotFound: true });
+    const event = await this.prisma.event.findUnique({ where: { id: auth.eventId! }, rejectOnNotFound: true });
     if (!event.matchPreferenceSubmissionOpen) throw new Error('Match preference submission is not open.');
 
-    const student = await this.prisma.student.findUniqueOrThrow({ where: auth.toWhere() });
+    const student = await this.prisma.student.findUnique({ where: auth.toWhere() });
     if (!student || student.status !== StudentStatus.ACCEPTED) throw Error('You have not been accepted.');
     if (student.skipPreferences) {
       throw new Error('You are not eligible to express project preferences. You will be matched manually in collaboration with your partner institution.');

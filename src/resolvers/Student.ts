@@ -17,7 +17,7 @@ import { parse } from 'csv-parse/sync';
 @Resolver(Student)
 export class StudentResolver {
   @Inject(() => PrismaClient)
-  private readonly prisma: PrismaClient;
+  private readonly prisma : PrismaClient;
 
   @Authorized(AuthRole.ADMIN, AuthRole.PARTNER)
   @Mutation(() => [Student])
@@ -38,10 +38,10 @@ export class StudentResolver {
       throw new Error(`The following entries were invalid: ${JSON.stringify(missing)}`);
     }
 
-    const event = await this.prisma.event.findUniqueOrThrow({ where: { id: auth.eventId! }, rejectOnNotFound: true });
+    const event = await this.prisma.event.findUnique({ where: { id: auth.eventId! }, rejectOnNotFound: true });
 
     const partner = auth.isPartner
-      ? await this.prisma.partner.findFirstOrThrow({ where: { partnerCode: auth.partnerCode, eventId: auth.eventId! } })
+      ? await this.prisma.partner.findFirst({ where: { partnerCode: auth.partnerCode, eventId: auth.eventId! } })
       : null;
 
     const partnerStudentCount = auth.isPartner
@@ -55,7 +55,7 @@ export class StudentResolver {
       const { givenName, surname, email, username, track, minHours, partnerCode, ...rest } = student;
       const thisPartner = auth.isPartner
         ? partner
-        : (auth.isAdmin && partnerCode ? await this.prisma.partner.findFirstOrThrow({ where: { partnerCode: partnerCode.toUpperCase(), eventId: auth.eventId! } }) : null);
+        : (auth.isAdmin && partnerCode ? await this.prisma.partner.findFirst({ where: { partnerCode: partnerCode.toUpperCase(), eventId: auth.eventId! } }) : null);
 
       students.push(await this.prisma.student.create({
         data: {
@@ -172,7 +172,7 @@ export class StudentResolver {
       });
     } else if (auth.isStudent) {
       return [
-        await this.prisma.student.findUniqueOrThrow({
+          await this.prisma.student.findUnique({
           where: idOrUsernameOrAuthToUniqueWhere(auth),
           include,
           rejectOnNotFound: true,
@@ -200,7 +200,7 @@ export class StudentResolver {
   ): Promise<PrismaStudent | null> {
     if (where) await validateStudentEvent(auth, where);
 
-    const student = await this.prisma.student.findUniqueOrThrow({
+    const student = await this.prisma.student.findUnique({
       where: idOrUsernameOrAuthToUniqueWhere(auth, where),
       include: { event: true },
     });
@@ -234,8 +234,8 @@ export class StudentResolver {
       eventId: auth.eventId,
     };
 
-    if (auth.type === AuthRole.APPLICANT_MENTOR) return (await this.prisma.mentor.findFirstOrThrow({ where }))?.id;
-    return (await this.prisma.student.findFirstOrThrow({ where }))?.id;
+    if (auth.type === AuthRole.APPLICANT_MENTOR) return (await this.prisma.mentor.findFirst({ where }))?.id;
+    return (await this.prisma.student.findFirst({ where }))?.id;
   }
 
   @Authorized([AuthRole.APPLICANT_STUDENT, AuthRole.APPLICANT_MENTOR])
@@ -269,7 +269,7 @@ export class StudentResolver {
     @Arg('partnerCode', () => String) partnerCode: string,
   ): Promise<Boolean> {
 
-    const partner = await this.prisma.partner.findFirstOrThrow({
+    const partner = await this.prisma.partner.findFirst({
       rejectOnNotFound: true,
       where: {
         eventId: auth.eventId!,
@@ -304,14 +304,14 @@ export class StudentResolver {
     @Arg('data', () => StudentApplyInput) data: StudentApplyInput,
   ): Promise<PrismaStudent> {
     if (!auth.username) throw Error('Username is required in token for student applicants.');
-    const event = await this.prisma.event.findUniqueOrThrow({ where: { id: auth.eventId } });
+    const event = await this.prisma.event.findUnique({ where: { id: auth.eventId } });
     if (!event) throw Error('Event does not exist.');
     if (!eventAllowsApplicationStudent(event)) throw Error('Student applications are not open for this event.');
 
     let partnerData: Partial<Prisma.StudentCreateInput> = { partnerCode: null };
 
     if (data.partnerCode) {
-      const partner = await this.prisma.partner.findFirstOrThrow({
+      const partner = await this.prisma.partner.findFirst({
         where: {
           eventId: auth.eventId!,
           partnerCode: { equals: data.partnerCode.trim(), mode: 'insensitive' },
@@ -325,7 +325,7 @@ export class StudentResolver {
           skipPreferences: partner.skipPreferences,
           partnerCode: partner.partnerCode,
         };
-
+        
         if (partner.autoApprove) {
           partnerData.status = 'OFFERED';
         }

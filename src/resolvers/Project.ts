@@ -20,7 +20,7 @@ import { parse } from 'csv-parse/sync';
 @Resolver(Project)
 export class ProjectResolver {
   @Inject(() => PrismaClient)
-  private readonly prisma: PrismaClient;
+  private readonly prisma : PrismaClient;
 
   @Query(() => Int)
   async projectCount(
@@ -47,7 +47,7 @@ export class ProjectResolver {
       throw new Error('Invalid CSV. Make sure each line has a projectId and studentId.');
     }
 
-    const event = await this.prisma.event.findUniqueOrThrow({
+    const event = await this.prisma.event.findUnique({
       where: { id: auth.eventId! },
       select: {
         projects: { select: { id: true } },
@@ -65,7 +65,7 @@ export class ProjectResolver {
     if (missingProjects.length > 0 || missingStudents.length > 0) {
       throw new Error(`Invalid CSV. Invalid projects: ${JSON.stringify(missingProjects)}. Invalid students: ${JSON.stringify(missingStudents)}.`);
     }
-
+    
     for (const match of contents) {
       await this.prisma.project.update({
         where: { id: match.projectId },
@@ -109,13 +109,12 @@ export class ProjectResolver {
     @Arg('project', () => String) project: string,
     @Arg('prUrl', () => String) prUrl: string,
   ): Promise<PrismaProject> {
-    const dbProject = await this.prisma.project.findUniqueOrThrow({
+    const dbProject = await this.prisma.project.findUnique({
       where: { id: project },
       include: {
         mentors: { select: { id: true, username: true, givenName: true, surname: true, email: true } },
         students: { select: { id: true, username: true, givenName: true, surname: true, email: true } },
-        event: { select: { matchPreferenceSubmissionOpen: true } }
-      },
+        event: { select: { matchPreferenceSubmissionOpen: true } } },
     });
     if (!dbProject) throw Error('Project not found.');
     if (!auth.isAdmin && dbProject.eventId !== auth.eventId) throw Error('Cannot edit this project.');
@@ -144,13 +143,12 @@ export class ProjectResolver {
       throw Error('You do not have permission to edit restricted fields.');
     }
 
-    const dbProject = await this.prisma.project.findUniqueOrThrow({
+    const dbProject = await this.prisma.project.findUnique({
       where: { id: project },
       include: {
         mentors: { select: { id: true, username: true, givenName: true, surname: true, email: true } },
         students: { select: { id: true, username: true, givenName: true, surname: true, email: true } },
-        event: { select: { matchPreferenceSubmissionOpen: true } }
-      },
+        event: { select: { matchPreferenceSubmissionOpen: true } } },
     });
     if (!dbProject) throw Error('Project not found.');
     if (!auth.isAdmin && dbProject.eventId !== auth.eventId) throw Error('Cannot edit this project.');
@@ -266,7 +264,7 @@ export class ProjectResolver {
     @Arg('project', () => String) project: string,
     @Arg('mentor', () => IdOrUsernameInput) mentor: IdOrUsernameInput,
   ): Promise<PrismaProject> {
-    const dbProject = await this.prisma.project.findUniqueOrThrow({
+    const dbProject = await this.prisma.project.findUnique({
       where: { id: project },
       include: { mentors: true },
       rejectOnNotFound: true,
@@ -322,21 +320,21 @@ export class ProjectResolver {
     });
   }
 
-  private projectIncludesMentors(auth: AuthContext, mentors: { id: string, username: string | null }[]): boolean {
+  private projectIncludesMentors(auth: AuthContext, mentors: {id: string, username: string | null }[]): boolean {
     // BUG(@tylermenezes): Workaround for Typescript bug with reducers
-    return <boolean><unknown>mentors.reduce((accum, { id, username }): boolean => (
+    return <boolean><unknown> mentors.reduce((accum, { id, username }): boolean => (
       accum
-      || <boolean><unknown>(auth.username && auth.username === username)
-      || <boolean><unknown>(auth.id && auth.id === id)
+      || <boolean><unknown> (auth.username && auth.username === username)
+      || <boolean><unknown> (auth.id && auth.id === id)
     ), false);
   }
 
-  private projectIncludesStudents(auth: AuthContext, students: { id: string, username: string | null }[]): boolean {
+  private projectIncludesStudents(auth: AuthContext, students: {id: string, username: string | null }[]): boolean {
     // BUG(@tylermenezes): Workaround for Typescript bug with reducers
-    return <boolean><unknown>students.reduce((accum, { id, username }): boolean => (
+    return <boolean><unknown> students.reduce((accum, { id, username }): boolean => (
       accum
-      || <boolean><unknown>(auth.username && auth.username === username)
-      || <boolean><unknown>(auth.id && auth.id === id)
+      || <boolean><unknown> (auth.username && auth.username === username)
+      || <boolean><unknown> (auth.id && auth.id === id)
     ), false);
   }
 }

@@ -13,14 +13,14 @@ import { nameToSlug } from '../utils';
 @Resolver(Event)
 export class EventResolver {
   @Inject(() => PrismaClient)
-  private readonly prisma: PrismaClient;
+  private readonly prisma : PrismaClient;
 
   @Authorized()
   @Query(() => Event, { nullable: true })
   async event(
     @Ctx() { auth }: Context,
   ): Promise<PrismaEvent> {
-    return this.prisma.event.findUniqueOrThrow({ where: { id: auth.eventId! }, rejectOnNotFound: true });
+    return this.prisma.event.findUnique({ where: { id: auth.eventId! }, rejectOnNotFound: true });
   }
 
   @Query(() => [Event])
@@ -53,7 +53,7 @@ export class EventResolver {
     @Arg('name', () => String) name: string,
     @Arg('startsAt', () => Date) startsAt: Date,
   ): Promise<PrismaEvent> {
-    const source = await this.prisma.event.findUniqueOrThrow({
+    const source = await this.prisma.event.findUnique({
       where: { id: auth.eventId },
       rejectOnNotFound: true,
       include: {
@@ -141,7 +141,7 @@ export class EventResolver {
     });
 
     if (source.fileTypes.length > 0) {
-      for (const ft of source.fileTypes) {
+      for(const ft of source.fileTypes) {
         await this.prisma.fileType.create({
           data: {
             slug: ft.slug,
@@ -157,7 +157,7 @@ export class EventResolver {
     }
 
     if (source.surveys.length > 0) {
-      for (const s of source.surveys) {
+      for(const s of source.surveys) {
         const survey = await this.prisma.survey.create({
           data: {
             name: s.name,
@@ -307,7 +307,7 @@ export class EventResolver {
         })),
       });
     }
-
+    
     return event;
   }
 }

@@ -255,7 +255,7 @@ export class Student implements PrismaStudent {
   @Field(() => Event, { name: 'event' })
   async fetchEvent(): Promise<PrismaEvent> {
     if (!this.event) {
-      this.event = (await Container.get(PrismaClient).event.findUniqueOrThrow({ where: { id: this.eventId } }))!;
+      this.event = (await Container.get(PrismaClient).event.findUnique({ where: { id: this.eventId } }))!;
     }
 
     return this.event;
@@ -274,7 +274,7 @@ export class Student implements PrismaStudent {
 
     if (!this.partnerCode) return null;
     if (!this.partner) {
-      this.partner = (await Container.get(PrismaClient).partner.findFirstOrThrow({ where: { partnerCode: this.partnerCode!, eventId: this.eventId } })) || null;
+      this.partner = (await Container.get(PrismaClient).partner.findFirst({ where: { partnerCode: this.partnerCode!, eventId: this.eventId } })) || null;
     }
 
     return this.partner;
@@ -365,16 +365,16 @@ export class Student implements PrismaStudent {
     const standupThreads = projects.filter(p => Array.isArray(p.standupThreads)).length > 0
       ? projects.flatMap(p => p.standupThreads || [])
       : await prisma.standupThread.findMany({
-        where: { project: { students: { some: { id: this.id } } } },
-        select: { id: true, dueAt: true },
-      });
+          where: { project: { students: { some: { id: this.id } } } },
+          select: { id: true, dueAt: true },
+        });
 
     const standups = Array.isArray(this.standupResults)
-      ? this.standupResults
-      : await prisma.standupResult.findMany({
-        where: { studentId: this.id },
-        select: { id: true, threadId: true, rating: true, humanRated: true },
-      });
+        ? this.standupResults
+        : await prisma.standupResult.findMany({
+          where: { studentId: this.id },
+          select: { id: true, threadId: true, rating: true, humanRated: true },
+        });
 
     const ratingsByThread = Object.fromEntries(
       standups.map(s => [s.threadId, s])
@@ -403,7 +403,7 @@ export class Student implements PrismaStudent {
     if (auth.isStudent && auth.id !== this.id && auth.username !== this.username) {
       throw new Error(`Cannot access information about other students.`);
     }
-
+    
     if (!this.files) {
       this.files = await Container.get(PrismaClient).file.findMany({
         where: { studentId: this.id },

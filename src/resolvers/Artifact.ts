@@ -11,7 +11,7 @@ import { validateActive } from '../utils';
 @Resolver(Artifact)
 export class ArtifactResolver {
   @Inject(() => PrismaClient)
-  private readonly prisma: PrismaClient;
+  private readonly prisma : PrismaClient;
 
   @Authorized([AuthRole.STUDENT, AuthRole.MENTOR])
   @Mutation(() => Boolean)
@@ -28,18 +28,18 @@ export class ArtifactResolver {
     if (name && artifactTypeId) throw new Error(`Cannot specify name with artifactType`);
     if (artifactTypeId && typeof _groupArtifact === 'boolean') throw new Error(`Cannot specify groupArtifact with artifactType`);
 
-    const project = await this.prisma.project.findFirstOrThrow({
+    const project = await this.prisma.project.findFirst({
       where: {
         id: projectId,
         ...(auth.isAdmin
-          ? {}
-          : { [auth.personType === 'MENTOR' ? 'mentors' : 'students']: { some: { id: auth.id } } }
+            ? {}
+            : { [auth.personType === 'MENTOR' ? 'mentors' : 'students' ]: { some: { id: auth.id } } }
         ),
       },
       rejectOnNotFound: true,
     });
 
-    const artifactType = artifactTypeId && await this.prisma.artifactType.findFirstOrThrow({
+    const artifactType = artifactTypeId && await this.prisma.artifactType.findFirst({
       where: {
         eventId: auth.eventId,
         id: artifactTypeId,
@@ -48,10 +48,10 @@ export class ArtifactResolver {
     });
 
     const groupArtifact = artifactType ? !artifactType.personType : _groupArtifact;
-
+    
     const nameTypeCriteria: Prisma.ArtifactWhereInput = artifactType
       ? { artifactTypeId: { equals: artifactTypeId } }
-      : { name: { equals: name!, mode: 'insensitive' } };
+      : { name: { equals: name!, mode: 'insensitive'} };
 
     const whereCriteria: Prisma.ArtifactWhereInput = groupArtifact
       ? { projectId: project.id }
@@ -68,7 +68,7 @@ export class ArtifactResolver {
         projectId: project.id,
         [auth.personType === 'MENTOR' ? 'mentorId' : 'studentId']: auth.id,
       };
-
+      
     if (await this.prisma.artifact.count({
       where: {
         ...nameTypeCriteria,

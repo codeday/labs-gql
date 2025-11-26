@@ -17,7 +17,7 @@ import {
 @Resolver(Student)
 export class ReviewResolver {
   @Inject(() => PrismaClient)
-  private readonly prisma: PrismaClient;
+  private readonly prisma : PrismaClient;
 
   @Authorized(AuthRole.REVIEWER)
   @Query(() => Student, { nullable: true })
@@ -40,7 +40,7 @@ export class ReviewResolver {
     });
     if (results.length === 0) return null;
     const id = results[randInt(0, results.length)].id;
-    return this.prisma.student.findUniqueOrThrow({ where: { id } });
+    return this.prisma.student.findUnique({ where: { id } });
   }
 
   @Authorized(AuthRole.REVIEWER)
@@ -81,7 +81,7 @@ export class ReviewResolver {
       ...(includeRejected ? [StudentStatus.REJECTED] : []),
     ];
 
-    type RatingInfo = { admissionRatingAverage: number, admissionRatingCount: number };
+    type RatingInfo = { admissionRatingAverage: number, admissionRatingCount: number }; 
 
     const topRatings = <Record<string, RatingInfo>>(await this.prisma.admissionRating.groupBy({
       skip,
@@ -101,7 +101,7 @@ export class ReviewResolver {
       orderBy: { _avg: { rating: 'desc' } },
     })).reduce((accum, e) => ({
       ...accum,
-      [e.studentId]: { admissionRatingAverage: e._avg?.rating, admissionRatingCount: e._count?.rating }
+      [e.studentId]: { admissionRatingAverage: e._avg?.rating, admissionRatingCount: e._count?.rating}
     }), {});
 
     const students = (await this.prisma.student.findMany({
@@ -156,7 +156,7 @@ export class ReviewResolver {
     @Arg('partnerContractData', () => GraphQLJSONObject, { nullable: true }) partnerContractData?: object,
     @Arg('timezone', () => String, { nullable: true }) timezone?: string,
   ): Promise<PrismaStudent> {
-    const student = await this.prisma.student.findUniqueOrThrow({
+    const student = await this.prisma.student.findUnique({
       where: auth.toWhere(),
       select: { status: true, offerDate: true },
     });

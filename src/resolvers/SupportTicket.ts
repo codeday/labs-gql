@@ -25,10 +25,10 @@ export class SupportTicketResolver {
     @Arg('preventingProgress', () => Boolean, { nullable: true }) preventingProgress?: boolean,
   ): Promise<boolean> {
     const reporter = auth.personType === PersonType.STUDENT
-      ? (await this.prisma.student.findUniqueOrThrow({ where: idOrUsernameOrAuthToUniqueWhere(auth), rejectOnNotFound: true }))
-      : (await this.prisma.mentor.findUniqueOrThrow({ where: idOrUsernameOrAuthToUniqueWhere(auth), rejectOnNotFound: true }));
+      ? (await this.prisma.student.findUnique({ where: idOrUsernameOrAuthToUniqueWhere(auth), rejectOnNotFound: true }))
+      : (await this.prisma.mentor.findUnique({ where: idOrUsernameOrAuthToUniqueWhere(auth), rejectOnNotFound: true }));
 
-    const project = await this.prisma.project.findFirstOrThrow({
+    const project = await this.prisma.project.findFirst({
       where: {
         id: projectId,
         ...(auth.personType === PersonType.STUDENT

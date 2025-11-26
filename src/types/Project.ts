@@ -112,7 +112,7 @@ export class Project implements PrismaProject {
   @Field(() => Event, { name: 'event', nullable: true })
   async fetchEvent(): Promise<PrismaEvent | null> {
     if (!this.event && this.eventId) {
-      this.event = (await Container.get(PrismaClient).event.findUniqueOrThrow({ where: { id: this.eventId } }))!;
+      this.event = (await Container.get(PrismaClient).event.findUnique({ where: { id: this.eventId } }))!;
     }
 
     return this.event ?? null;
@@ -127,7 +127,7 @@ export class Project implements PrismaProject {
   async fetchRepository(): Promise<PrismaRepository | null> {
     if (!this.repositoryId) return null;
     if (!this.repository) {
-      this.repository = (await Container.get(PrismaClient).repository.findUniqueOrThrow({ where: { id: this.repositoryId } }))!;
+      this.repository = (await Container.get(PrismaClient).repository.findUnique({ where: { id: this.repositoryId } }))!;
     }
 
     return this.repository;
@@ -141,7 +141,7 @@ export class Project implements PrismaProject {
   ): Promise<PrismaArtifact[]> {
     if (!this.artifacts) {
       let artifactsWhere: Prisma.ArtifactWhereInput = {
-        [auth.personType === 'MENTOR' ? 'mentorId' : 'studentId']: auth.id
+        [auth.personType === 'MENTOR' ? 'mentorId': 'studentId']: auth.id
       };
       if (auth.isAdmin) artifactsWhere = {};
       else if (auth.isPartner) artifactsWhere = {
@@ -172,7 +172,7 @@ export class Project implements PrismaProject {
       this.affinePartner = (
         await Container.get(PrismaClient)
           .partner
-          .findUniqueOrThrow({ where: { id: this.affinePartnerId } })
+          .findUnique({ where: { id: this.affinePartnerId } })
       )!;
     }
 
@@ -228,15 +228,15 @@ export class Project implements PrismaProject {
         this.fetchMentors(),
         this.fetchStudents(),
       ]);
-
+      
       const isMentorOnProject = auth.isMentor && projectMentors.some(m => m.id === auth.id);
       const isStudentOnProject = auth.isStudent && projectStudents.some(s => s.id === auth.id);
-
+      
       if (!isMentorOnProject && !isStudentOnProject) {
         throw new Error('Unauthorized.');
       }
     }
-
+    
     if (!this.files) {
       this.files = await Container.get(PrismaClient).file.findMany({
         where: { projectId: this.id },

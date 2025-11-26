@@ -80,16 +80,16 @@ function buildAffinityQuery(partner?: Partner | null): esb.MatchQuery | esb.Bool
 async function buildQueryFor(student: Student, tags: Tag[]): Promise<FunctionScoreQuery> {
   const prisma = Container.get(PrismaClient);
   const partner = student.partnerCode
-    ? await prisma.partner.findFirstOrThrow({
-      where: {
-        partnerCode: student.partnerCode,
-        eventId: student.eventId,
-      },
-      include: {
-        forceTags: { select: { id: true } },
-        forbidTags: { select: { id: true } },
-      },
-    })
+    ? await prisma.partner.findFirst({
+        where: {
+          partnerCode: student.partnerCode,
+          eventId: student.eventId,
+        },
+        include: {
+          forceTags: { select: { id: true } },
+          forbidTags: { select: { id: true } },
+        },
+      })
     : null;
   const timezone = await getTimezone(student);
 
@@ -99,13 +99,13 @@ async function buildQueryFor(student: Student, tags: Tag[]): Promise<FunctionSco
     ? tags.filter((t) => !partner.forbidTags.includes(t))
     : tags;
   const scoreTagsMatching = buildTagsScore(filteredTags);
-
+  
   const partnerForceTags = partner?.forceTags && partner.forbidTags.length > 0
-    ? esb.boolQuery().must(partner.forceTags.map(({ id }) => esb.termQuery('tags', id)))
+    ? esb.boolQuery().must(partner.forceTags.map(({ id }) => esb.termQuery('tags', id )))
     : undefined;
 
   const partnerForbidTags = partner?.forbidTags && partner.forbidTags.length > 0
-    ? esb.boolQuery().mustNot(partner.forbidTags.map(({ id }) => esb.termQuery('tags', id)))
+    ? esb.boolQuery().mustNot(partner.forbidTags.map(({ id }) => esb.termQuery('tags', id )))
     : undefined;
 
   const queryStudentRequiresLength = esb.rangeQuery(Entry.maxWeeks).gte(student.weeks);

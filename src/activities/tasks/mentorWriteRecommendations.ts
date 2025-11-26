@@ -80,7 +80,7 @@ export default async function mentorWriteRecommendations({ auth }: Context, args
 
   if (!args || !args.channel) throw new Error(`Must specify channel in arguments.`);
 
-  const event = await prisma.event.findFirstOrThrow({
+  const event = await prisma.event.findFirst({
     where: {
       id: auth.eventId!,
       slackWorkspaceId: { not: null },
@@ -90,17 +90,17 @@ export default async function mentorWriteRecommendations({ auth }: Context, args
   }) as PickNonNullable<Event, 'id' | 'slackWorkspaceId' | 'slackWorkspaceAccessToken' | 'name'>;
 
   const mentors = await prisma.mentor.findMany({
-    where: {
-      eventId: auth.eventId,
-      status: 'ACCEPTED',
-      projects: { some: { status: 'MATCHED' } },
-    },
-    include: {
-      event: true,
-      projects: { where: { status: 'MATCHED' }, include: { students: { where: { status: 'ACCEPTED' } } } },
-      targetSurveyResponses: { where: { authorStudentId: { not: null } } },
-    }
-  });
+      where: {
+        eventId: auth.eventId,
+        status: 'ACCEPTED',
+        projects: { some: { status: 'MATCHED' } },
+      },
+      include: {
+        event: true,
+        projects: { where: { status: 'MATCHED' }, include: { students: { where: { status: 'ACCEPTED' } } } },
+        targetSurveyResponses: { where: { authorStudentId: { not: null } } },
+      }
+    });
 
   const recommendations = []
   for (const mentor of mentors) {
@@ -113,7 +113,7 @@ export default async function mentorWriteRecommendations({ auth }: Context, args
         OR: [
           { email: mentor.email },
           { givenName: mentor.givenName, surname: mentor.surname },
-          ...(mentor.username ? [{ username: mentor.username }] : [{}]),
+          ...(mentor.username  ? [{ username: mentor.username }] : [{}]),
         ],
       },
       include: {
@@ -127,23 +127,23 @@ export default async function mentorWriteRecommendations({ auth }: Context, args
       mentor,
       ...previousParticipation,
     ]
-      .map(m => ({
-        ...m,
-        startsAtDateString: DateTime.fromJSDate(m.event.startsAt).toLocaleString(DateTime.DATE_MED),
-        endsAtDateString: DateTime.fromJSDate(m.event.startsAt).plus({ weeks: m.maxWeeks || 5 }).toLocaleString(DateTime.DATE_MED)
-      }));
+    .map(m => ({
+      ...m,
+      startsAtDateString: DateTime.fromJSDate(m.event.startsAt).toLocaleString(DateTime.DATE_MED),
+      endsAtDateString: DateTime.fromJSDate(m.event.startsAt).plus({ weeks: m.maxWeeks || 5 }).toLocaleString(DateTime.DATE_MED)
+    }));
 
     const allSurveyResponsesAbout = allMentorship.flatMap(p => p.targetSurveyResponses);
     const surveyResponsesFreeResponse = allSurveyResponsesAbout
       .flatMap(sr => Object.entries(sr.response as object))
-      .filter(([, v]) => typeof v === 'string' && v.length > 20)
+      .filter(([,v]) => typeof v === 'string' && v.length > 20)
       .map(([k, v]) => `- ${k}: ${v.replace(/(\r\n|\n|\r)/gm, " ")}`)
       .slice(0, 20)
       .join(`\n`);
 
     const allMentoredStudents = allMentorship
-      .flatMap(m => m.projects)
-      .flatMap(p => p.students);
+        .flatMap(m => m.projects)
+        .flatMap(p => p.students);
 
     const mentorInformation = {
       'Recommendation For': `${mentor.givenName} ${mentor.surname}`,
@@ -160,7 +160,7 @@ export default async function mentorWriteRecommendations({ auth }: Context, args
     };
 
     const prompt = GPT_PROMPT + `\n\n` + Object.entries(mentorInformation)
-      .map(([k, v]) => `${k}: ${v}`)
+      .map(([k,v]) => `${k}: ${v}`)
       .join(`\n`);
 
     DEBUG(prompt);

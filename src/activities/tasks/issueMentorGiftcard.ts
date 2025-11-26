@@ -35,7 +35,7 @@ export default async function issueMentorGiftcardActivity({ auth }: Context, arg
   if (!args || !args.initialValue) {
     throw new Error(`Must specify badgeClassEntityId in arguments.`);
   }
-  const event = await prisma.event.findUniqueOrThrow({ where: { id: auth.eventId! }, rejectOnNotFound: true });
+  const event = await prisma.event.findUnique({ where: { id: auth.eventId! }, rejectOnNotFound: true });
 
   const mentors = await prisma.mentor.findMany({
     where: {
@@ -63,7 +63,7 @@ export default async function issueMentorGiftcardActivity({ auth }: Context, arg
           args.featuredProduct && args.featuredProduct.trim().length > 0 ? args.featuredProduct : undefined,
         );
         DEBUG(`Emailed ${mentor.email} gift card.`)
-      } else { DEBUG(`Could not create gift card for ${mentor.email}.`); }
+      } else { DEBUG(`Could not create gift card for ${mentor.email}.` );}
     } catch (ex) { DEBUG(ex); }
   }
 }

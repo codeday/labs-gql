@@ -58,7 +58,7 @@ export default async function issueBadge({ auth }: Context, args: Partial<IssueB
     throw new Error(`Must specify badgeClassEntityId in arguments.`);
   }
   const target = BADGES_BY_ID[args.badgeClassEntityId].target;
-  const event = await prisma.event.findUniqueOrThrow({ where: { id: auth.eventId! } });
+  const event = await prisma.event.findUnique({ where: { id: auth.eventId! } });
 
   const badgr = await badgrLogin(config.badgr.username, config.badgr.password);
 
@@ -103,7 +103,7 @@ export default async function issueBadge({ auth }: Context, args: Partial<IssueB
               }
             } as unknown as string,
             evidence: student.projects.map(p => ({ url: p.prUrl! })),
-          });
+        });
       } catch (ex) { DEBUG(ex); }
     }
   } else if (target === 'mentor') {
@@ -138,7 +138,7 @@ export default async function issueBadge({ auth }: Context, args: Partial<IssueB
               }
             } as unknown as string,
             evidence: [],
-          });
+        });
       } catch (ex) { DEBUG(ex); }
     }
   }

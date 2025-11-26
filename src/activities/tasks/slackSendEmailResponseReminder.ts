@@ -41,9 +41,9 @@ export const SCHEMA = {
 export default async function slackSendEmailResponseReminder({ auth }: Context, args: Partial<SlackSendEmailResponseReminderArgs> | undefined): Promise<void> {
   if (!args || !args.channel) throw new Error(`Must specify channel in arguments.`);
   if (!args || !args.intro) throw new Error(`Must specify intro message in arguments.`);
-
+  
   const prisma = Container.get(PrismaClient);
-  const event = await prisma.event.findFirstOrThrow({
+  const event = await prisma.event.findFirst({
     where: {
       id: auth.eventId!,
       slackWorkspaceId: { not: null },
@@ -60,13 +60,13 @@ export default async function slackSendEmailResponseReminder({ auth }: Context, 
         : { none: {} },
       slackId: { not: null },
       ...(args.partnerCode
-        ? { students: { some: { partnerCode: { equals: args.partnerCode, mode: 'insensitive' } } } }
-        : {}
-      )
+          ? { students: { some: { partnerCode: { equals: args.partnerCode, mode: 'insensitive' } } } }
+          : {}
+        )
     },
     select: { slackId: true }
   });
-
+  
   const slack = getSlackClientForEvent(event);
 
   DEBUG(`Reminding ${students.length} students about ${args.emailId} email responses in ${args.channel}.`);

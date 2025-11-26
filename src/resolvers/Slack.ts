@@ -12,14 +12,14 @@ import { JwksClient } from 'jwks-rsa';
 @Resolver()
 export class SlackResolver {
   @Inject(() => PrismaClient)
-  private readonly prisma: PrismaClient;
+  private readonly prisma : PrismaClient;
 
   private readonly client = new JwksClient({
     jwksUri: 'https://slack.com/openid/connect/keys'
   });
 
-  private getKey(header: any, callback: (err: any, key: string) => any) {
-    this.client.getSigningKey(header.kid, function (err, key) {
+  private getKey(header: any, callback: (err: any, key: string) => any){
+    this.client.getSigningKey(header.kid, function(err, key) {
       if (err || !key) throw new Error('Key not found');
       callback(null, key.getPublicKey());
     });
@@ -31,7 +31,7 @@ export class SlackResolver {
       verify(
         token,
         keyResolver,
-        { issuer: 'https://slack.com' },
+        { issuer: 'https://slack.com'},
         (err, resp) => {
           if (err) return reject(err);
           if (typeof resp !== 'object') return reject('JWT was not an object.');
@@ -47,7 +47,7 @@ export class SlackResolver {
     @Ctx() { auth }: Context,
     @Arg('token', () => String) tokenStr: string,
   ) {
-    const event = await this.prisma.event.findUniqueOrThrow({
+    const event = await this.prisma.event.findUnique({
       where: { id: auth.eventId },
       rejectOnNotFound: true,
     });

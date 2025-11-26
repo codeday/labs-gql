@@ -7,7 +7,7 @@ import { StudentStatus, MentorStatus, ProjectStatus } from '../enums';
 export async function validateActive(auth: AuthContext) {
   if (!auth.isStudent && !auth.isMentor) throw new Error('Not a student or mentor token.');
   if (auth.isStudent) {
-    const me = await Container.get(PrismaClient).student.findUniqueOrThrow({
+    const me = await Container.get(PrismaClient).student.findUnique({
       where: auth.toWhere(),
       include: { event: true },
       rejectOnNotFound: true,
@@ -18,7 +18,7 @@ export async function validateActive(auth: AuthContext) {
       throw new Error(`Participation ended.`)
     }
   } else if (auth.isMentor) {
-    const me = await Container.get(PrismaClient).mentor.findUniqueOrThrow({
+    const me = await Container.get(PrismaClient).mentor.findUnique({
       where: auth.toWhere(),
       include: { event: true, projects: { where: { status: { in: [ProjectStatus.MATCHED, ProjectStatus.ACCEPTED] } } } },
       rejectOnNotFound: true,
