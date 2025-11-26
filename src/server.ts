@@ -20,7 +20,9 @@ export async function startServer(): Promise<void> {
   const apollo = new ApolloServer({
     schema,
     context,
-    introspection: config.debug,
+    playground: config.debug,
+    introspection: true,
+    uploads: false,
   });
 
   const app = Express();
