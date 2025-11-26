@@ -53,7 +53,7 @@ export class ProjectResolver {
         projects: { select: { id: true } },
         students: { select: { id: true } },
       },
-      rejectOnNotFound: true,
+
     });
 
     const projectIds = event.projects.map((p: { id: string }) => p.id);
@@ -269,7 +269,6 @@ export class ProjectResolver {
     const dbProject = await this.prisma.project.findUniqueOrThrow({
       where: { id: project },
       include: { mentors: true },
-      rejectOnNotFound: true,
     });
 
     if (dbProject.mentors.length > 0) {

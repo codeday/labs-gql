@@ -89,8 +89,7 @@ export class Artifact implements PrismaArtifact {
     if (!this.artifactTypeId) return null;
     if (!this.artifactType) {
       this.artifactType = (await Container.get(PrismaClient).artifactType.findUniqueOrThrow({
-        where: { id: this.artifactTypeId },
-        rejectOnNotFound: true,
+        where: { id: this.artifactTypeId }
       }));
     }
     return this.artifactType!;

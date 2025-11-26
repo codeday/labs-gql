@@ -20,7 +20,7 @@ export class EventResolver {
   async event(
     @Ctx() { auth }: Context,
   ): Promise<PrismaEvent> {
-    return this.prisma.event.findUniqueOrThrow({ where: { id: auth.eventId! }, rejectOnNotFound: true });
+    return this.prisma.event.findUniqueOrThrow({ where: { id: auth.eventId! } });
   }
 
   @Query(() => [Event])
@@ -55,7 +55,6 @@ export class EventResolver {
   ): Promise<PrismaEvent> {
     const source = await this.prisma.event.findUniqueOrThrow({
       where: { id: auth.eventId },
-      rejectOnNotFound: true,
       include: {
         surveys: {
           include: {

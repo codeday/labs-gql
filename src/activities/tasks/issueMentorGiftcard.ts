@@ -35,7 +35,7 @@ export default async function issueMentorGiftcardActivity({ auth }: Context, arg
   if (!args || !args.initialValue) {
     throw new Error(`Must specify badgeClassEntityId in arguments.`);
   }
-  const event = await prisma.event.findUniqueOrThrow({ where: { id: auth.eventId! }, rejectOnNotFound: true });
+  const event = await prisma.event.findUniqueOrThrow({ where: { id: auth.eventId! } });
 
   const mentors = await prisma.mentor.findMany({
     where: {

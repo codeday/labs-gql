@@ -36,7 +36,6 @@ export class SurveyOccurence {
     if (!this.survey) {
       this.survey = (await Container.get(PrismaClient).survey.findUniqueOrThrow({
         where: { id: this.surveyId },
-        rejectOnNotFound: true,
       }));
     }
     return this.survey;
