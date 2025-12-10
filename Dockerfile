@@ -11,11 +11,13 @@ COPY . /app
 RUN yarn run build
 RUN npm prune --production --omit=dev
 RUN rm -rf src/
+RUN mkdir -p /app/dist
 
 FROM node:20-alpine3.18
 ENV NODE_ENV=production
 COPY --from=0 /app /app
 WORKDIR /app
-RUN apk add --update --no-cache openssl1.1-compat
+RUN apk add --update --no-cache openssl1.1-compat postgresql-client
 COPY ./docker-entrypoint.sh /docker-entrypoint.sh
-CMD /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+CMD ["/docker-entrypoint.sh"]

@@ -1,0 +1,33 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: labs_gql_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: labsdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 2s
+      retries: 10
+
+  app:
+    build: .
+    container_name: labs_gql_app
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "4000:4000"
+    env_file:
+      - .env
+    entrypoint: ["./wait-for-db.sh", "db", "5432", "node", "dist/main.js"]
+    stdin_open: true
+    tty: true
+  
+volumes:
+  db_data:

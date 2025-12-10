@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node dist",
     "clean": "rm -rf dist",
-    "build": "npm -s run clean && npm -s run swagger && npm -s run prisma && npx tsc --skipLibCheck && cpy '**/*' '!**/*.ts' ../dist/ --cwd=src/ --no-overwrite --parents",
+    "build": "npm -s run clean && npm -s run swagger && npm -s run prisma && npx tsc --skipLibCheck && cp -r src/ dist/ --no-clobber --parents",
     "prisma": "prisma format && prisma generate",
     "dev": "ts-node-dev --no-notify --respawn --transpile-only src",
     "debug": "ts-node-dev --no-notify --respawn src",
