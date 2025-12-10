@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: labsdb
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
@@ -15,19 +15,39 @@ services:
       interval: 2s
       retries: 10
 
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.9
+    container_name: labs_gql_elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -q green || grep -q yellow"]
+      interval: 5s
+      retries: 20
+
   app:
     build: .
     container_name: labs_gql_app
     depends_on:
       db:
         condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
     ports:
-      - "4000:4000"
+      - "5000:5000"
+      - "5001:5001"
     env_file:
       - .env
-    entrypoint: ["./wait-for-db.sh", "db", "5432", "node", "dist/main.js"]
+    environment:
+      - ELASTIC_URL=http://elasticsearch:9200
     stdin_open: true
     tty: true
   
 volumes:
   db_data:
+  elasticsearch_data:
