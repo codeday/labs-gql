@@ -5,21 +5,8 @@ const apiKey = process.env.API_KEY; // Bearer token (labs JWT) if you want the a
 
 const publicQueries: Array<{ name: string; query: string; variables?: Record<string, unknown> }> = [
   {
-    name: "tags",
-    query: /* GraphQL */ `
-      query Tags {
-        tags {
-          id
-          type
-          mentorDisplayName
-          studentDisplayName
-        }
-      }
-    `,
-  },
-  {
     name: "statTotalOutcomes",
-    query: /* GraphQL */ `
+    query: `
       query StatTotalOutcomes {
         statTotalOutcomes {
           key
@@ -33,8 +20,8 @@ const publicQueries: Array<{ name: string; query: string; variables?: Record<str
 // These require a Bearer token (admin/manager/etc.)
 const authedQueries: Array<{ name: string; query: string; variables?: Record<string, unknown> }> = [
   {
-    name: "mentors (take 5)",
-    query: /* GraphQL */ `
+    name: "mentors",
+    query: `
       query Mentors {
         mentors(take: 5) {
           id
@@ -48,8 +35,8 @@ const authedQueries: Array<{ name: string; query: string; variables?: Record<str
     `,
   },
   {
-    name: "students (take 5)",
-    query: /* GraphQL */ `
+    name: "students",
+    query: `
       query Students {
         students(take: 5) {
           id
@@ -64,8 +51,8 @@ const authedQueries: Array<{ name: string; query: string; variables?: Record<str
     `,
   },
   {
-    name: "projects (take 5)",
-    query: /* GraphQL */ `
+    name: "projects",
+    query:`
       query Projects {
         projects(take: 5) {
           id
