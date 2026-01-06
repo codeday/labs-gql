@@ -255,7 +255,7 @@ export class Student implements PrismaStudent {
   @Field(() => Event, { name: 'event' })
   async fetchEvent(): Promise<PrismaEvent> {
     if (!this.event) {
-      this.event = (await Container.get(PrismaClient).event.findUniqueOrThrow({ where: { id: this.eventId } }))!;
+      this.event = (await Container.get(PrismaClient).event.findUnique({ where: { id: this.eventId } }))!;
     }
 
     return this.event;
@@ -274,7 +274,7 @@ export class Student implements PrismaStudent {
 
     if (!this.partnerCode) return null;
     if (!this.partner) {
-      this.partner = (await Container.get(PrismaClient).partner.findFirstOrThrow({ where: { partnerCode: this.partnerCode!, eventId: this.eventId } })) || null;
+      this.partner = (await Container.get(PrismaClient).partner.findFirst({ where: { partnerCode: this.partnerCode!, eventId: this.eventId } })) || null;
     }
 
     return this.partner;

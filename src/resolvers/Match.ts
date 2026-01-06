@@ -62,7 +62,7 @@ export class MatchResolver {
     const event = await this.prisma.event.findUniqueOrThrow({ where: { id: auth.eventId! } });
     if (!event.matchPreferenceSubmissionOpen) throw new Error('Match preference submission is not open.');
 
-    const student = await this.prisma.student.findUniqueOrThrow({ where: auth.toWhere() });
+    const student = await this.prisma.student.findUnique({ where: auth.toWhere() });
     if (!student || student.status !== StudentStatus.ACCEPTED) throw Error('You have not been accepted.');
     if (student.skipPreferences) {
       throw new Error('You are not eligible to express project preferences. You will be matched manually in collaboration with your partner institution.');

@@ -32,7 +32,7 @@ export class FileTypeResolver {
   async fileType(
     @Arg('id', () => String) id: string,
   ): Promise<PrismaFileType | null> {
-    return this.prisma.fileType.findUniqueOrThrow({
+    return this.prisma.fileType.findUnique({
       where: { id },
     });
   }

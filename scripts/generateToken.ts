@@ -8,7 +8,7 @@ async function main() {
   const eventId = process.argv[2] || 'event-test-2025';
   const role = process.argv[3] || 'admin'; // admin, manager, mentor, or student
 
-  const event = await prisma.event.findUniqueOrThrow({ where: { id: eventId } });
+  const event = await prisma.event.findUnique({ where: { id: eventId } });
 
   let token: string;
 

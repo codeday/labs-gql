@@ -109,7 +109,7 @@ export class ProjectResolver {
     @Arg('project', () => String) project: string,
     @Arg('prUrl', () => String) prUrl: string,
   ): Promise<PrismaProject> {
-    const dbProject = await this.prisma.project.findUniqueOrThrow({
+    const dbProject = await this.prisma.project.findUnique({
       where: { id: project },
       include: {
         mentors: { select: { id: true, username: true, givenName: true, surname: true, email: true } },
@@ -144,7 +144,7 @@ export class ProjectResolver {
       throw Error('You do not have permission to edit restricted fields.');
     }
 
-    const dbProject = await this.prisma.project.findUniqueOrThrow({
+    const dbProject = await this.prisma.project.findUnique({
       where: { id: project },
       include: {
         mentors: { select: { id: true, username: true, givenName: true, surname: true, email: true } },

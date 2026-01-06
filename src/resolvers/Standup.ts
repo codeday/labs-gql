@@ -62,7 +62,7 @@ export class StandupResolver {
         throw new Error('No permission to view this student\'s standups.');
       }
     } else if (auth.isMentor) {
-      const id = auth.id ?? (await this.prisma.mentor.findUniqueOrThrow({ where: { username_eventId: { username: auth.username!, eventId: auth.eventId! } } }))?.id!;
+      const id = auth.id ?? (await this.prisma.mentor.findUnique({ where: { username_eventId: { username: auth.username!, eventId: auth.eventId! } } }))?.id!;
       const projectCount = await this.prisma.project.count({
         where: {
           mentors: { some: { id: id } },
@@ -73,7 +73,7 @@ export class StandupResolver {
         throw new Error(`Cannot access this standup.`)
       }
     } else if (auth.isStudent) {
-      const id = auth.id ?? (await this.prisma.student.findUniqueOrThrow({ where: { username_eventId: { username: auth.username!, eventId: auth.eventId! } } }))?.id!;
+      const id = auth.id ?? (await this.prisma.student.findUnique({ where: { username_eventId: { username: auth.username!, eventId: auth.eventId! } } }))?.id!;
       if (standup.student.id !== id) {
         throw new Error(`Cannot access this standup.`);
       }

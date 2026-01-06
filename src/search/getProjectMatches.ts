@@ -80,7 +80,7 @@ function buildAffinityQuery(partner?: Partner | null): esb.MatchQuery | esb.Bool
 async function buildQueryFor(student: Student, tags: Tag[]): Promise<FunctionScoreQuery> {
   const prisma = Container.get(PrismaClient);
   const partner = student.partnerCode
-    ? await prisma.partner.findFirstOrThrow({
+    ? await prisma.partner.findFirst({
       where: {
         partnerCode: student.partnerCode,
         eventId: student.eventId,

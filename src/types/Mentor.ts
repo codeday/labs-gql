@@ -86,7 +86,7 @@ export class Mentor implements PrismaMentor {
   @Field(() => Event, { name: 'event' })
   async fetchEvent(): Promise<PrismaEvent> {
     if (!this.event) {
-      this.event = (await Container.get(PrismaClient).event.findUniqueOrThrow({ where: { id: this.eventId } }))!;
+      this.event = (await Container.get(PrismaClient).event.findUnique({ where: { id: this.eventId } }))!;
     }
 
     return this.event;

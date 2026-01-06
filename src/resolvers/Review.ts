@@ -40,7 +40,7 @@ export class ReviewResolver {
     });
     if (results.length === 0) return null;
     const id = results[randInt(0, results.length)].id;
-    return this.prisma.student.findUniqueOrThrow({ where: { id } });
+    return this.prisma.student.findUnique({ where: { id } });
   }
 
   @Authorized(AuthRole.REVIEWER)
@@ -156,7 +156,7 @@ export class ReviewResolver {
     @Arg('partnerContractData', () => GraphQLJSONObject, { nullable: true }) partnerContractData?: object,
     @Arg('timezone', () => String, { nullable: true }) timezone?: string,
   ): Promise<PrismaStudent> {
-    const student = await this.prisma.student.findUniqueOrThrow({
+    const student = await this.prisma.student.findUnique({
       where: auth.toWhere(),
       select: { status: true, offerDate: true },
     });

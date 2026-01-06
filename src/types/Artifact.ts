@@ -41,7 +41,7 @@ export class Artifact implements PrismaArtifact {
   async fetchStudent(): Promise<PrismaStudent | undefined | null> {
     if (!this.studentId) return null;
     if (!this.student) {
-      this.student = (await Container.get(PrismaClient).student.findUniqueOrThrow({
+      this.student = (await Container.get(PrismaClient).student.findUnique({
         where: { id: this.studentId },
       })) || undefined;
     }
@@ -57,7 +57,7 @@ export class Artifact implements PrismaArtifact {
   async fetchMentor(): Promise<PrismaMentor | undefined | null> {
     if (!this.mentorId) return null;
     if (!this.mentor) {
-      this.mentor = (await Container.get(PrismaClient).mentor.findUniqueOrThrow({
+      this.mentor = (await Container.get(PrismaClient).mentor.findUnique({
         where: { id: this.mentorId },
       })) || undefined;
     }
@@ -72,7 +72,7 @@ export class Artifact implements PrismaArtifact {
   @Field(() => Project, { name: 'project' })
   async fetchProject(): Promise<PrismaProject> {
     if (!this.project) {
-      this.project = (await Container.get(PrismaClient).project.findUniqueOrThrow({
+      this.project = (await Container.get(PrismaClient).project.findUnique({
         where: { id: this.projectId },
       })) || undefined;
     }

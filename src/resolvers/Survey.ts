@@ -139,9 +139,9 @@ export class SurveyResolver {
     // Figure out ID if a username is provided
     let authorId: string | null = null;
     if (auth.isMentor) {
-      authorId = auth.id ?? (await this.prisma.mentor.findUniqueOrThrow({ where: { username_eventId: { username: auth.username!, eventId: auth.eventId! } } }))?.id!;
+      authorId = auth.id ?? (await this.prisma.mentor.findUnique({ where: { username_eventId: { username: auth.username!, eventId: auth.eventId! } } }))?.id!;
     } else {
-      authorId = auth.id ?? (await this.prisma.student.findUniqueOrThrow({ where: { username_eventId: { username: auth.username!, eventId: auth.eventId! } } }))?.id!;
+      authorId = auth.id ?? (await this.prisma.student.findUnique({ where: { username_eventId: { username: auth.username!, eventId: auth.eventId! } } }))?.id!;
     }
 
     if (!authorId) throw new Error(`Must provide an authorship token when creating a survey.`);
@@ -200,7 +200,7 @@ export class SurveyResolver {
         throw new Error('No permission to view this student\'s survey responses.');
       }
     } else if (auth.isMentor) {
-      const id = auth.id ?? (await this.prisma.mentor.findUniqueOrThrow({ where: { username_eventId: { username: auth.username!, eventId: auth.eventId! } } }))?.id!;
+      const id = auth.id ?? (await this.prisma.mentor.findUnique({ where: { username_eventId: { username: auth.username!, eventId: auth.eventId! } } }))?.id!;
       const projectCount = await this.prisma.project.count({
         where: {
           mentors: { some: { id: id } },
@@ -214,7 +214,7 @@ export class SurveyResolver {
         throw new Error(`Cannot access this survey response.`)
       }
     } else if (auth.isStudent) {
-      const id = auth.id ?? (await this.prisma.student.findUniqueOrThrow({ where: { username_eventId: { username: auth.username!, eventId: auth.eventId! } } }))?.id!;
+      const id = auth.id ?? (await this.prisma.student.findUnique({ where: { username_eventId: { username: auth.username!, eventId: auth.eventId! } } }))?.id!;
       if (surveyResponse.authorStudentId !== id && surveyResponse.studentId !== id) {
         throw new Error(`Cannot access this survey response.`);
       }
