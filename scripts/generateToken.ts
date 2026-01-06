@@ -10,6 +10,8 @@ async function main() {
 
   const event = await prisma.event.findUnique({ where: { id: eventId } });
 
+  if (!event) throw new Error(`No event found with id ${eventId}`);
+
   let token: string;
 
   if (role === 'admin') {
