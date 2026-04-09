@@ -1,47 +1,53 @@
-import { InputType, Field, Int } from 'type-graphql';
-import { Prisma } from '@prisma/client';
-import { GraphQLJSONObject } from 'graphql-type-json';
-import { GraphQLUpload, FileUpload } from 'graphql-upload';
-import { StudentStatus, Track } from '../enums';
-import { uploadResume } from '../utils';
+import { InputType, Field, Int } from "type-graphql";
+import { Prisma } from "@prisma/client";
+import { GraphQLJSONObject } from "graphql-type-json";
+import { GraphQLUpload, FileUpload } from "graphql-upload";
+import { StudentStatus, Track } from "../enums";
+import { uploadResume } from "../utils";
 
 @InputType()
 export class StudentApplyInput {
   @Field(() => String)
-  givenName: string
+  givenName: string;
 
   @Field(() => String)
-  surname: string
+  surname: string;
 
   @Field(() => String)
-  email: string
+  email: string;
+
+  @Field(() => String)
+  githubUsername: string;
 
   @Field(() => GraphQLJSONObject, { nullable: true })
   // eslint-disable-next-line @typescript-eslint/ban-types
-  profile?: object
+  profile?: object;
 
   @Field(() => Track)
-  track: Track
+  track: Track;
 
   @Field(() => Int)
-  minHours: number
+  minHours: number;
 
   @Field(() => String, { nullable: true })
-  partnerCode?: string
+  partnerCode?: string;
 
   @Field(() => [String], { nullable: true })
-  tags?: string[]
+  tags?: string[];
 
   @Field(() => String, { nullable: true })
-  timezone?: string
+  timezone?: string;
 
   @Field(() => GraphQLUpload, { nullable: true })
-  resume?: FileUpload
+  resume?: FileUpload;
 
-  async toQuery(): Promise<Omit<Prisma.StudentCreateInput, 'username'>> {
-    const resumeUrl = this.resume
-      ? await uploadResume(this.resume)
-      : null;
+  async toQuery(): Promise<Omit<Prisma.StudentCreateInput, "username">> {
+    const resumeUrl = this.resume ? await uploadResume(this.resume) : null;
+    const githubUsername = this.githubUsername.match(
+      /https?:\/\/(www\.)?github.com\//,
+    )
+      ? this.githubUsername.split("github.com/", 2)[1].split(/\W/, 1)[0]
+      : this.githubUsername;
 
     return {
       givenName: this.givenName,
@@ -53,7 +59,14 @@ export class StudentApplyInput {
       minHours: this.minHours,
       partnerCode: this.partnerCode,
       timezone: this.timezone,
-      tags: this.tags ? { connect: this.tags.map((id): Prisma.TagWhereUniqueInput => ({ id })) } : undefined,
+      githubUsername: this.githubUsername,
+      tags: this.tags
+        ? {
+            connect: this.tags.map(
+              (id): Prisma.TagWhereUniqueInput => ({ id }),
+            ),
+          }
+        : undefined,
       resumeUrl,
     };
   }
