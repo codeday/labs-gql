@@ -69,6 +69,26 @@ export class StandupAndPropser {
     if (!Array.isArray(result.threads)) throw new Error(`Expected array, got ${JSON.stringify(result)}`);
     return result.threads;
   }
+
+  async post<T = object>(path: string, body: object): Promise<T> {
+    const result = await fetch(
+      `https://api.standup-and-prosper.com/v1/teams/${this.teamId}${path}`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.token}`,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(body),
+      },
+    );
+    return result.json();
+  }
+
+  async createStandup(options: object): Promise<Standup> {
+    return this.post<Standup>('/standups', options);
+  }
 }
 
 export function getClientForEvent(

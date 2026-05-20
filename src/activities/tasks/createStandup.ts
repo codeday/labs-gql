@@ -7,11 +7,10 @@ import {
   SlackStudentInfo,
   slackEventInfoSelect,
 } from "../../slack";
+import { EventWithStandupAndProsper, getClientForEvent } from "../../standupAndProsper/StandupAndProsper";
 import { makeDebug } from "../../utils";
 
 const DEBUG = makeDebug('activities:tasks:createStandup');
-
-const STANDUP_API_BASE = 'https://api.standup-and-prosper.com/v1';
 
 const DEFAULT_STANDUP = {
   type: 'SLACK',
@@ -34,9 +33,6 @@ const DEFAULT_STANDUP = {
 };
 
 export default async function createStandup({ auth }: Context): Promise<void> {
-  const apiKey = process.env.STANDUP_API_KEY;
-  if (!apiKey) throw new Error('STANDUP_API_KEY environment variable is not set');
-
   const prisma = Container.get(PrismaClient);
 
   const existing = await prisma.project.findMany({
@@ -50,12 +46,13 @@ export default async function createStandup({ auth }: Context): Promise<void> {
       id: auth.eventId,
       slackWorkspaceAccessToken: { not: null },
       slackWorkspaceId: { not: null },
+      standupAndProsperToken: { not: null },
     },
-    select: slackEventInfoSelect,
-  }) as SlackEventWithProjects<SlackMentorInfo & SlackStudentInfo>[];
+    select: { ...slackEventInfoSelect, standupAndProsperToken: true },
+  }) as (SlackEventWithProjects<SlackMentorInfo & SlackStudentInfo> & EventWithStandupAndProsper)[];
 
   for (const event of events) {
-    const teamId = event.slackWorkspaceId;
+    const client = getClientForEvent(event);
 
     for (const project of event.projects) {
       if (existingStandupIds.has(project.id)) {
@@ -85,28 +82,14 @@ export default async function createStandup({ auth }: Context): Promise<void> {
       };
 
       try {
-        const res = await fetch(`${STANDUP_API_BASE}/teams/${teamId}/standups`, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(body),
-        });
-
-        if (!res.ok) {
-          const text = await res.text();
-          DEBUG(`Failed for project ${project.id}: ${res.status} ${text}`);
-        } else {
-          const data = await res.json() as { id?: string };
-          if (data.id) {
-            await prisma.project.update({
-              where: { id: project.id },
-              data: { standupId: data.id },
-            });
-          }
-          DEBUG(`Created standup for project ${project.id} in channel ${project.slackChannelId}`);
+        const result = await client.createStandup(body);
+        if (result.standupId) {
+          await prisma.project.update({
+            where: { id: project.id },
+            data: { standupId: result.standupId },
+          });
         }
+        DEBUG(`Created standup for project ${project.id} in channel ${project.slackChannelId}`);
       } catch (ex) {
         DEBUG(ex);
       }
