@@ -12,7 +12,6 @@ import { makeDebug } from "../../utils";
 const DEBUG = makeDebug('activities:tasks:createStandup');
 
 const STANDUP_API_BASE = 'https://api.standup-and-prosper.com/v1';
-const EXCLUDED_SLACK_IDS = new Set(['U07ACCWHDSA']);
 
 const DEFAULT_STANDUP = {
   type: 'SLACK',
@@ -70,7 +69,7 @@ export default async function createStandup({ auth }: Context): Promise<void> {
       }
 
       const users = project.students
-        .filter((s) => s.slackId && !EXCLUDED_SLACK_IDS.has(s.slackId))
+        .filter((s) => s.slackId)
         .map((s) => ({ userId: s.slackId! }));
 
       if (users.length === 0) {
