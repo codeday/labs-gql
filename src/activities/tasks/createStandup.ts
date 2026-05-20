@@ -39,6 +39,13 @@ export default async function createStandup({ auth }: Context): Promise<void> {
   if (!apiKey) throw new Error('STANDUP_API_KEY environment variable is not set');
 
   const prisma = Container.get(PrismaClient);
+
+  const existing = await prisma.project.findMany({
+    where: { event: { id: auth.eventId }, standupId: { not: null } },
+    select: { id: true },
+  });
+  const existingStandupIds = new Set(existing.map((p: { id: string }) => p.id));
+
   const events = await prisma.event.findMany({
     where: {
       id: auth.eventId,
@@ -52,6 +59,11 @@ export default async function createStandup({ auth }: Context): Promise<void> {
     const teamId = event.slackWorkspaceId;
 
     for (const project of event.projects) {
+      if (existingStandupIds.has(project.id)) {
+        DEBUG(`Skipping project ${project.id} — standup already exists`);
+        continue;
+      }
+
       if (!project.slackChannelId) {
         DEBUG(`Skipping project ${project.id} — no Slack channel`);
         continue;
@@ -87,6 +99,13 @@ export default async function createStandup({ auth }: Context): Promise<void> {
           const text = await res.text();
           DEBUG(`Failed for project ${project.id}: ${res.status} ${text}`);
         } else {
+          const data = await res.json() as { id?: string };
+          if (data.id) {
+            await prisma.project.update({
+              where: { id: project.id },
+              data: { standupId: data.id },
+            });
+          }
           DEBUG(`Created standup for project ${project.id} in channel ${project.slackChannelId}`);
         }
       } catch (ex) {
