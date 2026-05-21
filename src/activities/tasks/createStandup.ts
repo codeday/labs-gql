@@ -16,11 +16,13 @@ import { makeDebug } from "../../utils";
 
 const DEBUG = makeDebug("activities:tasks:createStandup");
 const STANDUP_USER = "U026ZCTG0CB";
+const ADMIN_USER = "U024H3101";
+
 const DEFAULT_STANDUP = {
-  type: "SLACK",
+  admins: [ADMIN_USER],
   days: ["Monday", "Wednesday", "Friday"],
-  time: "10:00:00",
-  reportTime: "12:00:00",
+  time: "20:00:00",
+  reminders: [{ time: "10:00:00" }, { time: "18:00:00" }],
   timezone: "America/Los_Angeles",
   schedule: { type: "WEEKLY" },
   questions: [
@@ -30,10 +32,10 @@ const DEFAULT_STANDUP = {
   ],
   groupBy: "USER_SINGLE_MESSAGE",
   reportSortOrder: "DISPLAY_NAME",
-  allowEditsAfterCompletion: true,
+  allowEditsAfterCompletion: "EXTENDED",
   asThread: false,
   syncWithChannel: false,
-  hideAnnouncements: false,
+  hideAnnouncements: true,
 };
 
 export default async function createStandup({ auth }: Context): Promise<void> {
