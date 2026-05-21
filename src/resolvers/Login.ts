@@ -35,6 +35,7 @@ export class LoginResolver {
   async otherEventTokens(
     @Ctx() { auth }: Context
   ): Promise<EventToken[]> {
+    return [];
     if (auth.isAdmin) return this.prisma.event.findMany().then(events => events.map(event => ({ event, token: signTokenAdmin(event) })));
     else if (auth.isManager) return this.prisma.event.findMany().then(events => events.map(event => ({ event, token: signTokenAdmin(event) })));
     else if (auth.isStudent) {
