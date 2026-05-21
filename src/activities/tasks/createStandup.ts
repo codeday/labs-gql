@@ -16,10 +16,9 @@ import { makeDebug } from "../../utils";
 
 const DEBUG = makeDebug("activities:tasks:createStandup");
 const STANDUP_USER = "U026ZCTG0CB";
-const ADMIN_USER = "U024H3101";
 
 const DEFAULT_STANDUP = {
-  admins: [ADMIN_USER],
+  admins: ["U024H3101", "U07ACCWHDSA"],
   days: ["Monday", "Wednesday", "Friday"],
   time: "20:00:00",
   reminders: [{ time: "10:00:00" }, { time: "18:00:00" }],
