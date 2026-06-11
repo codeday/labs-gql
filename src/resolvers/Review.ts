@@ -110,12 +110,18 @@ export class ReviewResolver {
     @Arg("take", () => Number, { nullable: true }) take?: number,
     @Arg("track", () => Track, { nullable: true }) track?: Track,
   ): Promise<PrismaStudent[]> {
-    const statuses = [
-      StudentStatus.APPLIED,
-      StudentStatus.TRACK_CHALLENGE,
-      StudentStatus.TRACK_INTERVIEW,
-      ...(includeRejected ? [StudentStatus.REJECTED] : []),
-    ];
+    const statuses = includeAll
+      ? {}
+      : {
+          status: {
+            in: [
+              StudentStatus.APPLIED,
+              StudentStatus.TRACK_CHALLENGE,
+              StudentStatus.TRACK_INTERVIEW,
+              ...(includeRejected ? [StudentStatus.REJECTED] : []),
+            ],
+          },
+        };
 
     type RatingInfo = {
       admissionRatingAverage: number;
@@ -133,13 +139,7 @@ export class ReviewResolver {
           student: {
             track,
             eventId: auth.eventId!,
-            ...(!includeAll
-              ? {}
-              : {
-                  status: {
-                    in: statuses,
-                  },
-                }),
+            ...statuses,
           },
         },
         orderBy: { _avg: { rating: "desc" } },
@@ -158,7 +158,7 @@ export class ReviewResolver {
     const students = await this.prisma.student.findMany({
       skip,
       take,
-      where: { eventId: auth.eventId!, status: { in: statuses }, track },
+      where: { eventId: auth.eventId!, ...statuses, track },
       include: { admissionRatings: { select: { track: true } } },
     });
 
