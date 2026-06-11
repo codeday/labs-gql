@@ -104,6 +104,8 @@ export class ReviewResolver {
     @Ctx() { auth }: Context,
     @Arg("includeRejected", () => Boolean, { nullable: true })
     includeRejected?: boolean,
+    @Arg("includeAll", () => Boolean, { nullable: true })
+    includeAll?: boolean,
     @Arg("skip", () => Number, { nullable: true }) skip?: number,
     @Arg("take", () => Number, { nullable: true }) take?: number,
     @Arg("track", () => Track, { nullable: true }) track?: Track,
@@ -131,9 +133,13 @@ export class ReviewResolver {
           student: {
             track,
             eventId: auth.eventId!,
-            status: {
-              in: statuses,
-            },
+            ...(!includeAll
+              ? {}
+              : {
+                  status: {
+                    in: statuses,
+                  },
+                }),
           },
         },
         orderBy: { _avg: { rating: "desc" } },
