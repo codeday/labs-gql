@@ -100,9 +100,15 @@ export class Event {
 
   @Field(() => GraphQLJSONObject, { nullable: true })
   contractSchema?: JSONSchema7
-  
+
   @Field(() => GraphQLJSONObject, { nullable: true })
   contractUi?: Record<string, unknown>
+
+  @Field(() => GraphQLJSONObject, { nullable: true })
+  contractSchemaNoPartner?: JSONSchema7
+
+  @Field(() => GraphQLJSONObject, { nullable: true })
+  contractUiNoPartner?: Record<string, unknown>
 
   @Field(() => GraphQLJSONObject, { nullable: true })
   mentorApplicationSchema?: JSONSchema7

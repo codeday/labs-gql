@@ -103,6 +103,8 @@ export class EventResolver {
 
         contractSchema: source.contractSchema || undefined,
         contractUi: source.contractUi || undefined,
+        contractSchemaNoPartner: source.contractSchemaNoPartner || undefined,
+        contractUiNoPartner: source.contractUiNoPartner || undefined,
 
         studentApplicationsStartAt: diffDate(source.studentApplicationsStartAt),
         studentApplicationsEndAt: diffDate(source.studentApplicationsEndAt),
