@@ -1,65 +1,19 @@
 /**
  * Manual test script for weeklyLowStandupReport
- * Run with: npx ts-node --transpile-only src/automation/tasks/weeklyLowStandupReport.manual-test.ts
  *
- * Note: This only tests the pure functions (findConsecutiveLowScores and formatStudentList)
- * and does not require database or Slack credentials.
+ * Prerequisites:
+ * - Copy .env.test.example to .env (if you don't have a .env file):
+ *     cp .env.test.example .env
+ *
+ * Run with:
+ *   npx ts-node src/automation/tasks/weeklyLowStandupReport.manual-test.ts
+ *
+ * This tests the pure functions (findConsecutiveLowScores and formatStudentList)
+ * imported from the actual implementation file to ensure tests stay in sync with code.
  */
 
-interface StudentWithLowStandups {
-  studentId: string;
-  givenName: string;
-  surname: string;
-  slackId: string | null;
-  eventName: string;
-  consecutiveLowScores: number;
-  lastTwoRatings: (number | null)[];
-}
-
-// Copy the functions here to avoid loading dependencies
-function findConsecutiveLowScores(
-  student: {
-    id: string;
-    givenName: string;
-    surname: string;
-    slackId: string | null;
-    standupResults: { rating: number | null }[];
-  },
-  eventName: string
-): StudentWithLowStandups | null {
-  const ratings = student.standupResults.map(r => r.rating);
-
-  if (ratings.length < 2) return null;
-
-  // Check for two consecutive ratings both < 2
-  for (let i = 0; i < ratings.length - 1; i++) {
-    const current = ratings[i];
-    const next = ratings[i + 1];
-
-    if (current !== null && next !== null && current < 2 && next < 2) {
-      return {
-        studentId: student.id,
-        givenName: student.givenName,
-        surname: student.surname,
-        slackId: student.slackId,
-        eventName,
-        consecutiveLowScores: 2,
-        lastTwoRatings: [current, next],
-      };
-    }
-  }
-
-  return null;
-}
-
-function formatStudentList(students: StudentWithLowStandups[]): string {
-  return students
-    .map(s => {
-      const slackMention = s.slackId ? `<@${s.slackId}>` : `${s.givenName} ${s.surname}`;
-      return `• ${slackMention} (${s.givenName} ${s.surname})`;
-    })
-    .join('\n');
-}
+import 'reflect-metadata';
+import { findConsecutiveLowScores, formatStudentList } from './weeklyLowStandupReport';
 
 // Simple assertion helper
 function assert(condition: boolean, message: string) {
