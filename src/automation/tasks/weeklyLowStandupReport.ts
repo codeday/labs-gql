@@ -1,9 +1,10 @@
 import { PrismaClient, StudentStatus } from "@prisma/client";
 import Container from "typedi";
 import { getSlackClientForEvent } from "../../slack";
-import { makeDebug } from "../../utils";
+import { makeDebug, PickNonNullable } from "../../utils";
 import { DateTime } from "luxon";
 import { WebClient } from "@slack/web-api";
+import { Event } from "@prisma/client";
 
 const DEBUG = makeDebug('automation:tasks:weeklyLowStandupReport');
 
@@ -38,7 +39,7 @@ export default async function weeklyLowStandupReport(): Promise<void> {
       slackWorkspaceAccessToken: true,
       slackWorkspaceId: true,
     },
-  });
+  }) as (PickNonNullable<Event, 'slackWorkspaceAccessToken' | 'slackWorkspaceId'> & Pick<Event, 'id' | 'name'>)[];
 
   DEBUG(`Found ${events.length} active events with Slack integration.`);
 
@@ -53,12 +54,9 @@ export default async function weeklyLowStandupReport(): Promise<void> {
   DEBUG('Weekly low standup report completed.');
 }
 
-async function sendReportForEvent(event: {
-  id: string;
-  name: string;
-  slackWorkspaceAccessToken: string;
-  slackWorkspaceId: string;
-}): Promise<void> {
+async function sendReportForEvent(
+  event: PickNonNullable<Event, 'slackWorkspaceAccessToken' | 'slackWorkspaceId'> & Pick<Event, 'id' | 'name'>
+): Promise<void> {
   const prisma = Container.get(PrismaClient);
   const slack = getSlackClientForEvent(event);
 
@@ -110,32 +108,9 @@ async function sendReportForEvent(event: {
   DEBUG(`Found ${students.length} accepted students in event ${event.id}`);
 
   // Filter students with two consecutive standup scores < 2
-  const flaggedStudents: StudentWithLowStandups[] = [];
-
-  for (const student of students) {
-    const ratings = student.standupResults.map(r => r.rating);
-    
-    if (ratings.length < 2) continue;
-
-    // Check for two consecutive ratings both < 2
-    for (let i = 0; i < ratings.length - 1; i++) {
-      const current = ratings[i];
-      const next = ratings[i + 1];
-      
-      if (current !== null && next !== null && current < 2 && next < 2) {
-        flaggedStudents.push({
-          studentId: student.id,
-          givenName: student.givenName,
-          surname: student.surname,
-          slackId: student.slackId,
-          eventName: event.name,
-          consecutiveLowScores: 2,
-          lastTwoRatings: [current, next],
-        });
-        break; // Only flag once per student
-      }
-    }
-  }
+  const flaggedStudents = students
+    .map(student => findConsecutiveLowScores(student, event.name))
+    .filter((student): student is StudentWithLowStandups => student !== null);
 
   DEBUG(`Found ${flaggedStudents.length} students with consecutive low standup scores`);
 
@@ -146,6 +121,61 @@ async function sendReportForEvent(event: {
 
   // Post to #stats channel
   await postToStatsChannel(slack, event.name, flaggedStudents);
+}
+
+/**
+ * Checks if a student has two consecutive standup scores under 2.
+ * Returns the student with flagging info, or null if they don't meet criteria.
+ *
+ * Exported for testing.
+ */
+export function findConsecutiveLowScores(
+  student: {
+    id: string;
+    givenName: string;
+    surname: string;
+    slackId: string | null;
+    standupResults: { rating: number | null }[];
+  },
+  eventName: string
+): StudentWithLowStandups | null {
+  const ratings = student.standupResults.map(r => r.rating);
+
+  if (ratings.length < 2) return null;
+
+  // Check for two consecutive ratings both < 2
+  for (let i = 0; i < ratings.length - 1; i++) {
+    const current = ratings[i];
+    const next = ratings[i + 1];
+
+    if (current !== null && next !== null && current < 2 && next < 2) {
+      return {
+        studentId: student.id,
+        givenName: student.givenName,
+        surname: student.surname,
+        slackId: student.slackId,
+        eventName,
+        consecutiveLowScores: 2,
+        lastTwoRatings: [current, next],
+      };
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Formats a list of students into a Slack message string.
+ *
+ * Exported for testing.
+ */
+export function formatStudentList(students: StudentWithLowStandups[]): string {
+  return students
+    .map(s => {
+      const slackMention = s.slackId ? `<@${s.slackId}>` : `${s.givenName} ${s.surname}`;
+      return `• ${slackMention} (${s.givenName} ${s.surname})`;
+    })
+    .join('\n');
 }
 
 async function postToStatsChannel(
@@ -176,15 +206,10 @@ async function postToStatsChannel(
     DEBUG(`Found channel #${STATS_CHANNEL_NAME} with ID ${statsChannel.id}`);
 
     // Format the message
-    const studentList = students
-      .map(s => {
-        const slackMention = s.slackId ? `<@${s.slackId}>` : `${s.givenName} ${s.surname}`;
-        return `• ${slackMention} (${s.givenName} ${s.surname})`;
-      })
-      .join('\n');
+    const studentList = formatStudentList(students);
 
-    const message = {
-      channel: statsChannel.id,
+    await slack.chat.postMessage({
+      channel: statsChannel.id!,
       blocks: [
         {
           type: 'header',
@@ -218,9 +243,8 @@ async function postToStatsChannel(
           ],
         },
       ],
-    };
+    });
 
-    await slack.chat.postMessage(message);
     DEBUG(`Successfully posted report to #${STATS_CHANNEL_NAME}`);
   } catch (error) {
     DEBUG(`Error posting to #${STATS_CHANNEL_NAME}:`, error);
