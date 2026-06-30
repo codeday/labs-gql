@@ -18,6 +18,7 @@ const DEBUG = makeDebug("activities:tasks:createStandup");
 const STANDUP_USER = "U026ZCTG0CB";
 
 const DEFAULT_STANDUP = {
+  type: "SLACK",
   admins: ["U024H3101", "U07ACCWHDSA"],
   days: ["Monday", "Wednesday", "Friday"],
   time: "20:00:00",
