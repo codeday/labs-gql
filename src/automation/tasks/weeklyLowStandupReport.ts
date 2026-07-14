@@ -16,6 +16,11 @@ interface StudentWithLowStandups {
   givenName: string;
   surname: string;
   slackId: string | null;
+  assignedMentors: {
+    givenName: string;
+    surname: string;
+    slackId: string | null;
+  }[];
   eventName: string;
   consecutiveLowScores: number;
   lastTwoRatings: (number | null)[];
@@ -78,6 +83,18 @@ async function sendReportForEvent(
       givenName: true,
       surname: true,
       slackId: true,
+      projects: {
+        select: {
+          mentors: {
+            select: {
+              id: true,
+              givenName: true,
+              surname: true,
+              slackId: true,
+            },
+          },
+        },
+      },
       standupResults: {
         where: {
           thread: {
@@ -135,6 +152,14 @@ export function findConsecutiveLowScores(
     givenName: string;
     surname: string;
     slackId: string | null;
+    projects?: {
+      mentors: {
+        id: string;
+        givenName: string;
+        surname: string;
+        slackId: string | null;
+      }[];
+    }[];
     standupResults: { rating: number | null }[];
   },
   eventName: string
@@ -149,11 +174,23 @@ export function findConsecutiveLowScores(
     const next = ratings[i + 1];
 
     if (current !== null && next !== null && current < 2 && next < 2) {
+      const mentorById = new Map<string, { givenName: string; surname: string; slackId: string | null }>();
+      for (const project of student.projects || []) {
+        for (const mentor of project.mentors) {
+          mentorById.set(mentor.id, {
+            givenName: mentor.givenName,
+            surname: mentor.surname,
+            slackId: mentor.slackId,
+          });
+        }
+      }
+
       return {
         studentId: student.id,
         givenName: student.givenName,
         surname: student.surname,
         slackId: student.slackId,
+        assignedMentors: Array.from(mentorById.values()),
         eventName,
         consecutiveLowScores: 2,
         lastTwoRatings: [current, next],
@@ -173,7 +210,12 @@ export function formatStudentList(students: StudentWithLowStandups[]): string {
   return students
     .map(s => {
       const slackMention = s.slackId ? `<@${s.slackId}>` : `${s.givenName} ${s.surname}`;
-      return `• ${slackMention} (${s.givenName} ${s.surname})`;
+      const mentorLabel = s.assignedMentors.length > 0
+        ? s.assignedMentors
+          .map((m) => (m.slackId ? `<@${m.slackId}>` : `${m.givenName} ${m.surname}`))
+          .join(', ')
+        : 'Unassigned';
+      return `• ${slackMention} (${s.givenName} ${s.surname}) - Mentor: ${mentorLabel}`;
     })
     .join('\n');
 }

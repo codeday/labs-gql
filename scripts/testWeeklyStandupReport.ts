@@ -24,6 +24,7 @@ import Container from 'typedi';
 import { WebClient } from '@slack/web-api';
 import { DateTime } from 'luxon';
 import { formatStudentList } from '../src/automation/tasks/weeklyLowStandupReport';
+import { registerDi } from '../src/di';
 
 // Parse command line arguments
 const args = process.argv.slice(2);
@@ -37,6 +38,11 @@ interface TestStudent {
   givenName: string;
   surname: string;
   slackId: string | null;
+  assignedMentors: {
+    givenName: string;
+    surname: string;
+    slackId: string | null;
+  }[];
   eventName: string;
   consecutiveLowScores: number;
   lastTwoRatings: (number | null)[];
@@ -49,6 +55,11 @@ const FAKE_STUDENTS: TestStudent[] = [
     givenName: 'Alice',
     surname: 'TestStudent',
     slackId: null, // No Slack ID to avoid pinging
+    assignedMentors: [{
+      givenName: 'Morgan',
+      surname: 'Lee',
+      slackId: null,
+    }],
     eventName: 'CodeDay Labs Test',
     consecutiveLowScores: 2,
     lastTwoRatings: [1, 1],
@@ -58,6 +69,11 @@ const FAKE_STUDENTS: TestStudent[] = [
     givenName: 'Bob',
     surname: 'DemoUser',
     slackId: null,
+    assignedMentors: [{
+      givenName: 'Riley',
+      surname: 'Park',
+      slackId: null,
+    }],
     eventName: 'CodeDay Labs Test',
     consecutiveLowScores: 2,
     lastTwoRatings: [0, 1],
@@ -67,6 +83,7 @@ const FAKE_STUDENTS: TestStudent[] = [
     givenName: 'Charlie',
     surname: 'SampleStudent',
     slackId: null,
+    assignedMentors: [],
     eventName: 'CodeDay Labs Test',
     consecutiveLowScores: 2,
     lastTwoRatings: [1, 0],
@@ -74,36 +91,15 @@ const FAKE_STUDENTS: TestStudent[] = [
 ];
 
 async function postTestMessage(
-  slack: WebClient,
+  slack: WebClient | null,
   channelName: string,
   students: TestStudent[],
   eventName: string
 ): Promise<void> {
-  // Find the channel
-  const channelsList = await slack.conversations.list({
-    exclude_archived: true,
-    types: 'public_channel,private_channel',
-  });
-
-  const channel = channelsList.channels?.find(
-    (c: any) => c.name === channelName
-  );
-
-  if (!channel) {
-    console.error(`❌ Channel #${channelName} not found.`);
-    console.log('\nAvailable channels:');
-    channelsList.channels?.slice(0, 10).forEach((c: any) => {
-      console.log(`  - #${c.name} (${c.id})`);
-    });
-    return;
-  }
-
-  console.log(`✅ Found channel #${channelName} (${channel.id})`);
-
   const studentList = formatStudentList(students);
 
   const message = {
-    channel: channel.id!,
+    channel: channelName,
     blocks: [
       {
         type: 'header',
@@ -143,10 +139,38 @@ async function postTestMessage(
     console.log('\n📋 DRY RUN - Message preview:');
     console.log(JSON.stringify(message, null, 2));
     console.log('\n✅ Dry run complete - no message posted');
-  } else {
-    await slack.chat.postMessage(message);
-    console.log(`\n✅ Test message posted to #${channelName}`);
+    return;
   }
+
+  if (!slack) {
+    throw new Error('Slack client is required for live posting.');
+  }
+
+  const channelsList = await slack.conversations.list({
+    exclude_archived: true,
+    types: 'public_channel,private_channel',
+  });
+
+  const channel = channelsList.channels?.find(
+    (c: any) => c.name === channelName
+  );
+
+  if (!channel) {
+    console.error(`❌ Channel #${channelName} not found.`);
+    console.log('\nAvailable channels:');
+    channelsList.channels?.slice(0, 10).forEach((c: any) => {
+      console.log(`  - #${c.name} (${c.id})`);
+    });
+    return;
+  }
+
+  console.log(`✅ Found channel #${channelName} (${channel.id})`);
+
+  await slack.chat.postMessage({
+    ...message,
+    channel: channel.id!,
+  });
+  console.log(`\n✅ Test message posted to #${channelName}`);
 }
 
 async function main() {
@@ -154,8 +178,6 @@ async function main() {
   console.log(`Mode: ${isDryRun ? 'DRY RUN' : 'LIVE'}`);
   console.log(`Channel: #${channelName}`);
   console.log(`Data: ${useRealData ? 'Real from database' : 'Fake test data'}\n`);
-
-  const prisma = Container.get(PrismaClient);
 
   let students: TestStudent[];
   let eventName: string;
@@ -170,28 +192,39 @@ async function main() {
     eventName = 'CodeDay Labs Test';
   }
 
-  // Get the first active event with Slack integration
-  const event = await prisma.event.findFirst({
-    where: {
-      isActive: true,
-      slackWorkspaceAccessToken: { not: null },
-      slackWorkspaceId: { not: null },
-    },
-  });
-
-  if (!event) {
-    console.error('❌ No active event with Slack integration found');
-    process.exit(1);
+  if (isDryRun) {
+    await postTestMessage(null, channelName, students, eventName);
+    return;
   }
 
-  console.log(`Using event: ${event.name} (${event.id})\n`);
+  registerDi();
+  const prisma = Container.get(PrismaClient);
 
-  // Create Slack client
-  const slack = new WebClient(event.slackWorkspaceAccessToken!, {
-    teamId: event.slackWorkspaceId!,
-  });
+  try {
+    const event = await prisma.event.findFirst({
+      where: {
+        isActive: true,
+        slackWorkspaceAccessToken: { not: null },
+        slackWorkspaceId: { not: null },
+      },
+    });
 
-  await postTestMessage(slack, channelName, students, eventName);
+    if (!event) {
+      console.error('❌ No active event with Slack integration found');
+      process.exit(1);
+    }
+
+    console.log(`Using event: ${event.name} (${event.id})\n`);
+
+    // Create Slack client
+    const slack = new WebClient(event.slackWorkspaceAccessToken!, {
+      teamId: event.slackWorkspaceId!,
+    });
+
+    await postTestMessage(slack, channelName, students, eventName);
+  } finally {
+    await prisma.$disconnect();
+  }
 }
 
 main()
