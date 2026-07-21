@@ -11,6 +11,8 @@
     "prisma": "prisma format && prisma generate",
     "dev": "ts-node-dev --no-notify --respawn --transpile-only src",
     "debug": "ts-node-dev --no-notify --respawn src",
+    "test:attendance": "ts-node --transpile-only src/automation/tasks/testProcessMentorReflections.ts && ts-node --transpile-only src/automation/tasks/testSendAttendanceAlerts.ts",
+    "test:attendance-slack": "ts-node --transpile-only scripts/testAttendanceSlack.ts",
     "send-event-recommendations": "ts-node scripts/sendEventRecommendations.ts",
     "swagger": "rm src/badgr/Api.ts; swagger-typescript-api -p badgr-api-v2.yaml -n Api2.ts -o ./src/badgr; echo 'type json = JSON;' | cat - src/badgr/Api2.ts > src/badgr/Api.ts; rm src/badgr/Api2.ts"
   },

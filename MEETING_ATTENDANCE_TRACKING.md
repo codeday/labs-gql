@@ -59,7 +59,7 @@ The system provides a **two-pronged approach** to tracking student meeting atten
 
 ### Automation Tasks
 
-**`processMentorReflections`** (runs every 6 hours)
+**`processMentorReflections`** (runs every Monday at 6 AM)
 - Processes mentor reflection survey responses
 - Extracts attendance data from response JSON
 - Automatically creates Meeting records for the week if needed
@@ -73,7 +73,7 @@ The system provides a **two-pronged approach** to tracking student meeting atten
 - Checks all active events for attendance issues
 - Identifies students with <75% attendance (minimum 2 meetings)
 - Identifies mentors behind on reflections
-- Sends Slack alerts to mentor channel with summary
+- Sends Slack alerts to the `#stats` channel with summary
 - Email template available for weekly reports
 
 ## Usage

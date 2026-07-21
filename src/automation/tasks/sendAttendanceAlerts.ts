@@ -5,26 +5,77 @@ import { makeDebug } from '../../utils';
 import { DateTime } from 'luxon';
 
 const DEBUG = makeDebug('automation:tasks:sendAttendanceAlerts');
+const ATTENDANCE_ALERT_CHANNEL = 'stats';
 
 export const JOBSPEC = '0 9 * * MON'; // Every Monday at 9 AM
 
-interface AttendanceIssue {
+export interface AttendanceIssue {
   studentName: string;
   studentEmail: string;
+  studentSlackId?: string;
   projectName: string;
   mentorName: string;
+  mentorSlackId?: string;
   attendancePercentage: number;
   meetingsAttended: number;
   meetingsTotal: number;
   lastAttendedAt?: Date;
 }
 
-interface MentorIssue {
+export interface MentorIssue {
   mentorName: string;
   mentorEmail: string;
+  mentorSlackId?: string;
   projectName: string;
   missedReflections: number;
   expectedReflections: number;
+}
+
+function slackMention(slackId?: string): string | null {
+  return slackId ? `<@${slackId}>` : null;
+}
+
+export function buildWeeklyAttendanceAlertMessage(
+  eventName: string,
+  students: AttendanceIssue[],
+  mentors: MentorIssue[]
+): string {
+  let message = `🚨 *Weekly Attendance Alert for ${eventName}*\n\n`;
+
+  if (students.length > 0) {
+    message += '*Students with Low Attendance (<75%):*\n';
+    students.slice(0, 10).forEach((s) => {
+      const pct = Math.round(s.attendancePercentage * 100);
+      message += `• ${s.studentName} - ${pct}% (${s.meetingsAttended}/${s.meetingsTotal} meetings)\n`;
+      message += `  Project: ${s.projectName}\n`;
+      message += `  Mentor: ${s.mentorName}\n`;
+
+      const studentMention = slackMention(s.studentSlackId);
+      const mentorMention = slackMention(s.mentorSlackId);
+      const mentions = [studentMention, mentorMention].filter(Boolean).join(' ');
+      if (mentions) message += `  Notify: ${mentions}\n`;
+    });
+    if (students.length > 10) {
+      message += `\n_... and ${students.length - 10} more students_\n`;
+    }
+    message += '\n';
+  }
+
+  if (mentors.length > 0) {
+    message += '*Mentors Behind on Reflections:*\n';
+    mentors.slice(0, 10).forEach((m) => {
+      message += `• ${m.mentorName} - ${m.missedReflections} reflections behind\n`;
+      message += `  Project: ${m.projectName}\n`;
+
+      const mention = slackMention(m.mentorSlackId);
+      if (mention) message += `  Notify: ${mention}\n`;
+    });
+    if (mentors.length > 10) {
+      message += `\n_... and ${mentors.length - 10} more mentors_\n`;
+    }
+  }
+
+  return message;
 }
 
 export default async function sendAttendanceAlerts(): Promise<void> {
@@ -46,8 +97,10 @@ export default async function sendAttendanceAlerts(): Promise<void> {
   }
 }
 
-async function processEventAlerts(event: Event): Promise<void> {
-  const prisma = Container.get(PrismaClient);
+export async function getAttendanceIssuesForEvent(
+  prisma: PrismaClient,
+  event: Event,
+): Promise<{ students: AttendanceIssue[]; mentors: MentorIssue[] }> {
 
   DEBUG(`Processing attendance alerts for event: ${event.name}`);
 
@@ -95,8 +148,10 @@ async function processEventAlerts(event: Event): Promise<void> {
         lowAttendanceStudents.push({
           studentName: `${student.givenName} ${student.surname}`,
           studentEmail: student.email,
+          studentSlackId: student.slackId || undefined,
           projectName: project.description?.slice(0, 50) || 'Untitled Project',
           mentorName: `${mentor.givenName} ${mentor.surname}`,
+          mentorSlackId: mentor.slackId || undefined,
           attendancePercentage,
           meetingsAttended,
           meetingsTotal,
@@ -128,6 +183,7 @@ async function processEventAlerts(event: Event): Promise<void> {
       mentorReflectionIssues.push({
         mentorName: `${mentor.givenName} ${mentor.surname}`,
         mentorEmail: mentor.email,
+        mentorSlackId: mentor.slackId || undefined,
         projectName: project.description?.slice(0, 50) || 'Untitled Project',
         missedReflections: expectedReflections - mentorReflections,
         expectedReflections,
@@ -135,9 +191,19 @@ async function processEventAlerts(event: Event): Promise<void> {
     }
   }
 
+  return {
+    students: lowAttendanceStudents,
+    mentors: mentorReflectionIssues,
+  };
+}
+
+async function processEventAlerts(event: Event): Promise<void> {
+  const prisma = Container.get(PrismaClient);
+  const { students, mentors } = await getAttendanceIssuesForEvent(prisma, event);
+
   // Send alerts if there are any issues
-  if (lowAttendanceStudents.length > 0 || mentorReflectionIssues.length > 0) {
-    await sendSlackAlert(event, lowAttendanceStudents, mentorReflectionIssues);
+  if (students.length > 0 || mentors.length > 0) {
+    await sendSlackAlert(event, students, mentors);
   } else {
     DEBUG(`No attendance issues found for ${event.name}`);
   }
@@ -148,44 +214,18 @@ async function sendSlackAlert(
   students: AttendanceIssue[],
   mentors: MentorIssue[]
 ): Promise<void> {
-  if (!event.slackWorkspaceAccessToken || !event.slackMentorChannelId || !event.slackWorkspaceId) {
+  if (!event.slackWorkspaceAccessToken || !event.slackWorkspaceId) {
     DEBUG(`Event ${event.id} does not have Slack configured, skipping Slack alert`);
     return;
   }
 
   const slack = getSlackClientForEvent(event as any);
+  const message = buildWeeklyAttendanceAlertMessage(event.name, students, mentors);
 
-  let message = `🚨 *Weekly Attendance Alert for ${event.name}*\n\n`;
-  
-  if (students.length > 0) {
-    message += `*Students with Low Attendance (<75%):*\n`;
-    students.slice(0, 10).forEach((s) => {
-      const pct = Math.round(s.attendancePercentage * 100);
-      message += `• ${s.studentName} - ${pct}% (${s.meetingsAttended}/${s.meetingsTotal} meetings)\n`;
-      message += `  Project: ${s.projectName}\n`;
-      message += `  Mentor: ${s.mentorName}\n`;
-    });
-    if (students.length > 10) {
-      message += `\n_... and ${students.length - 10} more students_\n`;
-    }
-    message += '\n';
-  }
+  DEBUG(`Sending Slack alert to channel ${ATTENDANCE_ALERT_CHANNEL}`);
 
-  if (mentors.length > 0) {
-    message += `*Mentors Behind on Reflections:*\n`;
-    mentors.slice(0, 10).forEach((m) => {
-      message += `• ${m.mentorName} - ${m.missedReflections} reflections behind\n`;
-      message += `  Project: ${m.projectName}\n`;
-    });
-    if (mentors.length > 10) {
-      message += `\n_... and ${mentors.length - 10} more mentors_\n`;
-    }
-  }
-
-  DEBUG(`Sending Slack alert to channel ${event.slackMentorChannelId}`);
-  
   await slack.chat.postMessage({
-    channel: event.slackMentorChannelId,
+    channel: ATTENDANCE_ALERT_CHANNEL,
     text: message,
   });
 }

@@ -5,7 +5,41 @@ import { DateTime } from 'luxon';
 
 const DEBUG = makeDebug('automation:tasks:processMentorReflections');
 
-export const JOBSPEC = '0 */6 * * *'; // Run every 6 hours
+export const JOBSPEC = '0 6 * * MON'; // Run every Monday at 6 AM
+
+export function extractAttendedStudentIds(
+  response: Record<string, unknown>,
+  projectStudentIds: string[]
+): Set<string> {
+  const validStudentIds = new Set(projectStudentIds);
+  const attendedStudentIds = new Set<string>();
+
+  const fromStudentAttendance = Array.isArray(response.studentAttendance)
+    ? response.studentAttendance
+    : [];
+  const fromStudentsPresent = Array.isArray(response.studentsPresent)
+    ? response.studentsPresent
+    : [];
+
+  for (const id of [...fromStudentAttendance, ...fromStudentsPresent]) {
+    if (typeof id === 'string' && validStudentIds.has(id)) attendedStudentIds.add(id);
+  }
+
+  const fromStudentsAbsent = Array.isArray(response.studentsAbsent)
+    ? response.studentsAbsent.filter((id): id is string => typeof id === 'string' && validStudentIds.has(id))
+    : [];
+
+  if (fromStudentsAbsent.length > 0 && attendedStudentIds.size === 0) {
+    const absentIds = new Set(fromStudentsAbsent);
+    projectStudentIds.forEach((id) => {
+      if (!absentIds.has(id)) attendedStudentIds.add(id);
+    });
+  } else {
+    fromStudentsAbsent.forEach((id) => attendedStudentIds.delete(id));
+  }
+
+  return attendedStudentIds;
+}
 
 /**
  * This task processes mentor reflection survey responses and extracts
@@ -19,8 +53,8 @@ export const JOBSPEC = '0 */6 * * *'; // Run every 6 hours
 export default async function processMentorReflections(): Promise<void> {
   const prisma = Container.get(PrismaClient);
 
-  // Get the last time we processed reflections (stored in a simple way)
-  const lastProcessed = DateTime.now().minus({ hours: 7 }).toJSDate();
+  // Weekly schedule: look back a full week plus a small buffer.
+  const lastProcessed = DateTime.now().minus({ days: 8 }).toJSDate();
 
   DEBUG(`Processing mentor reflections since ${lastProcessed.toISOString()}`);
 
@@ -82,8 +116,8 @@ async function processReflection(reflection: any): Promise<void> {
 
   // Determine if a meeting was held
   const meetingHeld = response.meetingHeld === true || response.meetingHeld === 'true';
-  
-  if (!meetingHeld && !response.studentAttendance && !response.studentsAbsent) {
+
+  if (!meetingHeld && !response.studentAttendance && !response.studentsAbsent && !response.studentsPresent) {
     DEBUG(`Skipping reflection ${reflection.id}: no attendance data found`);
     return;
   }
@@ -116,18 +150,11 @@ async function processReflection(reflection: any): Promise<void> {
     });
   }
 
-  // Extract attendance information
-  const attendedStudentIds = new Set<string>();
-  
-  // Format 1: response.studentAttendance (array of student IDs)
-  if (Array.isArray(response.studentAttendance)) {
-    response.studentAttendance.forEach((id: string) => attendedStudentIds.add(id));
-  }
-
-  // Format 2: response.studentsPresent (array of student IDs)
-  if (Array.isArray(response.studentsPresent)) {
-    response.studentsPresent.forEach((id: string) => attendedStudentIds.add(id));
-  }
+  // Extract attendance information from supported reflection response formats.
+  const attendedStudentIds = extractAttendedStudentIds(
+    response,
+    project.students.map((s: { id: string }) => s.id)
+  );
 
   // Record attendance for all students in the project
   for (const student of project.students) {
