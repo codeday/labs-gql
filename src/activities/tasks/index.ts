@@ -2,21 +2,28 @@
 /* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable global-require */
 /* eslint-disable import/no-dynamic-require */
-import fs from 'fs';
+import fs from "fs";
 import { makeDebug } from "../../utils";
 
-const DEBUG = makeDebug('activities:tasks');
+const DEBUG = makeDebug("activities:tasks");
 
-type TaskImport = { default: Function, SCHEMA?: object | null };
-export type TaskExport = { name: string, fn: Function, schema: object | null }
+type TaskImport = { default: Function; SCHEMA?: object | null };
+export type TaskExport = { name: string; fn: Function; schema: object | null };
 
-const allTasks = <TaskExport[]>fs.readdirSync(__dirname)
-  .filter(n => !['index.ts', 'index.js'].includes(n))
-  .map(n => {
+const allTasks = <TaskExport[]>fs
+  .readdirSync(__dirname)
+  .filter(
+    (n) =>
+      !["index.ts", "index.js"].includes(n) &&
+      !n.endsWith("test.js") &&
+      !n.endsWith("test.ts"),
+  )
+  .map((n) => {
     const f = require(`./${n}`) as TaskImport;
-    if (!f.default) throw new Error(`Task ${n} does not include a default export.`);
+    if (!f.default)
+      throw new Error(`Task ${n} does not include a default export.`);
     return {
-      name: n.replace(/\.(ts|js)$/g, ''),
+      name: n.replace(/\.(ts|js)$/g, ""),
       schema: f.SCHEMA || null,
       fn: f.default,
     };
