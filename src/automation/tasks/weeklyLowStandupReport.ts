@@ -65,17 +65,36 @@ async function sendReportForEvent(
   const prisma = Container.get(PrismaClient);
   const slack = getSlackClientForEvent(event);
 
+  const flaggedStudents = await getFlaggedStudentsForEvent(prisma, event.id, event.name);
+
+  DEBUG(`Found ${flaggedStudents.length} students with consecutive low standup scores`);
+
+  if (flaggedStudents.length === 0) {
+    DEBUG('No students to report, skipping Slack message.');
+    return;
+  }
+
+  // Post to #stats channel
+  await postToStatsChannel(slack, event.name, flaggedStudents);
+}
+
+export async function getFlaggedStudentsForEvent(
+  prisma: PrismaClient,
+  eventId: string,
+  eventName: string,
+  now: DateTime = DateTime.now()
+): Promise<StudentWithLowStandups[]> {
+
   // Calculate date range for "previous week" (last 7 days from start of today)
-  const now = DateTime.now();
   const startOfToday = now.startOf('day');
   const oneWeekAgo = startOfToday.minus({ days: 7 });
 
-  DEBUG(`Checking standups from ${oneWeekAgo.toISO()} to ${startOfToday.toISO()} for event ${event.id}`);
+  DEBUG(`Checking standups from ${oneWeekAgo.toISO()} to ${startOfToday.toISO()} for event ${eventId}`);
 
   // Get all students in the active event
   const students = await prisma.student.findMany({
     where: {
-      eventId: event.id,
+      eventId,
       status: StudentStatus.ACCEPTED,
     },
     select: {
@@ -122,22 +141,12 @@ async function sendReportForEvent(
     },
   });
 
-  DEBUG(`Found ${students.length} accepted students in event ${event.id}`);
+  DEBUG(`Found ${students.length} accepted students in event ${eventId}`);
 
   // Filter students with two consecutive standup scores < 2
-  const flaggedStudents = students
-    .map(student => findConsecutiveLowScores(student, event.name))
+  return students
+    .map(student => findConsecutiveLowScores(student, eventName))
     .filter((student): student is StudentWithLowStandups => student !== null);
-
-  DEBUG(`Found ${flaggedStudents.length} students with consecutive low standup scores`);
-
-  if (flaggedStudents.length === 0) {
-    DEBUG('No students to report, skipping Slack message.');
-    return;
-  }
-
-  // Post to #stats channel
-  await postToStatsChannel(slack, event.name, flaggedStudents);
 }
 
 /**
