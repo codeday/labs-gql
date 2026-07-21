@@ -17,3 +17,6 @@ export * from './ArtifactType';
 export * from './File';
 export * from './FileType';
 export * from './ScheduledAnnouncement';
+export * from './Meeting';
+export * from './MeetingAttendance';
+export * from './MeetingResponse';
