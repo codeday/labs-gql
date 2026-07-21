@@ -2,21 +2,32 @@
 /* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable global-require */
 /* eslint-disable import/no-dynamic-require */
-import fs from 'fs';
+import fs from "fs";
 import { makeDebug } from "../../utils";
 
-const DEBUG = makeDebug('automation:tasks');
+const DEBUG = makeDebug("automation:tasks");
 
-type TaskImport = { default: Function, JOBSPEC: string | undefined };
-export type TaskExport = { name: string, fn: Function, spec: string | undefined }
+type TaskImport = { default: Function; JOBSPEC: string | undefined };
+export type TaskExport = {
+  name: string;
+  fn: Function;
+  spec: string | undefined;
+};
 
-const allTasks = <TaskExport[]>fs.readdirSync(__dirname)
-  .filter(n => !['index.ts', 'index.js'].includes(n))
-  .map(n => {
+const allTasks = <TaskExport[]>fs
+  .readdirSync(__dirname)
+  .filter(
+    (n) =>
+      !["index.ts", "index.js"].includes(n) &&
+      !n.endsWith("test.js") &&
+      !n.endsWith("test.ts"),
+  )
+  .map((n) => {
     const f = require(`./${n}`) as TaskImport;
-    if (!f.default) throw new Error(`Task ${n} does not include a default export.`);
+    if (!f.default)
+      throw new Error(`Task ${n} does not include a default export.`);
     return {
-      name: n.replace(/\.(ts|js)$/g, ''),
+      name: n.replace(/\.(ts|js)$/g, ""),
       fn: f.default,
       spec: f.JOBSPEC,
     };
