@@ -20,3 +20,4 @@ export * from './ScheduledAnnouncement';
 export * from './Meeting';
 export * from './MeetingAttendance';
 export * from './MeetingResponse';
+export * from './AttendanceStats';

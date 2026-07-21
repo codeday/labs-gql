@@ -1,5 +1,5 @@
 import {
-  Resolver, Authorized, Query, Arg, Ctx,
+  Resolver, Authorized, Query, Arg, Ctx, Int, Float,
 } from 'type-graphql';
 import { PrismaClient } from '@prisma/client';
 import { Inject, Service } from 'typedi';
@@ -7,6 +7,7 @@ import { DateTime } from 'luxon';
 import { Context, AuthRole } from '../context';
 import { Track, StudentStatus } from '../enums';
 import { Stat } from '../types/Stat';
+import { StudentAttendanceStat, MentorReflectionStat, FlaggedStudent } from '../types/AttendanceStats';
 
 // 2012: 24 students, 400 hours = 9,600 hours
 // 2013: 16 students, 400 hours = 6,400 hours
@@ -106,5 +107,185 @@ export class StatsResolver {
         value: _count.status - (status === StudentStatus.OFFERED ? expiredStudents : 0),
       })),
     ];
+  }
+
+  @Authorized(AuthRole.ADMIN, AuthRole.MANAGER)
+  @Query(() => [StudentAttendanceStat])
+  async statStudentAttendance(
+    @Ctx() { auth }: Context,
+    @Arg('eventId', () => String, { nullable: true }) eventId?: string,
+    @Arg('projectId', () => String, { nullable: true }) projectId?: string,
+    @Arg('minAttendance', () => Float, { nullable: true }) minAttendance?: number,
+  ): Promise<StudentAttendanceStat[]> {
+    const targetEventId = eventId || auth.eventId!;
+    const minAttendanceThreshold = minAttendance ?? 0.75; // Default 75%
+
+    // Get all students in the event
+    const students = await this.prisma.student.findMany({
+      where: {
+        eventId: targetEventId,
+        status: 'ACCEPTED',
+        ...(projectId ? { projects: { some: { id: projectId } } } : {}),
+      },
+      include: {
+        projects: {
+          where: { status: 'MATCHED' },
+          include: {
+            meetings: {
+              include: {
+                attendance: {
+                  where: { studentId: { not: null } },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const stats: StudentAttendanceStat[] = [];
+
+    for (const student of students) {
+      const project = student.projects[0]; // Assume one project per student
+      if (!project) continue;
+
+      const allMeetings = project.meetings;
+      const studentAttendance = allMeetings.flatMap((m) =>
+        m.attendance.filter((a) => a.studentId === student.id)
+      );
+
+      const meetingsTotal = allMeetings.length;
+      const meetingsAttended = studentAttendance.filter((a) => a.attended).length;
+      const attendancePercentage = meetingsTotal > 0 ? meetingsAttended / meetingsTotal : 0;
+
+      const lastAttended = studentAttendance
+        .filter((a) => a.attended)
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0];
+
+      const lastMeeting = allMeetings.sort(
+        (a, b) => (b.scheduledStartAt?.getTime() || 0) - (a.scheduledStartAt?.getTime() || 0)
+      )[0];
+
+      const dataSources = Array.from(
+        new Set(studentAttendance.map((a) => a.source))
+      );
+
+      stats.push({
+        student: student as any,
+        project: project as any,
+        meetingsTotal,
+        meetingsAttended,
+        attendancePercentage,
+        lastAttendedAt: lastAttended?.createdAt,
+        lastMeetingAt: lastMeeting?.scheduledStartAt || undefined,
+        isFlagged: attendancePercentage < minAttendanceThreshold && meetingsTotal > 0,
+        dataSources,
+      });
+    }
+
+    return stats.sort((a, b) => a.attendancePercentage - b.attendancePercentage);
+  }
+
+  @Authorized(AuthRole.ADMIN, AuthRole.MANAGER)
+  @Query(() => [MentorReflectionStat])
+  async statMentorReflectionCompletion(
+    @Ctx() { auth }: Context,
+    @Arg('eventId', () => String, { nullable: true }) eventId?: string,
+  ): Promise<MentorReflectionStat[]> {
+    const targetEventId = eventId || auth.eventId!;
+
+    // Get all mentors in the event
+    const mentors = await this.prisma.mentor.findMany({
+      where: {
+        eventId: targetEventId,
+        status: 'ACCEPTED',
+      },
+      include: {
+        projects: {
+          where: { status: 'MATCHED' },
+        },
+        authoredSurveyResponses: {
+          where: {
+            surveyOccurence: {
+              survey: {
+                personType: 'MENTOR',
+                eventId: targetEventId,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const stats: MentorReflectionStat[] = [];
+
+    // Calculate expected reflections based on weeks since event start
+    const event = await this.prisma.event.findUnique({
+      where: { id: targetEventId },
+    });
+
+    if (!event) return stats;
+
+    const weeksSinceStart = Math.max(
+      1,
+      Math.floor(DateTime.now().diff(DateTime.fromJSDate(event.startsAt), 'weeks').weeks)
+    );
+
+    for (const mentor of mentors) {
+      const project = mentor.projects[0];
+      const submittedReflections = mentor.authoredSurveyResponses.length;
+      const expectedReflections = Math.min(weeksSinceStart, event.defaultWeeks);
+      const completionPercentage =
+        expectedReflections > 0 ? submittedReflections / expectedReflections : 0;
+
+      const lastSubmitted = mentor.authoredSurveyResponses.sort(
+        (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+      )[0];
+
+      stats.push({
+        mentor: mentor as any,
+        project: project as any,
+        expectedReflections,
+        submittedReflections,
+        completionPercentage,
+        lastSubmittedAt: lastSubmitted?.createdAt,
+        isFlagged: completionPercentage < 0.75 && expectedReflections > 0,
+      });
+    }
+
+    return stats.sort((a, b) => a.completionPercentage - b.completionPercentage);
+  }
+
+  @Authorized(AuthRole.ADMIN, AuthRole.MANAGER)
+  @Query(() => [FlaggedStudent])
+  async flaggedStudents(
+    @Ctx() { auth }: Context,
+    @Arg('eventId', () => String, { nullable: true }) eventId?: string,
+    @Arg('minAttendance', () => Float, { nullable: true }) minAttendance?: number,
+  ): Promise<FlaggedStudent[]> {
+    const attendanceStats = await this.statStudentAttendance(
+      { auth } as Context,
+      eventId,
+      undefined,
+      minAttendance
+    );
+
+    const flagged: FlaggedStudent[] = [];
+
+    for (const stat of attendanceStats.filter((s) => s.isFlagged)) {
+      const mentor = stat.project?.mentors?.[0];
+
+      flagged.push({
+        student: stat.student,
+        mentor: mentor as any,
+        project: stat.project,
+        reason: `Low attendance: ${Math.round(stat.attendancePercentage * 100)}%`,
+        attendancePercentage: stat.attendancePercentage,
+        missedMeetings: stat.meetingsTotal - stat.meetingsAttended,
+        lastAttendedAt: stat.lastAttendedAt,
+      });
+    }
+
+    return flagged;
   }
 }
