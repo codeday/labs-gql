@@ -222,12 +222,22 @@ model Meeting {
   notesStudentSchema Json?
   notesStudentUi     Json?
 
+  // Slack Integration
+  slackHuddleId    String?
+  scheduledStartAt DateTime?
+  scheduledEndAt   DateTime?
+
   // Relations
   event   Event  @relation(fields: [eventId], references: [id])
   eventId String
 
+  project   Project? @relation(fields: [projectId], references: [id])
+  projectId String?
+
   responses  MeetingResponse[]
   attendance MeetingAttendance[]
+
+  @@index([projectId])
 }
 
 model MeetingAttendance {
@@ -239,12 +249,19 @@ model MeetingAttendance {
   attended Boolean @default(false)
   prepared Boolean @default(false)
 
+  // Attendance tracking
+  source     AttendanceSource @default(MANUAL)
+  confidence Float            @default(1.0)
+  metadata   Json?
+
   // Relations
   meeting   Meeting @relation(fields: [meetingId], references: [id])
   meetingId String
 
   student   Student? @relation(fields: [studentId], references: [id])
   studentId String?
+
+  @@index([source])
 }
 
 model MeetingResponse {
@@ -490,6 +507,13 @@ enum PrStatus {
   CLOSED_MERGED
 }
 
+enum AttendanceSource {
+  SLACK_HUDDLE
+  MESSAGE_ACTIVITY
+  MENTOR_REPORT
+  MANUAL
+}
+
 model Project {
   // Metadata
   id        String   @id @default(cuid())
@@ -536,6 +560,7 @@ model Project {
   standupResults StandupResult[]
   artifacts      Artifact[]
   files          File[]
+  meetings       Meeting[]
 }
 
 model ArtifactType {

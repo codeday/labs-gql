@@ -10,6 +10,7 @@ import {
   FileTypeType,
   FileTypeGenerationCondition,
   FileTypeGenerationTarget,
+  AttendanceSource,
 } from '@prisma/client';
 import { registerEnumType } from 'type-graphql';
 
@@ -35,6 +36,7 @@ registerEnumType(RejectionReason, { name: 'RejectionReason' });
 registerEnumType(TagType, { name: 'TagType' });
 registerEnumType(PersonType, { name: 'PersonType' });
 registerEnumType(PrStatus, { name: 'PrStatus' });
+registerEnumType(AttendanceSource, { name: 'AttendanceSource' });
 
 export {
   Track,
@@ -49,4 +51,5 @@ export {
   FileTypeType,
   FileTypeGenerationCondition,
   FileTypeGenerationTarget,
+  AttendanceSource,
 };
