@@ -18,6 +18,7 @@ const DEBUG = makeDebug("activities:tasks:createStandup");
 const STANDUP_USER = "U026ZCTG0CB";
 
 const DEFAULT_STANDUP = {
+  type: "SLACK",
   admins: ["U024H3101", "U07ACCWHDSA"],
   days: ["Monday", "Wednesday", "Friday"],
   time: "20:00:00",
@@ -39,6 +40,8 @@ const DEFAULT_STANDUP = {
 
 export default async function createStandup({ auth }: Context): Promise<void> {
   const prisma = Container.get(PrismaClient);
+
+  DEBUG(`Starting createStandup for event ${auth.eventId}`);
 
   const event = (await prisma.event.findFirst({
     rejectOnNotFound: true,
@@ -68,45 +71,103 @@ export default async function createStandup({ auth }: Context): Promise<void> {
   })) as SlackEventWithProjects<SlackMentorInfo & SlackStudentInfo> &
     EventWithStandupAndProsper;
 
+  DEBUG(
+    `Loaded event ${auth.eventId} (slackWorkspaceId=${event.slackWorkspaceId}); found ${event.projects.length} candidate project(s) without a standup`,
+  );
+
+  if (event.projects.length === 0) {
+    DEBUG(
+      `No projects matched the filter (standupId=null, slackChannelId set, has student with slackId) for event ${auth.eventId} — nothing to do`,
+    );
+    return;
+  }
+
   const client = getClientForEvent(event);
   const slack = getSlackClientForEvent(event);
 
+  let created = 0;
+  let skipped = 0;
+  let failed = 0;
+
   for (const project of event.projects) {
+    DEBUG(
+      `Processing project ${project.id} (channel=${project.slackChannelId}, students=${project.students.length})`,
+    );
+
     try {
-      await slack.conversations.invite({
+      const inviteResult = await slack.conversations.invite({
         channel: project.slackChannelId!,
         users: STANDUP_USER,
       });
-    } catch (ex) {}
+      DEBUG(
+        `Invited standup bot ${STANDUP_USER} into channel ${project.slackChannelId} for project ${project.id} (ok=${inviteResult.ok})`,
+      );
+    } catch (ex) {
+      DEBUG(
+        `Slack invite of ${STANDUP_USER} into ${project.slackChannelId} for project ${project.id} failed (continuing — bot may already be present): %O`,
+        ex,
+      );
+    }
 
-    DEBUG(project.students);
+    DEBUG(`Project ${project.id} students: %O`, project.students);
     const users = project.students
       .filter((s) => s.slackId)
       .map((s) => ({ userId: s.slackId! }));
 
+    DEBUG(
+      `Project ${project.id}: ${users.length}/${project.students.length} students have a slackId`,
+    );
+
     if (users.length === 0) {
       DEBUG(`Skipping project ${project.id} — no eligible student Slack IDs`);
+      skipped += 1;
       continue;
     }
 
+    const payload = {
+      ...DEFAULT_STANDUP,
+      channel: project.slackChannelId,
+      channelId: project.slackChannelId,
+      users,
+    };
+
     try {
-      const result = await client.createStandup({
-        ...DEFAULT_STANDUP,
-        channel: project.slackChannelId,
-        channelId: project.slackChannelId,
-        users,
-      });
+      DEBUG(
+        `Calling StandupAndProsper.createStandup for project ${project.id} with payload: %O`,
+        payload,
+      );
+      const result = await client.createStandup(payload);
+      DEBUG(
+        `StandupAndProsper.createStandup response for project ${project.id}: %O`,
+        result,
+      );
+
       if (result.standupId) {
         await prisma.project.update({
           where: { id: project.id },
           data: { standupId: result.standupId },
         });
+        DEBUG(
+          `Created standup ${result.standupId} for project ${project.id} in channel ${project.slackChannelId}`,
+        );
+        created += 1;
+      } else {
+        DEBUG(
+          `StandupAndProsper.createStandup returned no standupId for project ${project.id} — not persisting. Full response: %O`,
+          result,
+        );
+        failed += 1;
       }
-      DEBUG(
-        `Created standup for project ${project.id} in channel ${project.slackChannelId}`,
-      );
     } catch (ex) {
-      DEBUG(ex);
+      DEBUG(
+        `Exception creating standup for project ${project.id} in channel ${project.slackChannelId}: %O`,
+        ex,
+      );
+      failed += 1;
     }
   }
+
+  DEBUG(
+    `createStandup finished for event ${auth.eventId}: created=${created}, skipped=${skipped}, failed=${failed}`,
+  );
 }

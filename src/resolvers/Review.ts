@@ -46,6 +46,7 @@ export class ReviewResolver {
         username: { not: auth.username },
         status: StudentStatus.APPLIED,
         eventId: auth.eventId,
+        partnerCode: null,
       },
       orderBy: [{ createdAt: "asc" }],
       select: { id: true, admissionRatings: { select: { rating: true } } },
