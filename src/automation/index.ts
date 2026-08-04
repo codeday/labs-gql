@@ -4,6 +4,7 @@ import tasks from './tasks';
 import { makeDebug } from "../utils";
 
 const DEBUG = makeDebug('automation');
+const AUTOMATION_TIMEZONE = 'America/Los_Angeles';
 
 const tasksByName = Object.fromEntries(
   tasks.map(t => [t.name, t])
@@ -35,8 +36,8 @@ export async function startAutomation() {
   tasks
     .filter(t => t.spec)
     .forEach(({ spec, fn, name }) => {
-      DEBUG(`Registered task ${name} for ${spec}.`);
-      new CronJob(spec!, tryCrontab(fn), null, true)
+      DEBUG(`Registered task ${name} for ${spec} in ${AUTOMATION_TIMEZONE}.`);
+      new CronJob(spec!, tryCrontab(fn), null, true, AUTOMATION_TIMEZONE)
     })
 }
 

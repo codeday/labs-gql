@@ -96,6 +96,10 @@ export class Event {
 
   @Authorized(AuthRole.ADMIN)
   @Field(() => String, { nullable: true })
+  slackReportingChannelId: string | null
+
+  @Authorized(AuthRole.ADMIN)
+  @Field(() => String, { nullable: true })
   standupAndProsperToken: string | null
 
   @Field(() => GraphQLJSONObject, { nullable: true })
@@ -112,13 +116,13 @@ export class Event {
 
   @Field(() => GraphQLJSONObject, { nullable: true })
   mentorApplicationSchema?: JSONSchema7
-  
+
   @Field(() => GraphQLJSONObject, { nullable: true })
   mentorApplicationUi?: Record<string, unknown>
 
   @Field(() => GraphQLJSONObject, { nullable: true })
   studentApplicationSchema?: JSONSchema7
-  
+
   @Field(() => GraphQLJSONObject, { nullable: true })
   studentApplicationUi?: Record<string, unknown>
 
@@ -136,7 +140,7 @@ export class Event {
     @Ctx() { auth }: Context,
   ): Promise<boolean> {
     if (!(auth.isAuthenticated || auth.isUnspecified)) return false;
-        return (await Container.get(PrismaClient)
+    return (await Container.get(PrismaClient)
       .student.count({ where: { ...auth.toWhereMany()!, eventId: this.id } })) > 0;
   }
 

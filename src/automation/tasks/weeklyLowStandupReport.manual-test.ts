@@ -22,6 +22,7 @@ import { WebClient } from '@slack/web-api';
 import { PrismaClient } from '@prisma/client';
 import { registerDi } from '../../di';
 import Container from 'typedi';
+import { findSlackChannelByName } from '../../slack';
 
 // Simple assertion helper
 function assert(condition: boolean, message: string) {
@@ -224,23 +225,11 @@ async function testSlackChannelLookup() {
     const slack = new WebClient(slackToken);
 
     // Test 1: List channels
-    console.log('Fetching channel list from Slack...');
-    const channelsList = await slack.conversations.list({
-      exclude_archived: true,
-      types: 'public_channel,private_channel',
-      limit: 100,
-    });
-
-    assert(
-      Array.isArray(channelsList.channels) && channelsList.channels.length > 0,
-      'Should retrieve list of channels from Slack'
-    );
+    console.log('Searching for channel in Slack...');
 
     // Test 2: Find a specific channel
     const testChannelName = 'stats';
-    const channel = channelsList.channels?.find(
-      (c: any) => c.name === testChannelName
-    );
+    const channel = await findSlackChannelByName(slack, testChannelName);
 
     assert(
       channel !== undefined,
@@ -252,8 +241,9 @@ async function testSlackChannelLookup() {
     }
 
     // Test 3: Handle non-existent channel
-    const nonExistentChannel = channelsList.channels?.find(
-      (c: any) => c.name === 'this-channel-definitely-does-not-exist-xyz123'
+    const nonExistentChannel = await findSlackChannelByName(
+      slack,
+      'this-channel-definitely-does-not-exist-xyz123'
     );
 
     assertEqual(

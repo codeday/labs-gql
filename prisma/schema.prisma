@@ -120,6 +120,7 @@ model Event {
   slackWorkspaceId              String?
   slackUserGroupId              String?
   slackAnnouncementChannelId    String?
+  slackReportingChannelId       String?
   slackMentorChannelId          String?
   slackWorkspaceAccessToken     String?
   standupAndProsperToken        String?

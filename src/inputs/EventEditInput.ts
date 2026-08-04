@@ -79,6 +79,9 @@ export class EventEditInput {
   @Field(() => String, { nullable: true })
   slackWorkspaceAccessToken?: string | null
 
+  @Field(() => String, { nullable: true })
+  slackReportingChannelId?: string | null
+
   public toQuery(): Prisma.EventUpdateInput {
     return {
       name: this.name ?? undefined,
@@ -109,6 +112,7 @@ export class EventEditInput {
       partnersOnly: this.partnersOnly ?? undefined,
       slackWorkspaceId: this.slackWorkspaceId ?? undefined,
       slackWorkspaceAccessToken: this.slackWorkspaceAccessToken ?? undefined,
+      slackReportingChannelId: this.slackReportingChannelId ?? undefined,
     };
   }
 }

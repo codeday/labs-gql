@@ -1,10 +1,9 @@
 import { PrismaClient, StudentStatus } from "@prisma/client";
 import Container from "typedi";
 import { getSlackClientForEvent } from "../../slack";
-import { makeDebug, PickNonNullable } from "../../utils";
+import { makeDebug } from "../../utils";
 import { DateTime } from "luxon";
 import { WebClient } from "@slack/web-api";
-import { Event } from "@prisma/client";
 
 const DEBUG = makeDebug('automation:tasks:weeklyLowStandupReport');
 
@@ -26,6 +25,14 @@ interface StudentWithLowStandups {
   lastTwoRatings: (number | null)[];
 }
 
+type WeeklyReportEvent = {
+  id: string;
+  name: string;
+  slackWorkspaceAccessToken: string;
+  slackWorkspaceId: string;
+  slackReportingChannelId: string | null;
+};
+
 export default async function weeklyLowStandupReport(): Promise<void> {
   const prisma = Container.get(PrismaClient);
 
@@ -43,8 +50,9 @@ export default async function weeklyLowStandupReport(): Promise<void> {
       name: true,
       slackWorkspaceAccessToken: true,
       slackWorkspaceId: true,
+      slackReportingChannelId: true,
     },
-  }) as (PickNonNullable<Event, 'slackWorkspaceAccessToken' | 'slackWorkspaceId'> & Pick<Event, 'id' | 'name'>)[];
+  }) as WeeklyReportEvent[];
 
   DEBUG(`Found ${events.length} active events with Slack integration.`);
 
@@ -60,7 +68,7 @@ export default async function weeklyLowStandupReport(): Promise<void> {
 }
 
 async function sendReportForEvent(
-  event: PickNonNullable<Event, 'slackWorkspaceAccessToken' | 'slackWorkspaceId'> & Pick<Event, 'id' | 'name'>
+  event: WeeklyReportEvent
 ): Promise<void> {
   const prisma = Container.get(PrismaClient);
   const slack = getSlackClientForEvent(event);
@@ -75,7 +83,12 @@ async function sendReportForEvent(
   }
 
   // Post to #stats channel
-  await postToStatsChannel(slack, event.name, flaggedStudents);
+  await postToStatsChannel(
+    slack,
+    event.name,
+    flaggedStudents,
+    event.slackReportingChannelId,
+  );
 }
 
 export async function getFlaggedStudentsForEvent(
@@ -232,35 +245,24 @@ export function formatStudentList(students: StudentWithLowStandups[]): string {
 async function postToStatsChannel(
   slack: WebClient,
   eventName: string,
-  students: StudentWithLowStandups[]
+  students: StudentWithLowStandups[],
+  configuredChannelId: string | null,
 ): Promise<void> {
   const STATS_CHANNEL_NAME = 'stats';
 
-  DEBUG(`Looking up channel: ${STATS_CHANNEL_NAME}`);
-
-  // Find the stats channel
   try {
-    const channelsList = await slack.conversations.list({
-      exclude_archived: true,
-      types: 'public_channel,private_channel',
-    });
-
-    const statsChannel = channelsList.channels?.find(
-      (c: any) => c.name === STATS_CHANNEL_NAME
-    );
-
-    if (!statsChannel) {
-      DEBUG(`Channel #${STATS_CHANNEL_NAME} not found, skipping report.`);
+    if (!configuredChannelId) {
+      DEBUG(`No configured reporting channel ID for this event; skipping report.`);
       return;
     }
 
-    DEBUG(`Found channel #${STATS_CHANNEL_NAME} with ID ${statsChannel.id}`);
+    DEBUG(`Using configured reporting channel ID ${configuredChannelId}`);
 
     // Format the message
     const studentList = formatStudentList(students);
 
     await slack.chat.postMessage({
-      channel: statsChannel.id!,
+      channel: configuredChannelId,
       blocks: [
         {
           type: 'header',
