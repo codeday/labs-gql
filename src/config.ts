@@ -32,6 +32,8 @@ loadEnv();
   'LINEAR_PROBLEM_LABEL_ID',
   'METRICS_KEY',
   'PLACID_API_TOKEN',
+  'ATTIO_API_TOKEN',
+  'ATTIO_ALUMNI_LIST',
 ].forEach((req) => { if (!process.env[req]) throw Error(`The ${req} environment variable is required.`); });
 
 const secondaryRegion = process.env.PRIMARY_REGION
@@ -74,6 +76,10 @@ const config = {
   },
   placid: {
     apiToken: process.env.PLACID_API_TOKEN!,
+  },
+  attio: {
+    apiToken: process.env.ATTIO_API_TOKEN!,
+    alumniListId: process.env.ATTIO_ALUMNI_LIST!,
   },
   app: {
     emailTemplateDir: path.join(__dirname, 'email', 'templates'),

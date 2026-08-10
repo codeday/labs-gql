@@ -12,6 +12,9 @@
     "dev": "ts-node-dev --no-notify --respawn --transpile-only src",
     "debug": "ts-node-dev --no-notify --respawn src",
     "send-event-recommendations": "ts-node scripts/sendEventRecommendations.ts",
+    "attio-setup": "ts-node scripts/attio-setup.ts",
+    "sync-alumni-interactions": "ts-node scripts/sync-alumni-interactions.ts",
+    "test": "ts-node src/automation/tasks/syncAlumniInteractions.test.ts",
     "swagger": "rm src/badgr/Api.ts; swagger-typescript-api -p badgr-api-v2.yaml -n Api2.ts -o ./src/badgr; echo 'type json = JSON;' | cat - src/badgr/Api2.ts > src/badgr/Api.ts; rm src/badgr/Api2.ts"
   },
   "dependencies": {
