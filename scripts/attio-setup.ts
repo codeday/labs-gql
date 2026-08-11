@@ -22,7 +22,9 @@ interface AttributeSpec {
   title: string;
   type: string;
   isUnique?: boolean;
+  isMultiselect?: boolean;
   selectOptions?: string[];
+  config?: Record<string, unknown>;
 }
 
 const ATTRIBUTES: AttributeSpec[] = [
@@ -37,6 +39,13 @@ const ATTRIBUTES: AttributeSpec[] = [
   },
   { apiSlug: 'event', title: 'Event', type: 'text' },
   { apiSlug: 'participated_at', title: 'Participated At', type: 'date' },
+  {
+    apiSlug: 'related_people',
+    title: 'Related People',
+    type: 'record-reference',
+    isMultiselect: true,
+    config: { record_reference: { allowed_objects: ['people'] } },
+  },
 ];
 
 interface AttioListSummary {
@@ -105,8 +114,8 @@ async function ensureAttribute(
         // Attio rejects is_required: true on list attributes ("Required attributes are
         // not permitted on lists"), but the field itself must still be present and false.
         is_required: false,
-        is_multiselect: false,
-        config: {},
+        is_multiselect: spec.isMultiselect ?? false,
+        config: spec.config ?? {},
       },
     },
     `attio-setup:create-attribute:${spec.apiSlug}`,

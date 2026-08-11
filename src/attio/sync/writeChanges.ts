@@ -10,13 +10,31 @@ function isUniquenessConflict(ex: unknown): boolean {
   return ex instanceof AttioApiError && ex.status === 400 && ex.attioCode === 'uniqueness_conflict';
 }
 
-function entryValuesFor(participation: Participation, fields: (keyof EntryFields)[]): Record<string, unknown> {
+/**
+ * relatedPersonEmails is resolved to Attio record ids here, at write time, using whatever
+ * peopleByEmail map the caller currently has (updated after the people-upsert phase runs) —
+ * that's the earliest point every valid participant, including ones on the "other side" of
+ * a project, is guaranteed to have an Attio record. An email that still doesn't resolve (its
+ * own row had a bad email, or its person-upsert failed) is silently dropped from the list
+ * rather than failing this row — it's a best-effort auxiliary field, not the dedup key.
+ */
+function entryValuesFor(
+  participation: Participation,
+  fields: (keyof EntryFields)[],
+  peopleByEmail: Map<string, string>,
+): Record<string, unknown> {
   const all: Record<keyof EntryFields, Record<string, unknown>> = {
     interactionId: { interaction_id: participation.interactionId },
     participationType: { participation_type: participation.participationType },
     eventType: { event_type: participation.eventType },
     event: { event: participation.event },
     participatedAt: { participated_at: participation.participatedAt },
+    relatedPersonEmails: {
+      related_people: participation.relatedPersonEmails
+        .map((email) => peopleByEmail.get(email))
+        .filter((id): id is string => Boolean(id))
+        .map((id) => ({ target_object: 'people', target_record_id: id })),
+    },
   };
   return fields.reduce((acc: Record<string, unknown>, field) => ({ ...acc, ...all[field] }), {});
 }
@@ -91,8 +109,8 @@ export async function writeChanges(
             parent_object: 'people',
             parent_record_id: parentRecordId,
             entry_values: entryValuesFor(participation, [
-              'interactionId', 'participationType', 'eventType', 'event', 'participatedAt',
-            ]),
+              'interactionId', 'participationType', 'eventType', 'event', 'participatedAt', 'relatedPersonEmails',
+            ], updatedPeopleByEmail),
           },
         },
         `entry-create:${participation.interactionId}`,
@@ -119,7 +137,7 @@ export async function writeChanges(
       await client.write(
         'PATCH',
         `/v2/lists/${listId}/entries/${update.entryId}`,
-        { data: { entry_values: entryValuesFor(update.participation, update.changedFields) } },
+        { data: { entry_values: entryValuesFor(update.participation, update.changedFields, updatedPeopleByEmail) } },
         `entry-update:${update.participation.interactionId}`,
       );
       entriesUpdated += 1;

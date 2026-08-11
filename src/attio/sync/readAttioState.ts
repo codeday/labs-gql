@@ -24,15 +24,36 @@ function selectValue(values: Record<string, unknown[]>, slug: string): string | 
   return first?.option?.title ?? null;
 }
 
-function entryToFields(entry: AttioListEntry): EntryFields | null {
+function recordReferenceIds(values: Record<string, unknown[]>, slug: string): string[] {
+  const v = values[slug];
+  if (!Array.isArray(v)) return [];
+  return (v as { target_record_id?: string }[])
+    .map((ref) => ref.target_record_id)
+    .filter((id): id is string => Boolean(id));
+}
+
+/**
+ * relatedPersonEmails is compared as emails, not record ids (see types.ts), so an existing
+ * entry's related_people record ids are resolved back to emails here using the same People
+ * read this run already did — every id an entry can reference must belong to someone that
+ * read turned up, since Attio has no other way to have created the reference.
+ */
+function entryToFields(entry: AttioListEntry, emailByRecordId: Map<string, string>): EntryFields | null {
   const interactionId = textValue(entry.entry_values, 'interaction_id');
   if (!interactionId) return null;
+
+  const relatedPersonEmails = recordReferenceIds(entry.entry_values, 'related_people')
+    .map((id) => emailByRecordId.get(id))
+    .filter((email): email is string => Boolean(email))
+    .sort();
+
   return {
     interactionId,
     participationType: selectValue(entry.entry_values, 'participation_type') as ParticipationType,
     eventType: selectValue(entry.entry_values, 'event_type') as EventType,
     event: textValue(entry.entry_values, 'event') ?? '',
     participatedAt: textValue(entry.entry_values, 'participated_at'),
+    relatedPersonEmails,
   };
 }
 
@@ -90,10 +111,25 @@ export async function readAttioState(client: AttioClient, listId: string): Promi
     fetchAllPeople(client),
   ]);
 
+  const peopleByEmail = new Map<string, string>();
+  const emailByRecordId = new Map<string, string>();
+  for (const person of people) {
+    const emailValues = (person.values.email_addresses ?? []) as { email_address?: string }[];
+    for (const emailValue of emailValues) {
+      const email = emailValue.email_address?.trim().toLowerCase();
+      if (email) {
+        peopleByEmail.set(email, person.id.record_id);
+        // Multiple emails can map to the same record id; any one of them is a fine reverse
+        // lookup since we only use this to detect *which* people are already referenced.
+        emailByRecordId.set(person.id.record_id, email);
+      }
+    }
+  }
+
   const entriesByInteractionId = new Map<string, ExistingEntry>();
   let orphanEntryCount = 0;
   for (const entry of entries) {
-    const fields = entryToFields(entry);
+    const fields = entryToFields(entry, emailByRecordId);
     if (!fields) {
       orphanEntryCount += 1;
       DEBUG(`Orphan list entry with no interaction_id: ${entry.id.entry_id}`);
@@ -101,15 +137,6 @@ export async function readAttioState(client: AttioClient, listId: string): Promi
       continue;
     }
     entriesByInteractionId.set(fields.interactionId, { entryId: entry.id.entry_id, fields });
-  }
-
-  const peopleByEmail = new Map<string, string>();
-  for (const person of people) {
-    const emailValues = (person.values.email_addresses ?? []) as { email_address?: string }[];
-    for (const emailValue of emailValues) {
-      const email = emailValue.email_address?.trim().toLowerCase();
-      if (email) peopleByEmail.set(email, person.id.record_id);
-    }
   }
 
   return { entriesByInteractionId, peopleByEmail, orphanEntryCount };

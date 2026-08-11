@@ -47,6 +47,7 @@ function participation(overrides: Partial<Participation> = {}): Participation {
     givenName: 'Alice',
     surname: 'Smith',
     participatedAt: '2024-06-01',
+    relatedPersonEmails: [],
     ...overrides,
   };
 }
@@ -60,6 +61,7 @@ function existingEntryFor(p: Participation, entryId = 'entry-1'): ExistingEntry 
       eventType: p.eventType,
       event: p.event,
       participatedAt: p.participatedAt,
+      relatedPersonEmails: p.relatedPersonEmails,
     },
   };
 }
@@ -103,6 +105,30 @@ function existingEntryFor(p: Participation, entryId = 'entry-1'): ExistingEntry 
   assertEqual(plan.entriesToUpdate[0].entryId, 'entry-c1', 'The update targets the right entry');
   assertEqual(plan.entriesToUpdate[0].changedFields, ['eventType'], 'Only the changed field is listed');
   assertEqual(plan.unchangedCount, 1, 'The unchanged row is counted as unchanged, not updated');
+})();
+
+(function testBackfillDetectsMissingRelatedPeople() {
+  // Simulates an entry created before the Related People attribute existed: Attio has an
+  // empty related_people, but the projection now has one. This is what makes the backfill
+  // "just happen" via the normal update path, with no separate backfill script needed.
+  const p = participation({ interactionId: 'backfill-1', relatedPersonEmails: ['mentor@example.com'] });
+  const existing = existingEntryFor(participation({ interactionId: 'backfill-1', relatedPersonEmails: [] }));
+  const entries = new Map([[p.interactionId, existing]]);
+  const people = new Map([[p.email, 'person-1']]);
+
+  const plan = buildDiffPlan([p], entries, people);
+  assertEqual(plan.entriesToUpdate.length, 1, 'A pre-existing entry with no related_people is queued for update once the projection has one');
+  assertEqual(plan.entriesToUpdate[0].changedFields, ['relatedPersonEmails'], 'Only relatedPersonEmails is flagged as changed');
+})();
+
+(function testMatchingRelatedPeopleIsNotAnUpdate() {
+  const p = participation({ interactionId: 'stable-1', relatedPersonEmails: ['a@example.com', 'b@example.com'] });
+  const entries = new Map([[p.interactionId, existingEntryFor(p)]]);
+  const people = new Map([[p.email, 'person-1']]);
+
+  const plan = buildDiffPlan([p], entries, people);
+  assertEqual(plan.entriesToUpdate, [], 'Identical related-people sets do not trigger an update');
+  assertEqual(plan.unchangedCount, 1, 'The row is counted as unchanged');
 })();
 
 // --- Stage B: bad email filtering --------------------------------------------------------
@@ -168,6 +194,62 @@ async function testParticipatedAtHandlesStringTimestampFromQueryRaw(): Promise<v
   assertEqual(participations[0].participatedAt, '2024-06-01', 'A string timestamp is normalized to a date-only string');
 }
 
+// array_agg over the Mentor<->Project<->Student join can come back as a real JS array or as
+// a Postgres array-literal string, same caveat as participatedAt.
+async function testRelatedPersonEmailsParsedFromArrayAndPgLiteral(): Promise<void> {
+  const fakePrisma = {
+    $queryRaw: async () => ([
+      {
+        interactionId: 'array-form',
+        participationType: 'Mentor',
+        event: 'CodeDay Labs Summer 2024',
+        email: 'mentor1@example.com',
+        givenName: 'M',
+        surname: 'One',
+        participatedAt: new Date('2024-06-01T00:00:00Z'),
+        relatedPersonEmails: ['Student2@Example.com', 'student1@example.com', 'student1@example.com'],
+      },
+      {
+        interactionId: 'string-form',
+        participationType: 'Mentor',
+        event: 'CodeDay Labs Summer 2024',
+        email: 'mentor2@example.com',
+        givenName: 'M',
+        surname: 'Two',
+        participatedAt: new Date('2024-06-01T00:00:00Z'),
+        relatedPersonEmails: '{studentB@example.com,studentA@example.com}',
+      },
+      {
+        interactionId: 'no-related',
+        participationType: 'Mentor',
+        event: 'CodeDay Labs Summer 2024',
+        email: 'mentor3@example.com',
+        givenName: 'M',
+        surname: 'Three',
+        participatedAt: new Date('2024-06-01T00:00:00Z'),
+        relatedPersonEmails: '{}',
+      },
+    ]),
+  };
+
+  const { participations } = await projectParticipations(fakePrisma as any);
+  const arrayForm = participations.find((p) => p.interactionId === 'array-form');
+  const stringForm = participations.find((p) => p.interactionId === 'string-form');
+  const noRelated = participations.find((p) => p.interactionId === 'no-related');
+
+  assertEqual(
+    arrayForm?.relatedPersonEmails,
+    ['student1@example.com', 'student2@example.com'],
+    'Array-form related emails are normalized, deduped, and sorted',
+  );
+  assertEqual(
+    stringForm?.relatedPersonEmails,
+    ['studenta@example.com', 'studentb@example.com'],
+    'A Postgres array-literal string is parsed the same way as a real array',
+  );
+  assertEqual(noRelated?.relatedPersonEmails, [], 'An empty Postgres array literal yields an empty list, not a crash');
+}
+
 // --- Stage C: multi-email person resolution -----------------------------------------------
 
 async function testPersonResolvesFromAnyEmail(): Promise<void> {
@@ -195,6 +277,46 @@ async function testPersonResolvesFromAnyEmail(): Promise<void> {
   assertEqual(state.peopleByEmail.get('primary@example.com'), 'person-multi', 'Resolves from first email');
   assertEqual(state.peopleByEmail.get('secondary@example.com'), 'person-multi', 'Resolves from second email');
   assertEqual(state.peopleByEmail.get('tertiary@example.com'), 'person-multi', 'Resolves from third email (case-insensitively)');
+}
+
+async function testExistingRelatedPeopleResolvedFromRecordIds(): Promise<void> {
+  const mentor: AttioPersonRecord = {
+    id: { workspace_id: 'w', object_id: 'o', record_id: 'mentor-record' },
+    created_at: '2024-01-01T00:00:00Z',
+    values: { email_addresses: [{ email_address: 'mentor@example.com' }] },
+  };
+  const student: AttioPersonRecord = {
+    id: { workspace_id: 'w', object_id: 'o', record_id: 'student-record' },
+    created_at: '2024-01-01T00:00:00Z',
+    values: { email_addresses: [{ email_address: 'student@example.com' }] },
+  };
+  const entry = {
+    id: { workspace_id: 'w', list_id: 'list-1', entry_id: 'entry-1' },
+    parent_record_id: 'mentor-record',
+    parent_object: 'people',
+    created_at: '2024-01-01T00:00:00Z',
+    entry_values: {
+      interaction_id: [{ value: 'm1', attribute_type: 'text' }],
+      related_people: [{ target_object: 'people', target_record_id: 'student-record', attribute_type: 'record-reference' }],
+    },
+  } as AttioListEntry;
+
+  const stubClient: AttioClient = {
+    get: async () => { throw new Error('not used'); },
+    read: (async (path: string) => {
+      if (path.includes('/entries/query')) return { data: [entry] };
+      return { data: [mentor, student] };
+    }) as AttioClient['read'],
+    write: async () => { throw new Error('not used'); },
+  };
+
+  const state = await readAttioState(stubClient, 'list-1');
+  const existing = state.entriesByInteractionId.get('m1');
+  assertEqual(
+    existing?.fields.relatedPersonEmails,
+    ['student@example.com'],
+    "An existing entry's related_people record id resolves back to an email for diffing",
+  );
 }
 
 // --- Stage E: uniqueness conflict, retry, and row-failure isolation -----------------------
@@ -225,6 +347,39 @@ async function testUniquenessConflictTreatedAsSuccess(): Promise<void> {
 
   assertEqual(result.rowsFailed, [], 'A uniqueness conflict on entry create is not a failure');
   assertEqual(result.entriesCreated, 0, 'A uniqueness conflict does not count as a new entry created');
+}
+
+async function testRelatedPeopleResolvedAtWriteTimeAndUnresolvableDropped(): Promise<void> {
+  const p = participation({
+    interactionId: 'rel-1',
+    email: 'mentor@example.com',
+    relatedPersonEmails: ['student-known@example.com', 'student-unknown@example.com'],
+  });
+  const captured: { entryValues: Record<string, unknown> | null } = { entryValues: null };
+  const client = fakeClient({
+    write: (async (method: string, path: string, body: unknown) => {
+      if (method === 'POST' && path === '/v2/lists/list-1/entries') {
+        captured.entryValues = (body as { data: { entry_values: Record<string, unknown> } }).data.entry_values;
+      }
+      return {};
+    }) as AttioClient['write'],
+  });
+
+  const peopleByEmail = new Map([
+    [p.email, 'person-mentor'],
+    ['student-known@example.com', 'person-student-known'],
+    // student-unknown@example.com deliberately absent, e.g. its own row had a bad email.
+  ]);
+
+  await writeChanges(client, 'list-1', {
+    peopleToUpsert: [], entriesToCreate: [p], entriesToUpdate: [], unchangedCount: 0,
+  }, peopleByEmail);
+
+  assertEqual(
+    captured.entryValues?.related_people,
+    [{ target_object: 'people', target_record_id: 'person-student-known' }],
+    'Only the resolvable related person is written; the unresolvable one is silently dropped, not a failure',
+  );
 }
 
 async function testSingleRowFailureDoesNotAbortRemainingPlan(): Promise<void> {
@@ -291,8 +446,11 @@ async function testRetryAfterDateIsRespected(): Promise<void> {
 async function main(): Promise<void> {
   await testBlankEmailExcluded();
   await testParticipatedAtHandlesStringTimestampFromQueryRaw();
+  await testRelatedPersonEmailsParsedFromArrayAndPgLiteral();
   await testPersonResolvesFromAnyEmail();
+  await testExistingRelatedPeopleResolvedFromRecordIds();
   await testUniquenessConflictTreatedAsSuccess();
+  await testRelatedPeopleResolvedAtWriteTimeAndUnresolvableDropped();
   await testSingleRowFailureDoesNotAbortRemainingPlan();
   await testRetryAfterDateIsRespected();
 

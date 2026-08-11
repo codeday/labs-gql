@@ -6,11 +6,16 @@ import { makeDebug } from '../../utils/makeDebug';
 const DEBUG = makeDebug('attio:sync:diff');
 
 const COMPARABLE_FIELDS: (keyof EntryFields)[] = [
-  'participationType', 'eventType', 'event', 'participatedAt',
+  'participationType', 'eventType', 'event', 'participatedAt', 'relatedPersonEmails',
 ];
 
+function fieldsDiffer(a: unknown, b: unknown): boolean {
+  if (Array.isArray(a) || Array.isArray(b)) return JSON.stringify(a) !== JSON.stringify(b);
+  return a !== b;
+}
+
 function diffFields(desired: Participation, existing: EntryFields): (keyof EntryFields)[] {
-  return COMPARABLE_FIELDS.filter((field) => desired[field] !== existing[field]);
+  return COMPARABLE_FIELDS.filter((field) => fieldsDiffer(desired[field], existing[field]));
 }
 
 /**

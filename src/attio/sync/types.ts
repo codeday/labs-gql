@@ -10,11 +10,17 @@ export interface Participation {
   givenName: string;
   surname: string;
   participatedAt: string | null;
+  // Normalized, sorted emails of the other side of this person's project(s): a student's
+  // mentors, or a mentor's students. Resolved to Attio record ids only at write time.
+  relatedPersonEmails: string[];
 }
 
 /**
- * The five list-entry attribute values we sync, in a flat shape shared by both
- * "what the projection wants" and "what Attio currently has" so Stage D can diff them directly.
+ * The list-entry attribute values we sync, in a flat shape shared by both "what the
+ * projection wants" and "what Attio currently has" so Stage D can diff them directly.
+ * relatedPersonEmails is compared as emails on both sides (see readAttioState.ts) even
+ * though Attio itself stores record references, so no record-id resolution is needed
+ * until Stage E actually writes a change.
  */
 export interface EntryFields {
   interactionId: string;
@@ -22,6 +28,7 @@ export interface EntryFields {
   eventType: EventType;
   event: string;
   participatedAt: string | null;
+  relatedPersonEmails: string[];
 }
 
 export interface ExistingEntry {
