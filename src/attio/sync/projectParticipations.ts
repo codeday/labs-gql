@@ -43,6 +43,9 @@ function parsePgTextArray(value: string[] | string | null): string[] {
 export interface ProjectionResult {
   participations: Participation[];
   badEmailInteractionIds: string[];
+  // The givenName/surname from whichever of this email's participations has the most recent
+  // participatedAt — the source of truth for correcting an existing Attio person's broken name.
+  canonicalNameByEmail: Map<string, { givenName: string; surname: string }>;
 }
 
 /**
@@ -132,5 +135,19 @@ export async function projectParticipations(prisma: QueryableClient, limit?: num
 
   const limited = limit !== undefined ? participations.slice(0, limit) : participations;
 
-  return { participations: limited, badEmailInteractionIds };
+  // Computed from `limited`, not the full set, so --limit bounds all activity for a test
+  // run — including name fixes — not just entry creates/updates.
+  const canonicalNameByEmail = new Map<string, { givenName: string; surname: string }>();
+  const bestParticipatedAtByEmail = new Map<string, string | null>();
+  for (const p of limited) {
+    const bestSoFar = bestParticipatedAtByEmail.get(p.email);
+    const isFirstForEmail = bestSoFar === undefined;
+    const isMoreRecent = Boolean(p.participatedAt) && (!bestSoFar || p.participatedAt! >= bestSoFar);
+    if (isFirstForEmail || isMoreRecent) {
+      canonicalNameByEmail.set(p.email, { givenName: p.givenName, surname: p.surname });
+      bestParticipatedAtByEmail.set(p.email, p.participatedAt);
+    }
+  }
+
+  return { participations: limited, badEmailInteractionIds, canonicalNameByEmail };
 }

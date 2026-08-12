@@ -30,6 +30,7 @@ function emptySummary(dryRun: boolean, skippedDueToLock: boolean): SyncSummary {
     rowsSkippedForBadEmail: 0,
     badEmailInteractionIds: [],
     peopleCreated: 0,
+    peopleNameFixed: 0,
     entriesCreated: 0,
     entriesUpdated: 0,
     entriesUnchanged: 0,
@@ -57,19 +58,31 @@ export async function runAlumniInteractionsSync(options: SyncOptions): Promise<S
 
   try {
     // Stage B: project source rows.
-    const { participations, badEmailInteractionIds } = await projectParticipations(prisma, options.limit);
+    const { participations, badEmailInteractionIds, canonicalNameByEmail } = await projectParticipations(
+      prisma,
+      options.limit,
+    );
     DEBUG(`Projected ${participations.length} participations (${badEmailInteractionIds.length} skipped for bad email).`);
 
     // Stage C: full bulk reads, both complete before any write.
     const client = createAttioClient(apiToken);
-    const { entriesByInteractionId, peopleByEmail, orphanEntryCount } = await readAttioState(client, listId);
+    const {
+      entriesByInteractionId, peopleByEmail, personNameStatusByRecordId, orphanEntryCount,
+    } = await readAttioState(client, listId);
     DEBUG(`Read ${entriesByInteractionId.size} existing entries, ${peopleByEmail.size} known emails, ${orphanEntryCount} orphan entries.`);
 
     // Stage D: pure in-memory diff.
-    const plan = buildDiffPlan(participations, entriesByInteractionId, peopleByEmail);
+    const plan = buildDiffPlan(
+      participations,
+      entriesByInteractionId,
+      peopleByEmail,
+      personNameStatusByRecordId,
+      canonicalNameByEmail,
+    );
     DEBUG(
-      `Plan: ${plan.peopleToUpsert.length} people to upsert, ${plan.entriesToCreate.length} entries to create, `
-      + `${plan.entriesToUpdate.length} entries to update, ${plan.unchangedCount} unchanged.`,
+      `Plan: ${plan.peopleToUpsert.length} people to upsert, ${plan.peopleToFixName.length} people to fix name for, `
+      + `${plan.entriesToCreate.length} entries to create, ${plan.entriesToUpdate.length} entries to update, `
+      + `${plan.unchangedCount} unchanged.`,
     );
 
     if (options.dryRun) {
@@ -79,6 +92,7 @@ export async function runAlumniInteractionsSync(options: SyncOptions): Promise<S
         rowsSkippedForBadEmail: badEmailInteractionIds.length,
         badEmailInteractionIds,
         peopleCreated: 0,
+        peopleNameFixed: 0,
         entriesCreated: 0,
         entriesUpdated: 0,
         entriesUnchanged: plan.unchangedCount,
@@ -90,7 +104,7 @@ export async function runAlumniInteractionsSync(options: SyncOptions): Promise<S
 
     // Stage E: writes, in order (people, then entry creates, then entry updates).
     const {
-      peopleCreated, entriesCreated, entriesUpdated, rowsFailed,
+      peopleCreated, peopleNameFixed, entriesCreated, entriesUpdated, rowsFailed,
     } = await writeChanges(client, listId, plan, peopleByEmail);
 
     return {
@@ -99,6 +113,7 @@ export async function runAlumniInteractionsSync(options: SyncOptions): Promise<S
       rowsSkippedForBadEmail: badEmailInteractionIds.length,
       badEmailInteractionIds,
       peopleCreated,
+      peopleNameFixed,
       entriesCreated,
       entriesUpdated,
       entriesUnchanged: plan.unchangedCount,

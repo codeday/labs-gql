@@ -57,10 +57,20 @@ function entryToFields(entry: AttioListEntry, emailByRecordId: Map<string, strin
   };
 }
 
+export interface PersonNameStatus {
+  hasFirstName: boolean;
+  hasLastName: boolean;
+}
+
 export interface AttioState {
   entriesByInteractionId: Map<string, ExistingEntry>;
   peopleByEmail: Map<string, string>;
+  personNameStatusByRecordId: Map<string, PersonNameStatus>;
   orphanEntryCount: number;
+}
+
+function isNonBlank(s: string | undefined): boolean {
+  return Boolean(s && s.trim());
 }
 
 async function fetchAllListEntries(client: AttioClient, listId: string): Promise<AttioListEntry[]> {
@@ -113,6 +123,7 @@ export async function readAttioState(client: AttioClient, listId: string): Promi
 
   const peopleByEmail = new Map<string, string>();
   const emailByRecordId = new Map<string, string>();
+  const personNameStatusByRecordId = new Map<string, PersonNameStatus>();
   for (const person of people) {
     const emailValues = (person.values.email_addresses ?? []) as { email_address?: string }[];
     for (const emailValue of emailValues) {
@@ -124,6 +135,12 @@ export async function readAttioState(client: AttioClient, listId: string): Promi
         emailByRecordId.set(person.id.record_id, email);
       }
     }
+
+    const nameValue = (person.values.name as { first_name?: string; last_name?: string }[] | undefined)?.[0];
+    personNameStatusByRecordId.set(person.id.record_id, {
+      hasFirstName: isNonBlank(nameValue?.first_name),
+      hasLastName: isNonBlank(nameValue?.last_name),
+    });
   }
 
   const entriesByInteractionId = new Map<string, ExistingEntry>();
@@ -139,5 +156,7 @@ export async function readAttioState(client: AttioClient, listId: string): Promi
     entriesByInteractionId.set(fields.interactionId, { entryId: entry.id.entry_id, fields });
   }
 
-  return { entriesByInteractionId, peopleByEmail, orphanEntryCount };
+  return {
+    entriesByInteractionId, peopleByEmail, personNameStatusByRecordId, orphanEntryCount,
+  };
 }

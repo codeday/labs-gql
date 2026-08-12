@@ -41,10 +41,32 @@ function entryValuesFor(
 
 export interface WriteResult {
   peopleCreated: number;
+  peopleNameFixed: number;
   entriesCreated: number;
   entriesUpdated: number;
   rowsFailed: RowFailure[];
   peopleByEmail: Map<string, string>;
+}
+
+async function upsertPersonNameValues(
+  client: AttioClient,
+  person: { email: string; givenName: string; surname: string },
+  logContext: string,
+): Promise<{ recordId: string }> {
+  const { data } = await client.write<{ data: { id: { record_id: string } } }>(
+    'PUT',
+    `/v2/objects/people/records?matching_attribute=email_addresses`,
+    {
+      data: {
+        values: {
+          email_addresses: [{ email_address: person.email }],
+          name: [{ first_name: person.givenName, last_name: person.surname, full_name: `${person.givenName} ${person.surname}` }],
+        },
+      },
+    },
+    logContext,
+  );
+  return { recordId: data.id.record_id };
 }
 
 /**
@@ -60,6 +82,7 @@ export async function writeChanges(
 ): Promise<WriteResult> {
   const rowsFailed: RowFailure[] = [];
   let peopleCreated = 0;
+  let peopleNameFixed = 0;
   let entriesCreated = 0;
   let entriesUpdated = 0;
   const updatedPeopleByEmail = new Map(peopleByEmail);
@@ -67,23 +90,26 @@ export async function writeChanges(
   for (const person of plan.peopleToUpsert) {
     try {
       // eslint-disable-next-line no-await-in-loop
-      const { data } = await client.write<{ data: { id: { record_id: string } } }>(
-        'PUT',
-        `/v2/objects/people/records?matching_attribute=email_addresses`,
-        {
-          data: {
-            values: {
-              email_addresses: [{ email_address: person.email }],
-              name: [{ first_name: person.givenName, last_name: person.surname, full_name: `${person.givenName} ${person.surname}` }],
-            },
-          },
-        },
-        `person-upsert:${person.email}`,
-      );
-      updatedPeopleByEmail.set(person.email, data.id.record_id);
+      const { recordId } = await upsertPersonNameValues(client, person, `person-upsert:${person.email}`);
+      updatedPeopleByEmail.set(person.email, recordId);
       peopleCreated += 1;
     } catch (ex) {
       DEBUG(`Failed to upsert person ${person.email}:`, ex);
+      rowsFailed.push({ interactionId: person.email, stage: 'person-upsert', error: (ex as Error).message });
+    }
+  }
+
+  // Existing Attio people with a broken (incomplete) name, corrected from the most recent
+  // Mentor/Student row for that email. This is the one case where we deliberately overwrite
+  // name on someone who already exists — everywhere else that's avoided to not clobber
+  // manual corrections, but an incomplete name can't be a deliberate correction.
+  for (const person of plan.peopleToFixName) {
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      await upsertPersonNameValues(client, person, `person-name-fix:${person.email}`);
+      peopleNameFixed += 1;
+    } catch (ex) {
+      DEBUG(`Failed to fix name for ${person.email}:`, ex);
       rowsFailed.push({ interactionId: person.email, stage: 'person-upsert', error: (ex as Error).message });
     }
   }
@@ -152,6 +178,6 @@ export async function writeChanges(
   }
 
   return {
-    peopleCreated, entriesCreated, entriesUpdated, rowsFailed, peopleByEmail: updatedPeopleByEmail,
+    peopleCreated, peopleNameFixed, entriesCreated, entriesUpdated, rowsFailed, peopleByEmail: updatedPeopleByEmail,
   };
 }

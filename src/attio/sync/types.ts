@@ -38,6 +38,10 @@ export interface ExistingEntry {
 
 export interface DiffPlan {
   peopleToUpsert: { email: string; givenName: string; surname: string }[];
+  // Existing Attio people whose stored name is incomplete (missing a first name, a last
+  // name, or both) — corrected using the most-recently-participated Mentor/Student row
+  // for that email. Disjoint from peopleToUpsert: only people already known to Attio.
+  peopleToFixName: { email: string; givenName: string; surname: string }[];
   entriesToCreate: Participation[];
   entriesToUpdate: { entryId: string; participation: Participation; changedFields: (keyof EntryFields)[] }[];
   unchangedCount: number;
@@ -60,6 +64,7 @@ export interface SyncSummary {
   rowsSkippedForBadEmail: number;
   badEmailInteractionIds: string[];
   peopleCreated: number;
+  peopleNameFixed: number;
   entriesCreated: number;
   entriesUpdated: number;
   entriesUnchanged: number;

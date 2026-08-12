@@ -8,6 +8,7 @@
 import 'reflect-metadata';
 import fetch, { Response, Headers } from 'node-fetch';
 import { buildDiffPlan } from '../../attio/sync/diff';
+import { PersonNameStatus } from '../../attio/sync/readAttioState';
 import { projectParticipations } from '../../attio/sync/projectParticipations';
 import { readAttioState } from '../../attio/sync/readAttioState';
 import { writeChanges } from '../../attio/sync/writeChanges';
@@ -72,7 +73,7 @@ function existingEntryFor(p: Participation, entryId = 'entry-1'): ExistingEntry 
   const p = participation();
   const entries = new Map([[p.interactionId, existingEntryFor(p)]]);
   const people = new Map([[p.email, 'person-1']]);
-  const plan = buildDiffPlan([p], entries, people);
+  const plan = buildDiffPlan([p], entries, people, new Map(), new Map());
   assertEqual(plan.entriesToCreate, [], 'No creates when Attio already matches the projection');
   assertEqual(plan.entriesToUpdate, [], 'No updates when Attio already matches the projection');
   assertEqual(plan.peopleToUpsert, [], 'No people to upsert when already known');
@@ -81,7 +82,7 @@ function existingEntryFor(p: Participation, entryId = 'entry-1'): ExistingEntry 
 
 (function testMissingParticipationCreatedOnce() {
   const p = participation({ interactionId: 'missing-1' });
-  const plan = buildDiffPlan([p], new Map(), new Map([[p.email, 'person-1']]));
+  const plan = buildDiffPlan([p], new Map(), new Map([[p.email, 'person-1']]), new Map(), new Map());
   assertEqual(plan.entriesToCreate.length, 1, 'Missing participation lands in entriesToCreate exactly once');
   assertEqual(plan.entriesToCreate[0].interactionId, 'missing-1', 'The created entry is the right one');
 })();
@@ -100,7 +101,7 @@ function existingEntryFor(p: Participation, entryId = 'entry-1'): ExistingEntry 
   ]);
   const people = new Map([[changed.email, 'person-1']]);
 
-  const plan = buildDiffPlan([changed, unchanged], entries, people);
+  const plan = buildDiffPlan([changed, unchanged], entries, people, new Map(), new Map());
   assertEqual(plan.entriesToUpdate.length, 1, 'Only the changed row lands in entriesToUpdate');
   assertEqual(plan.entriesToUpdate[0].entryId, 'entry-c1', 'The update targets the right entry');
   assertEqual(plan.entriesToUpdate[0].changedFields, ['eventType'], 'Only the changed field is listed');
@@ -116,7 +117,7 @@ function existingEntryFor(p: Participation, entryId = 'entry-1'): ExistingEntry 
   const entries = new Map([[p.interactionId, existing]]);
   const people = new Map([[p.email, 'person-1']]);
 
-  const plan = buildDiffPlan([p], entries, people);
+  const plan = buildDiffPlan([p], entries, people, new Map(), new Map());
   assertEqual(plan.entriesToUpdate.length, 1, 'A pre-existing entry with no related_people is queued for update once the projection has one');
   assertEqual(plan.entriesToUpdate[0].changedFields, ['relatedPersonEmails'], 'Only relatedPersonEmails is flagged as changed');
 })();
@@ -126,9 +127,62 @@ function existingEntryFor(p: Participation, entryId = 'entry-1'): ExistingEntry 
   const entries = new Map([[p.interactionId, existingEntryFor(p)]]);
   const people = new Map([[p.email, 'person-1']]);
 
-  const plan = buildDiffPlan([p], entries, people);
+  const plan = buildDiffPlan([p], entries, people, new Map(), new Map());
   assertEqual(plan.entriesToUpdate, [], 'Identical related-people sets do not trigger an update');
   assertEqual(plan.unchangedCount, 1, 'The row is counted as unchanged');
+})();
+
+// --- Diff: fixing broken names on existing people ----------------------------------------
+
+function nameStatus(hasFirstName: boolean, hasLastName: boolean): Map<string, PersonNameStatus> {
+  return new Map([['person-1', { hasFirstName, hasLastName }]]);
+}
+
+(function testOnlyFirstNameIsQueuedForFix() {
+  const p = participation({ email: 'alice@example.com' });
+  const people = new Map([[p.email, 'person-1']]);
+  const canonical = new Map([[p.email, { givenName: 'Alice', surname: 'Smith' }]]);
+
+  const plan = buildDiffPlan([p], new Map(), people, nameStatus(true, false), canonical);
+  assertEqual(plan.peopleToFixName, [{ email: 'alice@example.com', givenName: 'Alice', surname: 'Smith' }], 'A first-name-only person is queued for a name fix');
+})();
+
+(function testOnlyLastNameIsQueuedForFix() {
+  const p = participation({ email: 'bob@example.com' });
+  const people = new Map([[p.email, 'person-1']]);
+  const canonical = new Map([[p.email, { givenName: 'Bob', surname: 'Jones' }]]);
+
+  const plan = buildDiffPlan([p], new Map(), people, nameStatus(false, true), canonical);
+  assertEqual(plan.peopleToFixName.length, 1, 'A last-name-only person is queued for a name fix');
+})();
+
+(function testNoNameAtAllIsQueuedForFix() {
+  const p = participation({ email: 'carl@example.com' });
+  const people = new Map([[p.email, 'person-1']]);
+  const canonical = new Map([[p.email, { givenName: 'Carl', surname: 'Davis' }]]);
+
+  const plan = buildDiffPlan([p], new Map(), people, nameStatus(false, false), canonical);
+  assertEqual(plan.peopleToFixName.length, 1, 'A person with no name at all is queued for a name fix');
+})();
+
+(function testCompleteNameIsNotTouched() {
+  const p = participation({ email: 'dana@example.com' });
+  const people = new Map([[p.email, 'person-1']]);
+  const canonical = new Map([[p.email, { givenName: 'Dana', surname: 'Lee' }]]);
+
+  const plan = buildDiffPlan([p], new Map(), people, nameStatus(true, true), canonical);
+  assertEqual(plan.peopleToFixName, [], 'A person who already has both names is never touched, to avoid clobbering manual corrections');
+})();
+
+(function testUnknownPersonIsNotQueuedForNameFix() {
+  // Absent from peopleByEmail entirely — they'll get a full name via peopleToUpsert on
+  // creation instead, so they shouldn't also show up here.
+  const p = participation({ email: 'new@example.com' });
+  const canonical = new Map([[p.email, { givenName: 'New', surname: 'Person' }]]);
+
+  const plan = buildDiffPlan([p], new Map(), new Map(), new Map(), canonical);
+  assertEqual(plan.peopleToFixName, [], 'A person not yet known to Attio is not queued for a name fix');
+  assertEqual(plan.peopleToUpsert.length, 1, 'They are queued for creation instead, which sets a full name');
 })();
 
 // --- Stage B: bad email filtering --------------------------------------------------------
@@ -250,6 +304,42 @@ async function testRelatedPersonEmailsParsedFromArrayAndPgLiteral(): Promise<voi
   assertEqual(noRelated?.relatedPersonEmails, [], 'An empty Postgres array literal yields an empty list, not a crash');
 }
 
+// The name-fix feature trusts whichever participation for an email is most recent — this
+// verifies that selection, not just "first row wins".
+async function testCanonicalNamePicksMostRecentParticipation(): Promise<void> {
+  const fakePrisma = {
+    $queryRaw: async () => ([
+      {
+        interactionId: 'old-row',
+        participationType: 'Mentor',
+        event: 'CodeDay Labs Summer 2022',
+        email: 'alice@example.com',
+        givenName: 'Al',
+        surname: 'Smyth',
+        participatedAt: new Date('2022-06-01T00:00:00Z'),
+        relatedPersonEmails: [],
+      },
+      {
+        interactionId: 'new-row',
+        participationType: 'Mentor',
+        event: 'CodeDay Labs Summer 2024',
+        email: 'alice@example.com',
+        givenName: 'Alice',
+        surname: 'Smith',
+        participatedAt: new Date('2024-06-01T00:00:00Z'),
+        relatedPersonEmails: [],
+      },
+    ]),
+  };
+
+  const { canonicalNameByEmail } = await projectParticipations(fakePrisma as any);
+  assertEqual(
+    canonicalNameByEmail.get('alice@example.com'),
+    { givenName: 'Alice', surname: 'Smith' },
+    'The most recently-participated row wins, regardless of row order',
+  );
+}
+
 // --- Stage C: multi-email person resolution -----------------------------------------------
 
 async function testPersonResolvesFromAnyEmail(): Promise<void> {
@@ -342,7 +432,7 @@ async function testUniquenessConflictTreatedAsSuccess(): Promise<void> {
   });
 
   const result = await writeChanges(client, 'list-1', {
-    peopleToUpsert: [], entriesToCreate: [p], entriesToUpdate: [], unchangedCount: 0,
+    peopleToUpsert: [], peopleToFixName: [], entriesToCreate: [p], entriesToUpdate: [], unchangedCount: 0,
   }, new Map([[p.email, 'person-1']]));
 
   assertEqual(result.rowsFailed, [], 'A uniqueness conflict on entry create is not a failure');
@@ -372,13 +462,41 @@ async function testRelatedPeopleResolvedAtWriteTimeAndUnresolvableDropped(): Pro
   ]);
 
   await writeChanges(client, 'list-1', {
-    peopleToUpsert: [], entriesToCreate: [p], entriesToUpdate: [], unchangedCount: 0,
+    peopleToUpsert: [], peopleToFixName: [], entriesToCreate: [p], entriesToUpdate: [], unchangedCount: 0,
   }, peopleByEmail);
 
   assertEqual(
     captured.entryValues?.related_people,
     [{ target_object: 'people', target_record_id: 'person-student-known' }],
     'Only the resolvable related person is written; the unresolvable one is silently dropped, not a failure',
+  );
+}
+
+async function testPeopleToFixNameIssuesPutWithNameAndCounts(): Promise<void> {
+  const captured: { values: Record<string, unknown> | null } = { values: null };
+  const client = fakeClient({
+    write: (async (method: string, path: string, body: unknown) => {
+      if (method === 'PUT' && path.includes('/objects/people/records')) {
+        captured.values = (body as { data: { values: Record<string, unknown> } }).data.values;
+      }
+      return { data: { id: { record_id: 'person-1' } } };
+    }) as AttioClient['write'],
+  });
+
+  const result = await writeChanges(client, 'list-1', {
+    peopleToUpsert: [],
+    peopleToFixName: [{ email: 'alice@example.com', givenName: 'Alice', surname: 'Smith' }],
+    entriesToCreate: [],
+    entriesToUpdate: [],
+    unchangedCount: 0,
+  }, new Map([['alice@example.com', 'person-1']]));
+
+  assertEqual(result.peopleNameFixed, 1, 'The name fix is counted separately from peopleCreated');
+  assertEqual(result.peopleCreated, 0, 'A name fix on an existing person is not counted as a person created');
+  assertEqual(
+    captured.values?.name,
+    [{ first_name: 'Alice', last_name: 'Smith', full_name: 'Alice Smith' }],
+    'The fix is written as a PUT with the corrected name',
   );
 }
 
@@ -400,6 +518,7 @@ async function testSingleRowFailureDoesNotAbortRemainingPlan(): Promise<void> {
 
   const result = await writeChanges(client, 'list-1', {
     peopleToUpsert: [],
+    peopleToFixName: [],
     entriesToCreate: [p1, p2],
     entriesToUpdate: [],
     unchangedCount: 0,
@@ -447,10 +566,12 @@ async function main(): Promise<void> {
   await testBlankEmailExcluded();
   await testParticipatedAtHandlesStringTimestampFromQueryRaw();
   await testRelatedPersonEmailsParsedFromArrayAndPgLiteral();
+  await testCanonicalNamePicksMostRecentParticipation();
   await testPersonResolvesFromAnyEmail();
   await testExistingRelatedPeopleResolvedFromRecordIds();
   await testUniquenessConflictTreatedAsSuccess();
   await testRelatedPeopleResolvedAtWriteTimeAndUnresolvableDropped();
+  await testPeopleToFixNameIssuesPutWithNameAndCounts();
   await testSingleRowFailureDoesNotAbortRemainingPlan();
   await testRetryAfterDateIsRespected();
 
