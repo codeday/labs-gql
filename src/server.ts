@@ -13,6 +13,7 @@ import { createContext as context } from './context';
 import config from './config';
 import { processPostmarkInboundEmail } from './email';
 import { getPrometheusMetrics } from './metrics';
+import { processSlackEvent } from './slack/webhooks';
 
 const DEBUG = makeDebug('server');
 
@@ -50,6 +51,11 @@ export async function startServer(): Promise<void> {
     `/${config.webhook.key}/email`,
     bodyParser.json(),
     processPostmarkInboundEmail
+  );
+  restServer.post(
+    `/${config.webhook.key}/slack`,
+    bodyParser.json(),
+    processSlackEvent
   );
   restServer.get('/metrics', basicAuth({ users: { 'metrics': config.metrics.key } }), async (_, res) => {
     res.setHeader('Content-Type', 'text/plain');
