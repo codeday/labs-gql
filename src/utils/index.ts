@@ -30,3 +30,4 @@ export * from './math';
 export * from './array';
 export * from './fullName';
 export * from './notNullable';
+export * from './attendanceTracking';

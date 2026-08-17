@@ -1,6 +1,6 @@
 import { InputType, Field, Int } from 'type-graphql';
 import { Prisma } from '@prisma/client';
-import { ProjectStatus, Track } from '../enums';
+import { AttendanceTrackingMode, ProjectStatus, Track } from '../enums';
 
 @InputType()
 export class ProjectEditInput {
@@ -34,6 +34,9 @@ export class ProjectEditInput {
   @Field(() => String, { nullable: true })
   repositoryId?: string | null
 
+  @Field(() => AttendanceTrackingMode, { nullable: true })
+  attendanceTracking?: AttendanceTrackingMode | null
+
   toQuery(): Prisma.ProjectUpdateInput {
     return {
       description: this.description,
@@ -50,6 +53,7 @@ export class ProjectEditInput {
       tags: this.tags ? { set: this.tags.map((id): Prisma.TagWhereUniqueInput => ({ id })) } : undefined,
       issueUrl: this.issueUrl ?? undefined,
       complete: this.complete ?? undefined,
+      attendanceTracking: this.attendanceTracking ?? undefined,
       repository: typeof this.repositoryId !== 'undefined'
         ? (this.repositoryId
             ? { connect: { id: this.repositoryId } }
