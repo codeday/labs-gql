@@ -117,6 +117,8 @@ model Event {
   matchComplete                 Boolean @default(false)
   partnersOnly                  Boolean @default(false)
 
+  defaultAttendanceTracking AttendanceTrackingMode @default(SLACK_HUDDLE)
+
   slackWorkspaceId              String?
   slackUserGroupId              String?
   slackAnnouncementChannelId    String?
@@ -222,12 +224,23 @@ model Meeting {
   notesStudentSchema Json?
   notesStudentUi     Json?
 
+  // Slack Integration
+  slackHuddleId    String?
+  scheduledStartAt DateTime?
+  scheduledEndAt   DateTime?
+
   // Relations
   event   Event  @relation(fields: [eventId], references: [id])
   eventId String
 
-  responses  MeetingResponse[]
-  attendance MeetingAttendance[]
+  project   Project? @relation(fields: [projectId], references: [id])
+  projectId String?
+
+  responses            MeetingResponse[]
+  attendance           MeetingAttendance[]
+  huddleParticipations SlackHuddleParticipation[]
+
+  @@index([projectId])
 }
 
 model MeetingAttendance {
@@ -239,12 +252,19 @@ model MeetingAttendance {
   attended Boolean @default(false)
   prepared Boolean @default(false)
 
+  // Attendance tracking
+  source     AttendanceSource @default(MANUAL)
+  confidence Float            @default(1.0)
+  metadata   Json?
+
   // Relations
   meeting   Meeting @relation(fields: [meetingId], references: [id])
   meetingId String
 
   student   Student? @relation(fields: [studentId], references: [id])
   studentId String?
+
+  @@index([source])
 }
 
 model MeetingResponse {
@@ -262,6 +282,40 @@ model MeetingResponse {
 
   authorStudent   Student? @relation(fields: [authorStudentId], references: [id])
   authorStudentId String?
+}
+
+model SlackHuddleParticipation {
+  // Metadata
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Slack data
+  huddleId  String
+  channelId String
+  userId    String // Slack user ID
+  joinedAt  DateTime
+  leftAt    DateTime?
+
+  // Relations - who joined (student or mentor)
+  student   Student? @relation(fields: [studentId], references: [id])
+  studentId String?
+
+  mentor   Mentor? @relation(fields: [mentorId], references: [id])
+  mentorId String?
+
+  // What meeting this was part of
+  meeting   Meeting? @relation(fields: [meetingId], references: [id])
+  meetingId String?
+
+  project   Project? @relation(fields: [projectId], references: [id])
+  projectId String?
+
+  @@unique([huddleId, userId])
+  @@index([huddleId])
+  @@index([studentId, joinedAt])
+  @@index([mentorId, joinedAt])
+  @@index([channelId, joinedAt])
 }
 
 model Survey {
@@ -383,11 +437,12 @@ model Mentor {
   // Relations
   projects                Project[]
   emailsSent              EmailSent[]
-  authoredSurveyResponses SurveyResponse[] @relation("AuthorMentor")
-  targetSurveyResponses   SurveyResponse[] @relation("TargetMentor")
+  authoredSurveyResponses SurveyResponse[]           @relation("AuthorMentor")
+  targetSurveyResponses   SurveyResponse[]           @relation("TargetMentor")
   projectEmails           ProjectEmail[]
   artifacts               Artifact[]
   files                   File[]
+  huddleParticipations    SlackHuddleParticipation[]
 
   event   Event  @relation(fields: [eventId], references: [id])
   eventId String @default("codeday-labs-2022")
@@ -434,14 +489,15 @@ model Student {
   emailsSent              EmailSent[]
   projectPreferences      ProjectPreference[]
   tagTrainingSubmissions  TagTrainingSubmission[]
-  authoredSurveyResponses SurveyResponse[]        @relation("AuthorStudent")
-  targetSurveyResponses   SurveyResponse[]        @relation("TargetStudent")
+  authoredSurveyResponses SurveyResponse[]           @relation("AuthorStudent")
+  targetSurveyResponses   SurveyResponse[]           @relation("TargetStudent")
   meetingResponses        MeetingResponse[]
   meetingAttendance       MeetingAttendance[]
   trainingEntryResponses  TrainingEntryResponse[]
   projectEmails           ProjectEmail[]
   artifacts               Artifact[]
   files                   File[]
+  huddleParticipations    SlackHuddleParticipation[]
 
   event   Event  @relation(fields: [eventId], references: [id])
   eventId String @default("codeday-labs-2022")
@@ -490,6 +546,16 @@ enum PrStatus {
   CLOSED_MERGED
 }
 
+enum AttendanceSource {
+  SLACK_HUDDLE
+  MANUAL
+}
+
+enum AttendanceTrackingMode {
+  SLACK_HUDDLE
+  NOT_TRACKED
+}
+
 model Project {
   // Metadata
   id        String   @id @default(cuid())
@@ -515,6 +581,8 @@ model Project {
   slackChannelId String?
   standupId      String?
 
+  attendanceTracking AttendanceTrackingMode?
+
   // Relations
   tags                  Tag[]
   mentors               Mentor[]
@@ -530,12 +598,14 @@ model Project {
   repository   Repository? @relation(fields: [repositoryId], references: [id])
   repositoryId String?
 
-  event          Event?          @relation(fields: [eventId], references: [id])
-  eventId        String?
-  standupThreads StandupThread[]
-  standupResults StandupResult[]
-  artifacts      Artifact[]
-  files          File[]
+  event                Event?                     @relation(fields: [eventId], references: [id])
+  eventId              String?
+  standupThreads       StandupThread[]
+  standupResults       StandupResult[]
+  artifacts            Artifact[]
+  files                File[]
+  meetings             Meeting[]
+  huddleParticipations SlackHuddleParticipation[]
 }
 
 model ArtifactType {

@@ -29,3 +29,5 @@ export * from './FileTypeCreateInput';
 export * from './FileTypeEditInput';
 export * from './ScheduledAnnouncementCreateInput';
 export * from './ScheduledAnnouncementEditInput';
+export * from './MeetingCreateInput';
+export * from './MeetingAttendanceInput';

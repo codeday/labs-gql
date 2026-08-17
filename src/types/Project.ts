@@ -16,7 +16,7 @@ import { Container } from 'typedi';
 import {
   ObjectType, Field, Int, Authorized, Ctx,
 } from 'type-graphql';
-import { Track, ProjectStatus, PrStatus } from '../enums';
+import { Track, ProjectStatus, PrStatus, AttendanceTrackingMode } from '../enums';
 import { Tag } from './Tag';
 import { Mentor } from './Mentor';
 import { Student } from './Student';
@@ -71,6 +71,9 @@ export class Project implements PrismaProject {
   @Authorized(AuthRole.ADMIN)
   @Field(() => String, { nullable: true })
   standupId: string | null
+
+  @Field(() => AttendanceTrackingMode, { nullable: true })
+  attendanceTracking: AttendanceTrackingMode | null
 
   @Field(() => [Tag], { name: 'tags' })
   async fetchTags(): Promise<PrismaTag[]> {
