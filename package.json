@@ -13,7 +13,6 @@
     "debug": "ts-node-dev --no-notify --respawn src",
     "send-event-recommendations": "ts-node scripts/sendEventRecommendations.ts",
     "backfill-reporting-channel": "ts-node scripts/backfillReportingChannel.ts",
-    "test:slack-reporting": "node --test --require ts-node/register/transpile-only tests/testSlackReporting.ts",
     "swagger": "rm src/badgr/Api.ts; swagger-typescript-api -p badgr-api-v2.yaml -n Api2.ts -o ./src/badgr; echo 'type json = JSON;' | cat - src/badgr/Api2.ts > src/badgr/Api.ts; rm src/badgr/Api2.ts"
   },
   "dependencies": {
