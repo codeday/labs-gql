@@ -13,7 +13,7 @@ import { nameToSlug } from '../utils';
 @Resolver(Event)
 export class EventResolver {
   @Inject(() => PrismaClient)
-  private readonly prisma : PrismaClient;
+  private readonly prisma: PrismaClient;
 
   @Authorized()
   @Query(() => Event, { nullable: true })
@@ -43,6 +43,20 @@ export class EventResolver {
     return this.prisma.event.update({
       where: { id: auth.eventId! },
       data: data.toQuery(),
+    });
+  }
+
+  @Authorized(AuthRole.ADMIN)
+  @Mutation(() => Event)
+  async setSlackReportingChannel(
+    @Ctx() { auth }: Context,
+    @Arg('channelId', () => String) channelId: string,
+  ): Promise<PrismaEvent> {
+    return this.prisma.event.update({
+      where: { id: auth.eventId! },
+      data: {
+        slackReportingChannelId: channelId,
+      },
     });
   }
 
@@ -132,6 +146,7 @@ export class EventResolver {
         slackWorkspaceId: source.slackWorkspaceId,
         slackWorkspaceAccessToken: source.slackWorkspaceAccessToken,
         slackAnnouncementChannelId: source.slackAnnouncementChannelId,
+        slackReportingChannelId: source.slackReportingChannelId,
         slackMentorChannelId: null,
         slackUserGroupId: null,
         standupAndProsperToken: source.standupAndProsperToken,
@@ -143,7 +158,7 @@ export class EventResolver {
     });
 
     if (source.fileTypes.length > 0) {
-      for(const ft of source.fileTypes) {
+      for (const ft of source.fileTypes) {
         await this.prisma.fileType.create({
           data: {
             slug: ft.slug,
@@ -159,7 +174,7 @@ export class EventResolver {
     }
 
     if (source.surveys.length > 0) {
-      for(const s of source.surveys) {
+      for (const s of source.surveys) {
         const survey = await this.prisma.survey.create({
           data: {
             name: s.name,
@@ -309,7 +324,7 @@ export class EventResolver {
         })),
       });
     }
-    
+
     return event;
   }
 }

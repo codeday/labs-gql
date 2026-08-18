@@ -1,6 +1,7 @@
 export * from './addMissingSlackChannelMembers';
 export * from './archiveSlackChannels';
 export * from './createSlackChannels';
+export * from './findSlackChannelByName';
 export * from './getSlackClientForEvent';
 export * from './linkExistingSlackChannels';
 export * from './linkExistingSlackMembers';

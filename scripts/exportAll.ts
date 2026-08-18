@@ -8,7 +8,7 @@ import { anonymousId } from '../src/utils';
 import { DateTime } from 'luxon';
 
 function dropFields<T extends Record<string, any>>(toDrop: string[]): (model: T) => Partial<T> {
-  return function(model: T): Partial<T> {
+  return function (model: T): Partial<T> {
     const out = { ...model };
     for (const field of toDrop) {
       delete out[field];
@@ -21,7 +21,7 @@ const LOW_INCOME_PARTNER_CODES = [];
 const LOW_INCOME_SCHOOLS = [];
 
 function anonymizeProfile<T extends object>(profileField: string): (model: T) => T {
-  return function(model: T): T {
+  return function (model: T): T {
     const profileValue = model[profileField];
     const out = { ...model };
     delete out[profileField];
@@ -39,7 +39,7 @@ function anonymizeProfile<T extends object>(profileField: string): (model: T) =>
 }
 
 function anonymizeModel<T extends object>(type: string): (model: T) => T {
-  return function(model: T): T {
+  return function (model: T): T {
     //
     const out = { ...model };
     for (const field of Object.keys(model)) {
@@ -63,8 +63,8 @@ function anonymizeModel<T extends object>(type: string): (model: T) => T {
   }
 }
 
-function anonymizeMappingModel<T extends {A: string, B: string}>(aType: string, bType: string): (mode: T) => T {
-  return function(model: T): T {
+function anonymizeMappingModel<T extends { A: string, B: string }>(aType: string, bType: string): (mode: T) => T {
+  return function (model: T): T {
     return {
       ...model,
       A: ['event', 'tag', 'eventId', 'tagId'].includes(aType) ? model.A : anonymousId(aType, model.A),
@@ -96,12 +96,12 @@ async function dumpTables(prisma: PrismaClient, eventIdFilter: Prisma.StringFilt
     artifactType: (await prisma.artifactType.findMany({ where: filter }))
       .map(anonymizeModel('artifactType')),
 
-    emailSent: (await prisma.emailSent.findMany({ where: { OR: [{ project: filter }, { student: filter }, { mentor: filter }]} }))
+    emailSent: (await prisma.emailSent.findMany({ where: { OR: [{ project: filter }, { student: filter }, { mentor: filter }] } }))
       .map(anonymizeModel('emailSent')),
 
     event: (await prisma.event.findMany({ where: { id: eventIdFilter } }))
       .map(anonymizeModel('event'))
-      .map(dropFields(['emailSignature', 'certificationStatements', 'slackWorkspaceId', 'slackUserGroupId', 'slackMentorChannelId', 'slackWorkspaceAccessToken', 'standupAndProsperToken', 'standupAiModelVaguePending', 'standupAiModelWorkloadPending', ])),
+      .map(dropFields(['emailSignature', 'certificationStatements', 'slackWorkspaceId', 'slackUserGroupId', 'slackAnnouncementChannelId', 'slackReportingChannelId', 'slackMentorChannelId', 'slackWorkspaceAccessToken', 'standupAndProsperToken', 'standupAiModelVaguePending', 'standupAiModelWorkloadPending',])),
 
     meeting: (await prisma.meeting.findMany({ where: filter }))
       .map(anonymizeModel('meeting')),
@@ -157,16 +157,16 @@ async function dumpTables(prisma: PrismaClient, eventIdFilter: Prisma.StringFilt
       .map(anonymizeModel('tagTrainingSubmission'))
       .map(dropFields('url')),
 
-    _mentorToProject: (await prisma.$queryRaw<{A: string, B: string}[]>`SELECT "A", "B" FROM "_MentorToProject";`)
+    _mentorToProject: (await prisma.$queryRaw<{ A: string, B: string }[]>`SELECT "A", "B" FROM "_MentorToProject";`)
       .map(anonymizeMappingModel('mentor', 'project')),
 
-    _projectToStudent: (await prisma.$queryRaw<{A: string, B: string}[]>`SELECT "A", "B" FROM "_ProjectToStudent";`)
+    _projectToStudent: (await prisma.$queryRaw<{ A: string, B: string }[]>`SELECT "A", "B" FROM "_ProjectToStudent";`)
       .map(anonymizeMappingModel('project', 'student')),
 
-    _projectToTag: (await prisma.$queryRaw<{A: string, B: string}[]>`SELECT "A", "B" FROM "_ProjectToTag";`)
+    _projectToTag: (await prisma.$queryRaw<{ A: string, B: string }[]>`SELECT "A", "B" FROM "_ProjectToTag";`)
       .map(anonymizeMappingModel('project', 'tag')),
 
-    _studentToTag: (await prisma.$queryRaw<{A: string, B: string}[]>`SELECT "A", "B" FROM "_StudentToTag";`)
+    _studentToTag: (await prisma.$queryRaw<{ A: string, B: string }[]>`SELECT "A", "B" FROM "_StudentToTag";`)
       .map(anonymizeMappingModel('student', 'tag')),
   };
 }

@@ -24,6 +24,7 @@ import Container from 'typedi';
 import { WebClient } from '@slack/web-api';
 import { DateTime } from 'luxon';
 import { formatStudentList, getFlaggedStudentsForEvent } from '../src/automation/tasks/weeklyLowStandupReport';
+import { findSlackChannelByName } from '../src/slack';
 import { registerDi } from '../src/di';
 
 // Parse command line arguments
@@ -373,21 +374,10 @@ async function postTestMessage(
     throw new Error('Slack client is required for live posting.');
   }
 
-  const channelsList = await slack.conversations.list({
-    exclude_archived: true,
-    types: 'public_channel,private_channel',
-  });
-
-  const channel = channelsList.channels?.find(
-    (c: any) => c.name === channelName
-  );
+  const channel = await findSlackChannelByName(slack, channelName);
 
   if (!channel) {
     console.error(`❌ Channel #${channelName} not found.`);
-    console.log('\nAvailable channels:');
-    channelsList.channels?.slice(0, 10).forEach((c: any) => {
-      console.log(`  - #${c.name} (${c.id})`);
-    });
     return;
   }
 
