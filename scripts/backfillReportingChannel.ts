@@ -55,11 +55,15 @@ async function main() {
 
     try {
       const slack = getSlackClientForEvent(event);
-      const channelId = await resolveSlackChannelId(slack, event.slackReportingChannelId);
+      const channelId = await resolveSlackChannelId(
+        slack,
+        force ? null : event.slackReportingChannelId,
+        channelName,
+      );
 
       if (!channelId) {
         skippedNotFound += 1;
-        console.log(`- ${event.id}: no configured reporting channel ID, skipping`);
+        console.log(`- ${event.id}: could not find #${channelName} in this workspace, skipping`);
         continue;
       }
 
