@@ -8,21 +8,15 @@
  * Run with:
  *   npx ts-node src/automation/tasks/weeklyLowStandupReport.manual-test.ts
  *
- * To test Slack channel lookup, set SLACK_BOT_TOKEN environment variable:
- *   SLACK_BOT_TOKEN=xoxb-your-token npx ts-node src/automation/tasks/weeklyLowStandupReport.manual-test.ts
- *
  * This tests the pure functions (findConsecutiveLowScores and formatStudentList)
  * imported from the actual implementation file to ensure tests stay in sync with code.
- * It also optionally tests Slack channel lookup if a token is provided.
  */
 
 import 'reflect-metadata';
 import { findConsecutiveLowScores, formatStudentList } from './weeklyLowStandupReport';
-import { WebClient } from '@slack/web-api';
 import { PrismaClient } from '@prisma/client';
 import { registerDi } from '../../di';
 import Container from 'typedi';
-import { findSlackChannelByName } from '../../slack';
 
 // Simple assertion helper
 function assert(condition: boolean, message: string) {
@@ -210,59 +204,6 @@ const formatted3 = formatStudentList([
 const expected = '• <@U123> (Alice Smith) - Mentor: <@UMENTOR1>\n• Bob Jones (Bob Jones) - Mentor: Taylor Ng';
 assertEqual(formatted3, expected, 'Should format multiple students with newlines');
 
-console.log('\n🧪 Testing Slack channel lookup...\n');
-
-async function testSlackChannelLookup() {
-  const slackToken = process.env.SLACK_BOT_TOKEN;
-
-  if (!slackToken) {
-    console.log('⏭️  Skipping Slack tests (set SLACK_BOT_TOKEN to test)\n');
-    console.log('✨ All non-Slack tests passed!\n');
-    return;
-  }
-
-  try {
-    const slack = new WebClient(slackToken);
-
-    // Test 1: List channels
-    console.log('Searching for channel in Slack...');
-
-    // Test 2: Find a specific channel
-    const testChannelName = 'stats';
-    const channel = await findSlackChannelByName(slack, testChannelName);
-
-    assert(
-      channel !== undefined,
-      `Should find #${testChannelName} channel in workspace`
-    );
-
-    if (channel) {
-      console.log(`✅ Found channel: #${channel.name} (ID: ${channel.id})`);
-    }
-
-    // Test 3: Handle non-existent channel
-    const nonExistentChannel = await findSlackChannelByName(
-      slack,
-      'this-channel-definitely-does-not-exist-xyz123'
-    );
-
-    assertEqual(
-      nonExistentChannel,
-      undefined,
-      'Should NOT find a non-existent channel'
-    );
-
-    console.log('\n✨ All tests passed (including Slack)!\n');
-  } catch (error: any) {
-    console.error('\n❌ Slack test failed:');
-    console.error(`   Error: ${error.message}`);
-    if (error.code === 'invalid_auth') {
-      console.error('   The SLACK_BOT_TOKEN provided is invalid or expired.');
-    }
-    process.exit(1);
-  }
-}
-
 console.log('\n🧪 Testing database access...\n');
 
 async function testDatabaseAccess() {
@@ -343,7 +284,6 @@ async function testDatabaseAccess() {
 
 async function runAllTests() {
   try {
-    await testSlackChannelLookup();
     await testDatabaseAccess();
     console.log('✨ All tests completed!\n');
   } catch (error) {
