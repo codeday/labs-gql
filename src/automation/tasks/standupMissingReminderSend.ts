@@ -19,8 +19,22 @@ const MISSING_STANDUP_SLACK_MESSAGES = [
   'As a reminder, standups are required.',
 ];
 
+export type StandupMissingReminderDeps = {
+  prisma: PrismaClient;
+  sendSlackProjectMessage: typeof sendSlackProjectMessage;
+  sendTemplateEmail: typeof sendTemplateEmail;
+};
+
 export default async function standupMissingReminderSend() {
-  const prisma = Container.get(PrismaClient);
+  return runStandupMissingReminderSend({
+    prisma: Container.get(PrismaClient),
+    sendSlackProjectMessage,
+    sendTemplateEmail,
+  });
+}
+
+export async function runStandupMissingReminderSend(deps: StandupMissingReminderDeps) {
+  const { prisma, sendSlackProjectMessage, sendTemplateEmail } = deps;
   const standups = await prisma.standupThread.findMany({
     where: {
       event: {
@@ -75,15 +89,21 @@ export default async function standupMissingReminderSend() {
     ));
 
     DEBUG(`Sending missing standup reminders to ${missingStudents.length} for ${standup.id} (project: ${standup.projectId})`)
-    await prisma.standupThread.update({
-      where: { id: standup.id },
-      data: { sentMissingReminderSlack: true, sentMissingReminderEmail: true },
-    });
 
-    if (missingStudents.length === 0) continue;
+    if (missingStudents.length === 0) {
+      await prisma.standupThread.update({
+        where: { id: standup.id },
+        data: { sentMissingReminderSlack: true, sentMissingReminderEmail: true },
+      });
+      continue;
+    }
 
     // Send email reminders
     if (!standup.sentMissingReminderEmail) {
+      await prisma.standupThread.update({
+        where: { id: standup.id },
+        data: { sentMissingReminderEmail: true },
+      });
       try {
         await sendTemplateEmail(
           'standupMissingReminder',
@@ -101,12 +121,24 @@ export default async function standupMissingReminderSend() {
       const missingStudentsWithConnectedSlack = missingStudents.filter(s => !!s.slackId);
       DEBUG(`Sending Slack reminders to ${missingStudentsWithConnectedSlack.length} students for ${standup.id}`);
       if (canSendSlackProjectMessage(standup.project) && missingStudentsWithConnectedSlack.length > 0) {
-        await sendSlackProjectMessage(
-          standup.project,
-          `${missingStudentsWithConnectedSlack.map(s => `<@${s.slackId}>`).join(' ')} ${randomSlackMessage}`
-        );
+        try {
+          await sendSlackProjectMessage(
+            standup.project,
+            `${missingStudentsWithConnectedSlack.map(s => `<@${s.slackId}>`).join(' ')} ${randomSlackMessage}`
+          );
+          await prisma.standupThread.update({
+            where: { id: standup.id },
+            data: { sentMissingReminderSlack: true },
+          });
+        } catch (ex) {
+          DEBUG(ex);
+        }
+      } else {
+        await prisma.standupThread.update({
+          where: { id: standup.id },
+          data: { sentMissingReminderSlack: true },
+        });
       }
-
     }
   }
 }
