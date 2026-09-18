@@ -44,8 +44,11 @@ export async function startAutomation() {
 export function runJob(name: string): boolean {
   if (name in tasksByName) {
     DEBUG(`Running oneshot job ${name}`);
-    tasksByName[name].fn();
-    DEBUG(`Job ${name} completed.`)
+    tasksByName[name].fn().catch((ex: unknown) => {
+      DEBUG(`Error from job ${name}:`);
+      DEBUG(ex);
+    });
+    DEBUG(`Job ${name} started.`);
     return true;
   }
   return false;
