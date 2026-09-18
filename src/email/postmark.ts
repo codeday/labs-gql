@@ -77,7 +77,7 @@ export async function processPostmarkInboundEmail(req: Request, res: Response) {
       from: myToEmails[0] ? `"${project?.event?.name || 'CodeDay'}" <${myToEmails[0]}>` : config.email.from,
       to: email.FromFull.Email,
       subject: `Re: ${email.Subject}`,
-      html: `<p>No one received your message. It was only sent to this unmonitored mailbox. <strong>You likely forgot to reply-all.</strong></p>\n${project?.event?.emailSignature}\n<br /><br /><blockquote>${email.HtmlBody}</blockquote>`
+      html: `<p>No one received your message. It was only sent to this unmonitored mailbox. <strong>You likely forgot to reply-all.</strong></p>\n${project?.event?.emailSignature || ''}\n<br /><br /><blockquote>${email.HtmlBody}</blockquote>`
     });
     return res.send('ok');
   }
