@@ -7,7 +7,7 @@ In recognition, we'd like to send you [{{ featuredProduct }}]({{link}}). (Or you
 In recognition, we're sending you a ${{ amount }} giftcard for [the CodeDay Store]({{link}}).
 {{/if}}
 
-Use this code at checkout to receive the ${{amount}} credit with free shipping: <strong>{{code}}</strong>
+Use this code at checkout to receive the ${{amount}} credit: <strong>{{code}}</strong>
 
 This code expires in a month, so [click here to use it now.]({{ link }})
 
