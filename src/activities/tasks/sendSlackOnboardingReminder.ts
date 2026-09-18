@@ -60,7 +60,7 @@ export default async function slackSendOnboardingReminder({ auth }: Context, arg
       eventId: auth.eventId!,
       slackId: { not: null },
       ...(args.partnerCode
-          ? { students: { some: { partnerCode: { equals: args.partnerCode, mode: 'insensitive' } } } }
+          ? { partnerCode: { equals: args.partnerCode, mode: 'insensitive' } }
           : {}
         )
     },
