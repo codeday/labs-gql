@@ -46,8 +46,19 @@ class RateLimiter {
   }
 }
 
-function computeRetryDelayMs(retryAfterHeader: string | null, attempt: number): number {
+export function computeRetryDelayMs(retryAfterHeader: string | null, attempt: number): number {
   if (retryAfterHeader) {
+    // RFC 9110 §10.2.3 also permits a non-negative integer count of seconds. This MUST be
+    // checked before date parsing: V8 parses bare numeric strings like "2" as valid *past*
+    // dates, so the date branch would otherwise compute a negative delta and clamp it to 0,
+    // causing an immediate retry instead of honoring the server's requested delay.
+    const trimmed = retryAfterHeader.trim();
+    if (/^\d+$/.test(trimmed)) {
+      const asSeconds = Number.parseInt(trimmed, 10);
+      if (Number.isFinite(asSeconds) && asSeconds >= 0) {
+        return asSeconds * 1000;
+      }
+    }
     const asDate = new Date(retryAfterHeader);
     if (!Number.isNaN(asDate.getTime())) {
       return Math.max(0, asDate.getTime() - Date.now());
