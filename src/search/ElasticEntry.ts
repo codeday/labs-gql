@@ -107,7 +107,7 @@ type ProjectInput = Project & { mentors: Mentor[], tags: Tag[], projectPreferenc
 function getTimezoneOffset(timezoneString?: string) {
   if (!timezoneString) return -7;
   const basicLookup = getTimezoneOffsetInner(timezoneString);
-  if (basicLookup) return basicLookup;
+  if (basicLookup !== null) return basicLookup;
   return {
     'America - Pacific': -7,
     'America - Mountain': -6,
@@ -119,7 +119,7 @@ function getTimezoneOffset(timezoneString?: string) {
     SGT: 8,
     Singapore: 8,
     'APAC - Singapore': 8,
-  }[timezoneString || ''] || -7;
+  }[timezoneString || ''] ?? -7;
 }
 
 export function projectToElasticEntry({

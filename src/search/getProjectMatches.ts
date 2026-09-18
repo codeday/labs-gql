@@ -77,7 +77,7 @@ function isStudentUnderrepresented(student: Student): boolean {
 
 async function getTimezone(student: Student): Promise<number> {
   if (student.timezone) {
-    return getTimezoneOffset(student.timezone) || -7;
+    return getTimezoneOffset(student.timezone) ?? -7;
   }
 
   const profile = <
