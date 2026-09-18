@@ -88,13 +88,17 @@ export class ReviewResolver {
     if (!auth.username) throw Error("Reviewers require username in token.");
     if (rating > 10 || rating < 1 || Math.floor(rating) !== rating)
       throw Error("Rating must be an int from 1 - 10.");
-    await this.prisma.admissionRating.create({
-      data: {
-        ratedBy: auth.username,
-        rating,
-        track,
-        student: { connect: idOrUsernameToUniqueWhere(auth, where) },
-      },
+
+    const student = await this.prisma.student.findUnique({
+      where: idOrUsernameToUniqueWhere(auth, where),
+      select: { id: true },
+    });
+    if (!student) throw Error("Student not found.");
+
+    await this.prisma.admissionRating.upsert({
+      where: { studentId_ratedBy: { studentId: student.id, ratedBy: auth.username } },
+      create: { ratedBy: auth.username, rating, track, studentId: student.id },
+      update: { rating, track },
     });
     return true;
   }

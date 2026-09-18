@@ -639,6 +639,8 @@ model AdmissionRating {
   // Relations
   student   Student @relation(fields: [studentId], references: [id])
   studentId String
+
+  @@unique([studentId, ratedBy])
 }
 
 model ProjectPreference {
