@@ -8,7 +8,7 @@ export async function uploadResume(file?: Promise<FileUpload> | FileUpload): Pro
   const resume = await file;
   if (!resume) return undefined;
 
-  const ext = resume?.filename?.split('.').pop() || 'pdf';
+  const ext = (resume?.filename?.split('.').pop() || 'pdf').toLowerCase();
   if (ext && !['pdf', 'doc', 'docx'].includes(ext)) {
     throw new Error('Only PDF and DOC/DOCX files are supported.');
   }
