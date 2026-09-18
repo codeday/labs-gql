@@ -25,7 +25,12 @@ export function signTokenAdmin(event: Event) {
   return sign(payload, config.auth.secret, { audience: config.auth.audience, expiresIn: '24w', noTimestamp: true });
 }
 
-export function signTokenManager(event: Event) {
-  const payload: Partial<JwtToken> = { typ: AuthRole.MANAGER, evt: event.id };
+export function signTokenManager(event: Event, managerUsername: string) {
+  const payload: Partial<JwtToken> = {
+    typ: AuthRole.MANAGER,
+    evt: event.id,
+    tgt: AuthByTarget.USERNAME,
+    sid: managerUsername,
+  };
   return sign(payload, config.auth.secret, { audience: config.auth.audience, expiresIn: '24w', noTimestamp: true });
 }
