@@ -69,7 +69,7 @@ export class ProjectResolver {
     });
 
     await this.prisma.student.updateMany({
-      where: { eventId: updatedPartner.eventId, partnerCode },
+      where: { eventId: updatedPartner.eventId, partnerCode: partnerCode.toUpperCase() },
       data: {
         ...(updatedPartner.minHours ? { minHours: updatedPartner.minHours } : {}),
         ...(updatedPartner.weeks ? { weeks: updatedPartner.weeks } : {}),
