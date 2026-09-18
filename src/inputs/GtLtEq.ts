@@ -1,4 +1,5 @@
 import { InputType, Field } from 'type-graphql';
+import { Prisma } from '@prisma/client';
 
 @InputType()
 export class GtLtEq {
@@ -17,7 +18,7 @@ export class GtLtEq {
   @Field(() => Number, { nullable: true })
   eq?: number
 
-  toQuery(): { gt?: number, gte?: number, lt?: number, lte?: number, eq?: number } {
+  toQuery(): Prisma.IntFilter {
     if (!this.gt && !this.gte && !this.lt && !this.lte && !this.eq) throw new Error('Specify GT, GTE, LT, LTE, or EQ');
     if (this.gt && this.gte) throw new Error('Do not specify both gt and gte.');
     if (this.lt && this.lte) throw new Error('Do not specify both lt and lte.');
@@ -27,7 +28,7 @@ export class GtLtEq {
       ...(this.gte ? { gte: this.gte } : {}),
       ...(this.lt ? { lt: this.lt } : {}),
       ...(this.lte ? { lte: this.lte } : {}),
-      ...(this.eq ? { eq: this.eq } : {}),
+      ...(this.eq ? { equals: this.eq } : {}),
     };
   }
 }
