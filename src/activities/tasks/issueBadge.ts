@@ -52,6 +52,7 @@ export const SCHEMA = {
 }
 
 export default async function issueBadge({ auth }: Context, args: Partial<IssueBadgeArgs> | undefined): Promise<void> {
+  if (!auth.eventId) throw new Error('An event must be specified to issue badges.');
   const prisma = Container.get(PrismaClient);
 
   if (!args || !args.badgeClassEntityId || !(args.badgeClassEntityId in BADGES_BY_ID)) {

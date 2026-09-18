@@ -24,12 +24,12 @@ export class TasksResolver {
 
   @Authorized(AuthRole.ADMIN)
   @Mutation(() => Boolean)
-  runActivity(
+  async runActivity(
     @Arg('functionName', () => String) functionName: string,
     @Arg('args', () => GraphQLJSONObject) args: object,
-    @Ctx() context: Context, 
-  ): boolean {
-    return Boolean(runActivity(functionName, context, args));
+    @Ctx() context: Context,
+  ): Promise<boolean> {
+    return Boolean(await runActivity(functionName, context, args));
   }
 
   @Authorized(AuthRole.ADMIN)

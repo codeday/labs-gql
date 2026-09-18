@@ -34,6 +34,7 @@ export const SCHEMA = {
 
 
 export default async function assignGroups({ auth }: Context, args: Partial<AssignGroupsArgs> | undefined): Promise<void> {
+  if (!auth.eventId) throw new Error('An event must be specified to assign groups.');
   const prisma = Container.get(PrismaClient);
   const projects = await prisma.project.findMany({
     where: {
