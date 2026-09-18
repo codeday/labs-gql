@@ -29,7 +29,7 @@ function entryValuesFor(
     eventType: { event_type: participation.eventType },
     event: { event: participation.event },
     participatedAt: { participated_at: participation.participatedAt },
-    relatedPersonEmails: {
+    relatedPersonRecordIds: {
       related_people: participation.relatedPersonEmails
         .map((email) => peopleByEmail.get(email))
         .filter((id): id is string => Boolean(id))
@@ -135,7 +135,7 @@ export async function writeChanges(
             parent_object: 'people',
             parent_record_id: parentRecordId,
             entry_values: entryValuesFor(participation, [
-              'interactionId', 'participationType', 'eventType', 'event', 'participatedAt', 'relatedPersonEmails',
+              'interactionId', 'participationType', 'eventType', 'event', 'participatedAt', 'relatedPersonRecordIds',
             ], updatedPeopleByEmail),
           },
         },
