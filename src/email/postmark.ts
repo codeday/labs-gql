@@ -87,7 +87,7 @@ export async function processPostmarkInboundEmail(req: Request, res: Response) {
     return res.send('ok');
   }
   
-  const emailSentId = myToEmails[0].split('+')[1] || undefined;
+  const emailSentId = myToEmails[0].split('@')[0].split('+')[1] || undefined;
   const emailSent = !emailSentId ? undefined : await prisma.emailSent.findUnique({
     where: { id: emailSentId },
     select: { id: true },
