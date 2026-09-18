@@ -58,6 +58,22 @@ Summarize positive feedback from their students, if anything.
 
 const DEBUG = makeDebug('activities:tasks:mentorWriteRecommendations');
 
+// Explicit, ordered column list for the recommendations CSV. csv-stringify derives
+// columns from the FIRST record only when `columns` is omitted; since the
+// `What Students Had to Say` key is conditionally present per mentor, omitting this
+// list would silently drop that column (and every later mentor's cell) whenever the
+// first-returned mentor had no qualifying feedback. Pinning the columns makes the
+// header order-independent and guarantees the feedback column is always emitted.
+const CSV_COLUMNS = [
+  'mentor', 'linkedIn', 'Recommendation For', 'Pronouns',
+  'Count of Projects Mentored', 'Students Mentored', 'Count of Students Mentored',
+  'Mentorship Dates', 'What Students Had to Say', 'prompt', 'result',
+];
+
+export function buildRecommendationsCsv(recommendations: object[]): string {
+  return stringify(recommendations, { header: true, columns: CSV_COLUMNS });
+}
+
 
 interface MentorWriteRecommendationsArgs {
   channel: string
@@ -183,7 +199,7 @@ export default async function mentorWriteRecommendations({ auth }: Context, args
     });
   }
 
-  const csv = stringify(recommendations, { header: true });
+  const csv = buildRecommendationsCsv(recommendations);
   const slack = getSlackClientForEvent(event);
 
   await slack.files.upload({
