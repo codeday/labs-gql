@@ -420,6 +420,71 @@ function fakeClient(overrides: Partial<AttioClient>): AttioClient {
   };
 }
 
+/**
+ * A stateful Attio client mock that answers readAttioState's two reads and implements
+ * the documented list-entry write semantics: PATCH prepends multiselect values without
+ * removing existing ones; PUT overwrites/removes them. Only `related_people` is modeled
+ * (the only multiselect attribute we sync); scalar fields are accepted but not tracked,
+ * since the convergence behavior under test lives entirely in `related_people`.
+ */
+function createStatefulAttioClient(options: {
+  entryId: string;
+  interactionId: string;
+  parentRecordId: string;
+  scalars: { participationType: string; eventType: string; event: string; participatedAt: string };
+  people: { recordId: string; email: string; givenName: string; surname: string }[];
+  initialRelatedIds: string[];
+}): { client: AttioClient; getStoredRelatedIds: () => string[] } {
+  let storedRelatedIds = [...options.initialRelatedIds];
+  const peopleRecords: AttioPersonRecord[] = options.people.map((p) => ({
+    id: { workspace_id: 'w', object_id: 'o', record_id: p.recordId },
+    created_at: '2024-01-01T00:00:00Z',
+    values: {
+      email_addresses: [{ email_address: p.email }],
+      name: [{ first_name: p.givenName, last_name: p.surname }],
+    },
+  }));
+  function entryShape(): AttioListEntry {
+    return {
+      id: { workspace_id: 'w', list_id: 'list-1', entry_id: options.entryId },
+      parent_record_id: options.parentRecordId,
+      parent_object: 'people',
+      created_at: '2024-01-01T00:00:00Z',
+      entry_values: {
+        interaction_id: [{ value: options.interactionId }],
+        participation_type: [{ option: { title: options.scalars.participationType } }],
+        event_type: [{ option: { title: options.scalars.eventType } }],
+        event: [{ value: options.scalars.event }],
+        participated_at: [{ value: options.scalars.participatedAt }],
+        related_people: storedRelatedIds.map((id) => ({ target_object: 'people', target_record_id: id })),
+      },
+    } as AttioListEntry;
+  }
+  const client: AttioClient = {
+    get: async () => { throw new Error('not used'); },
+    read: (async (path: string) => {
+      if (path.includes('/entries/query')) return { data: [entryShape()] };
+      return { data: peopleRecords };
+    }) as AttioClient['read'],
+    write: (async (method: string, path: string, body: unknown) => {
+      if (path.match(/\/v2\/lists\/[^/]+\/entries\/[^/]+/)) {
+        const supplied = ((body as { data?: { entry_values?: { related_people?: { target_record_id: string }[] } } } | null)
+          ?.data?.entry_values?.related_people) ?? [];
+        const suppliedIds = supplied.map((r) => r.target_record_id);
+        if (method === 'PUT') {
+          // Documented PUT semantic: overwrite/remove.
+          storedRelatedIds = suppliedIds;
+        } else if (method === 'PATCH') {
+          // Documented PATCH semantic: prepend, no remove.
+          storedRelatedIds = [...suppliedIds, ...storedRelatedIds];
+        }
+      }
+      return {};
+    }) as AttioClient['write'],
+  };
+  return { client, getStoredRelatedIds: () => storedRelatedIds };
+}
+
 async function testUniquenessConflictTreatedAsSuccess(): Promise<void> {
   const p = participation({ interactionId: 'dup-1', email: 'known@example.com' });
   const client = fakeClient({
@@ -529,6 +594,168 @@ async function testSingleRowFailureDoesNotAbortRemainingPlan(): Promise<void> {
   assertEqual(result.entriesCreated, 1, 'The remaining row still succeeds despite the earlier failure');
 }
 
+// --- Stage E: update-loop PATCH-vs-PUT method choice ----------------------------------------
+//
+// related_people is the only multiselect attribute we sync. PATCH appends multiselect values
+// without removing existing ones; PUT overwrites/removes them. These tests pin the method
+// chosen per changed-field shape and verify the sync reaches a fixed point across cycles.
+
+function captureUpdateClient(): { client: AttioClient; calls: { method: string; entryValues: Record<string, unknown> }[] } {
+  const calls: { method: string; entryValues: Record<string, unknown> }[] = [];
+  const client = fakeClient({
+    write: (async (method: string, path: string, body: unknown) => {
+      if (path.match(/\/v2\/lists\/[^/]+\/entries\/[^/]+/)) {
+        calls.push({
+          method,
+          entryValues: (body as { data: { entry_values: Record<string, unknown> } }).data.entry_values,
+        });
+      }
+      return {};
+    }) as AttioClient['write'],
+  });
+  return { client, calls };
+}
+
+async function testRelatedPeopleOnlyUpdateUsesPutOverwrite(): Promise<void> {
+  // An update whose only changed field is relatedPersonEmails (the REJECTED-transition path)
+  // must go through PUT — PATCH only appends and cannot remove a shrunk reference.
+  const p = participation({
+    interactionId: 'rel-update-1',
+    email: 'mentor@example.com',
+    relatedPersonEmails: ['student@example.com'],
+  });
+  const { client, calls } = captureUpdateClient();
+  const peopleByEmail = new Map([
+    [p.email, 'person-mentor'],
+    ['student@example.com', 'person-student'],
+  ]);
+
+  const result = await writeChanges(client, 'list-1', {
+    peopleToUpsert: [], peopleToFixName: [], entriesToCreate: [],
+    entriesToUpdate: [{ entryId: 'entry-1', participation: p, changedFields: ['relatedPersonEmails'] }],
+    unchangedCount: 0,
+  }, peopleByEmail);
+
+  assertEqual(calls.length, 1, 'A relatedPersonEmails-only update issues exactly one write');
+  assertEqual(calls[0].method, 'PUT', 'related_people update uses PUT (overwrite/remove), not PATCH (append-only)');
+  assertEqual(
+    calls[0].entryValues.related_people,
+    [{ target_object: 'people', target_record_id: 'person-student' }],
+    'The full desired related_people set is sent via PUT',
+  );
+  assertEqual(Object.keys(calls[0].entryValues), ['related_people'], 'PUT body carries only the related_people slug');
+  assertEqual(result.entriesUpdated, 1, 'The update is counted as one entry updated');
+  assertEqual(result.rowsFailed, [], 'No row failure is recorded for a clean PUT update');
+}
+
+async function testScalarOnlyUpdateStillUsesPatch(): Promise<void> {
+  // A scalar-only update (no relatedPersonEmails change) must keep using PATCH — the original
+  // behavior for single-value attributes, where append and overwrite are equivalent. Guards
+  // against the fix over-eagerly routing everything through PUT.
+  const p = participation({ interactionId: 'scalar-update-1', event: 'CodeDay Labs Fall 2024' });
+  const { client, calls } = captureUpdateClient();
+
+  await writeChanges(client, 'list-1', {
+    peopleToUpsert: [], peopleToFixName: [], entriesToCreate: [],
+    entriesToUpdate: [{ entryId: 'entry-1', participation: p, changedFields: ['event'] }],
+    unchangedCount: 0,
+  }, new Map([[p.email, 'person-1']]));
+
+  assertEqual(calls.length, 1, 'A scalar-only update issues exactly one write');
+  assertEqual(calls[0].method, 'PATCH', 'A scalar-only update still uses PATCH (no regression for single-value fields)');
+  assertEqual(calls[0].entryValues.event, 'CodeDay Labs Fall 2024', 'The scalar field is sent in the PATCH body');
+  assertEqual(calls[0].entryValues.related_people, undefined, 'related_people is NOT sent when only a scalar changed');
+}
+
+async function testMixedUpdateSplitsPutRelatedPeopleAndPatchScalars(): Promise<void> {
+  // When a single entry's changedFields contains BOTH relatedPersonEmails and scalar fields,
+  // related_people goes through PUT (overwrite/remove) and the scalars go through PATCH
+  // separately. Attio's PUT docs only spell out multiselect behavior, so scalars stay on PATCH
+  // (the method established for them); the entry is still counted as a single update.
+  const p = participation({
+    interactionId: 'mixed-update-1',
+    email: 'mentor@example.com',
+    event: 'CodeDay Labs Fall 2024',
+    relatedPersonEmails: ['student@example.com'],
+  });
+  const { client, calls } = captureUpdateClient();
+  const peopleByEmail = new Map([
+    [p.email, 'person-mentor'],
+    ['student@example.com', 'person-student'],
+  ]);
+
+  const result = await writeChanges(client, 'list-1', {
+    peopleToUpsert: [], peopleToFixName: [], entriesToCreate: [],
+    entriesToUpdate: [{ entryId: 'entry-1', participation: p, changedFields: ['event', 'relatedPersonEmails'] }],
+    unchangedCount: 0,
+  }, peopleByEmail);
+
+  assertEqual(calls.length, 2, 'A mixed update issues two writes (PUT related_people + PATCH scalars)');
+  assertEqual(calls[0].method, 'PUT', 'The first write is PUT (for related_people overwrite)');
+  assertEqual(
+    calls[0].entryValues.related_people,
+    [{ target_object: 'people', target_record_id: 'person-student' }],
+    'PUT carries the full desired related_people set',
+  );
+  assertEqual(Object.keys(calls[0].entryValues), ['related_people'], 'PUT body contains only the related_people slug');
+  // calls[1] only exists under the fix (split write); guard access so a regression fails
+  // cleanly instead of crashing the suite before later tests can run.
+  assertEqual(calls[1]?.method, 'PATCH', 'The second write is PATCH (for scalars)');
+  assertEqual(calls[1]?.entryValues?.event, 'CodeDay Labs Fall 2024', 'PATCH carries the changed scalar');
+  assertEqual(calls[1]?.entryValues?.related_people, undefined, 'PATCH body does NOT carry related_people');
+  assertEqual(result.entriesUpdated, 1, 'A mixed update is still counted as a single entry updated');
+  assertEqual(result.rowsFailed, [], 'No row failure is recorded for a clean split update');
+}
+
+async function testRelatedPeopleShrinkConvergesNonEmpty(): Promise<void> {
+  // Scenario B from the bug report: a multi-student mentor with [student, extra] has one
+  // student rejected, shrinking relatedPersonEmails to [extra]. Against a stateful mock that
+  // implements Attio's documented PATCH-prepend / PUT-overwrite semantics, the sync must
+  // remove the rejected student's reference on cycle 1 and reach a fixed point on cycle 2.
+  // (Before the fix, related_people went through PATCH, the student was never removed, and
+  // cycle 2 re-queued the identical update every run — non-convergence.)
+  const { client, getStoredRelatedIds } = createStatefulAttioClient({
+    entryId: 'entry-1',
+    interactionId: 'm1',
+    parentRecordId: 'mentor-rec',
+    scalars: { participationType: 'Mentor', eventType: 'Labs', event: 'CodeDay Labs Summer 2024', participatedAt: '2024-06-01' },
+    people: [
+      { recordId: 'mentor-rec', email: 'mentor@example.com', givenName: 'M', surname: 'One' },
+      { recordId: 'student-rec', email: 'student@example.com', givenName: 'S', surname: 'One' },
+      { recordId: 'extra-rec', email: 'extra@example.com', givenName: 'E', surname: 'One' },
+    ],
+    initialRelatedIds: ['student-rec', 'extra-rec'],
+  });
+  const desired: Participation = {
+    interactionId: 'm1', participationType: 'Mentor', eventType: 'Labs',
+    event: 'CodeDay Labs Summer 2024', email: 'mentor@example.com',
+    givenName: 'M', surname: 'One', participatedAt: '2024-06-01',
+    relatedPersonEmails: ['extra@example.com'], // shrunk from [student, extra]
+  };
+  const peopleByEmail = new Map([
+    ['mentor@example.com', 'mentor-rec'],
+    ['student@example.com', 'student-rec'],
+    ['extra@example.com', 'extra-rec'],
+  ]);
+
+  // Cycle 1: Attio still has [student-rec, extra-rec]; desired is [extra] -> one update queued.
+  const state1 = await readAttioState(client, 'list-1');
+  const plan1 = buildDiffPlan([desired], state1.entriesByInteractionId, peopleByEmail, state1.personNameStatusByRecordId, new Map());
+  assertEqual(plan1.entriesToUpdate.length, 1, 'Cycle 1 (non-empty shrink): a shrink queues exactly one update');
+  assertEqual(plan1.entriesToUpdate[0].changedFields, ['relatedPersonEmails'], 'Cycle 1 (non-empty shrink): only relatedPersonEmails is flagged');
+  const result1 = await writeChanges(client, 'list-1', plan1, peopleByEmail);
+  assertEqual(result1.entriesUpdated, 1, 'Cycle 1 (non-empty shrink): writeChanges reports one update');
+  assertEqual(getStoredRelatedIds(), ['extra-rec'], 'Cycle 1 (non-empty shrink): PUT removed the rejected student reference from Attio');
+
+  // Cycle 2: re-read Attio (now converges with the projection) -> no update queued.
+  const state2 = await readAttioState(client, 'list-1');
+  const plan2 = buildDiffPlan([desired], state2.entriesByInteractionId, peopleByEmail, state2.personNameStatusByRecordId, new Map());
+  assertEqual(plan2.entriesToUpdate.length, 0, 'Cycle 2 (non-empty shrink): the entry reaches steady state (no re-queue) — sync converges');
+  assertEqual(plan2.unchangedCount, 1, 'Cycle 2 (non-empty shrink): the entry is counted as unchanged, proving a fixed point');
+  const result2 = await writeChanges(client, 'list-1', plan2, peopleByEmail);
+  assertEqual(result2.entriesUpdated, 0, 'Cycle 2 (non-empty shrink): no writes are issued — fixed point reached');
+}
+
 // --- HTTP client: 429 + Retry-After ---------------------------------------------------------
 
 async function testRetryAfterDateIsRespected(): Promise<void> {
@@ -573,6 +800,10 @@ async function main(): Promise<void> {
   await testRelatedPeopleResolvedAtWriteTimeAndUnresolvableDropped();
   await testPeopleToFixNameIssuesPutWithNameAndCounts();
   await testSingleRowFailureDoesNotAbortRemainingPlan();
+  await testRelatedPeopleOnlyUpdateUsesPutOverwrite();
+  await testScalarOnlyUpdateStillUsesPatch();
+  await testMixedUpdateSplitsPutRelatedPeopleAndPatchScalars();
+  await testRelatedPeopleShrinkConvergesNonEmpty();
   await testRetryAfterDateIsRespected();
 
   if (failures > 0) {
