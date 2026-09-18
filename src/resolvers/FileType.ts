@@ -6,7 +6,6 @@ import { Inject, Service } from 'typedi';
 import { Context, AuthRole } from '../context';
 import { FileType, File } from '../types';
 import { FileTypeCreateInput, FileTypeEditInput } from '../inputs';
-import { validateActive } from '../utils';
 
 @Service()
 @Resolver(FileType)
@@ -55,13 +54,11 @@ export class FileTypeResolver {
     @Arg('id', () => String) id: string,
     @Arg('data', () => FileTypeEditInput) data: FileTypeEditInput,
   ): Promise<PrismaFileType> {
-    await validateActive(auth);
-    
     const fileType = await this.prisma.fileType.findUnique({
       where: { id },
       rejectOnNotFound: true,
     });
-    
+
     // Check if the user has access to the event
     if (fileType.eventId !== auth.eventId) {
       throw new Error('You do not have permission to update this file type');
@@ -79,13 +76,11 @@ export class FileTypeResolver {
     @Ctx() { auth }: Context,
     @Arg('id', () => String) id: string,
   ): Promise<boolean> {
-    await validateActive(auth);
-    
     const fileType = await this.prisma.fileType.findUnique({
       where: { id },
       rejectOnNotFound: true,
     });
-    
+
     // Check if the user has access to the event
     if (fileType.eventId !== auth.eventId) {
       throw new Error('You do not have permission to delete this file type');
