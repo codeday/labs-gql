@@ -83,7 +83,9 @@ function plural(value: any[], ifPlural: string, ifNotPlural: string): string {
 }
 
 function mentorManagers(project: Project & { mentors: Mentor[] }, suffix?: string): string[] {
-  return [...new Set(project.mentors.map((m) => m.managerUsername))].map((m) => `${m}${suffix || ''}`);
+  return [...new Set(project.mentors.map((m) => m.managerUsername))]
+    .filter((m): m is string => Boolean(m))
+    .map((m) => `${m}${suffix || ''}`);
 }
 
 function lowercase(value: string): string {
