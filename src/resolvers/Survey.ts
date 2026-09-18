@@ -13,7 +13,7 @@ import { Inject, Service } from 'typedi';
 import { Context, AuthRole } from '../context';
 import { Survey, SurveyOccurence, SurveyResponse } from '../types';
 import { SurveyCreateInput } from '../inputs';
-import { getSurveyResponseType, validateActive, validateSurveyEvent } from '../utils';
+import { getSurveyResponseType, validateWasActive, validateSurveyEvent } from '../utils';
 import { SurveyRespondInput } from '../inputs/SurveyRespondInput';
 
 const DEBUG = makeDebug('resolvers:Survey');
@@ -73,7 +73,7 @@ export class SurveyResolver {
       },
     };
     if (!auth.isAdmin) {
-      try { await validateActive(auth); }
+      try { await validateWasActive(auth); }
       catch (_) { return []; }
     }
 
@@ -97,7 +97,7 @@ export class SurveyResolver {
         some: { visibleAt: { lte: new Date() } },
       },
     };
-    if (!auth.isAdmin) await validateActive(auth);
+    if (!auth.isAdmin) await validateWasActive(auth);
 
     return this.prisma.survey.findFirst({
       where: {
@@ -116,7 +116,7 @@ export class SurveyResolver {
     @Arg('occurrence', () => String) occurrence: string,
     @Arg('responses', () => [SurveyRespondInput]) responses: SurveyRespondInput[],
   ): Promise<boolean> {
-    await validateActive(auth);
+    await validateWasActive(auth);
 
     const { survey } = await this.prisma.surveyOccurence.findFirst({
       where: {
@@ -145,7 +145,7 @@ export class SurveyResolver {
     }
 
     if (!authorId) throw new Error(`Must provide an authorship token when creating a survey.`);
-    
+
     await this.prisma.surveyResponse.createMany({
       data: responses
         .map((response) => ({

@@ -30,3 +30,24 @@ export async function validateActive(auth: AuthContext) {
     }
   }
 }
+
+export async function validateWasActive(auth: AuthContext) {
+  if (!auth.isStudent && !auth.isMentor) throw new Error('Not a student or mentor token.');
+  if (auth.isStudent) {
+    const me = await Container.get(PrismaClient).student.findUnique({
+      where: auth.toWhere(),
+      include: { event: true },
+      rejectOnNotFound: true,
+    });
+
+    if (me.status !== StudentStatus.ACCEPTED) throw new Error(`Not an active participant.`);
+  } else if (auth.isMentor) {
+    const me = await Container.get(PrismaClient).mentor.findUnique({
+      where: auth.toWhere(),
+      include: { event: true, projects: { where: { status: { in: [ProjectStatus.MATCHED, ProjectStatus.ACCEPTED] } } } },
+      rejectOnNotFound: true,
+    });
+    if (me.status !== MentorStatus.ACCEPTED) throw new Error(`Not an active mentor.`);
+    if (me.projects.length === 0) throw new Error(`No active projects.`);
+  }
+}
