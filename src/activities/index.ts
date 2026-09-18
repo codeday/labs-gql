@@ -18,14 +18,15 @@ export function getActivitySchema(name: string): object | null {
   return tasksByName[name]?.schema || null;
 }
 
-export function runActivity(name: string, context: Context, args: Object): boolean {
+export async function runActivity(name: string, context: Context, args: Object): Promise<boolean> {
   if (name in tasksByName) {
     DEBUG(`Running activity ${name}`);
     try {
-      tasksByName[name].fn(context, args);
+      await tasksByName[name].fn(context, args);
     } catch (ex) {
       DEBUG(`Error from activity ${name}:`)
       DEBUG(ex);
+      throw ex;
     }
     DEBUG(`Activity ${name} completed.`)
     return true;
