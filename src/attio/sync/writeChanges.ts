@@ -159,13 +159,35 @@ export async function writeChanges(
 
   for (const update of plan.entriesToUpdate) {
     try {
-      // eslint-disable-next-line no-await-in-loop
-      await client.write(
-        'PATCH',
-        `/v2/lists/${listId}/entries/${update.entryId}`,
-        { data: { entry_values: entryValuesFor(update.participation, update.changedFields, updatedPeopleByEmail) } },
-        `entry-update:${update.participation.interactionId}`,
-      );
+      // related_people is the only multiselect attribute we sync. Attio's PATCH list-entry
+      // endpoint appends multiselect values without removing existing ones, so a shrink (a
+      // student rejected after their mentor's entry was already synced, dropped from the
+      // projection by `AND s.status != 'REJECTED'`) would never take effect — the entry would
+      // re-diff every run and never converge. PUT overwrites/removes multiselect values, so
+      // route related_people through it. The other fields are single-value scalars where append
+      // and overwrite are equivalent, but Attio's PUT docs only spell out multiselect behavior,
+      // so scalars stay on PATCH (the method established for them). A row changing both kinds
+      // of fields issues both writes; the entry is still counted as a single update.
+      const scalarFields = update.changedFields.filter((f) => f !== 'relatedPersonEmails');
+      const needsOverwrite = update.changedFields.includes('relatedPersonEmails');
+      if (needsOverwrite) {
+        // eslint-disable-next-line no-await-in-loop
+        await client.write(
+          'PUT',
+          `/v2/lists/${listId}/entries/${update.entryId}`,
+          { data: { entry_values: entryValuesFor(update.participation, ['relatedPersonEmails'], updatedPeopleByEmail) } },
+          `entry-update:${update.participation.interactionId}`,
+        );
+      }
+      if (scalarFields.length > 0) {
+        // eslint-disable-next-line no-await-in-loop
+        await client.write(
+          'PATCH',
+          `/v2/lists/${listId}/entries/${update.entryId}`,
+          { data: { entry_values: entryValuesFor(update.participation, scalarFields, updatedPeopleByEmail) } },
+          `entry-update:${update.participation.interactionId}`,
+        );
+      }
       entriesUpdated += 1;
     } catch (ex) {
       DEBUG(`Failed to update entry for ${update.participation.interactionId}:`, ex);
