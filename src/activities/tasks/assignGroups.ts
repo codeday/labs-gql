@@ -40,7 +40,7 @@ export default async function assignGroups({ auth }: Context, args: Partial<Assi
       eventId: auth.eventId!,
       status: ProjectStatus.ACCEPTED,
     },
-    include: { students: true },
+    include: { students: { where: { status: { notIn: [StudentStatus.CANCELED, StudentStatus.REJECTED] } } } },
   });
   
   const students = await prisma.student.findMany({
