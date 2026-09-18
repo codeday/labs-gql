@@ -15,6 +15,11 @@ async function scoreProjectStandup(
   try {
     const rating = await getProjectStandupScore(standup);
 
+    if (rating === null) {
+      DEBUG(`Standup ${standup.id} could not be scored; leaving rating null for retry on the next run.`);
+      return;
+    }
+
     DEBUG(`Standup ${standup.id} was scored ${rating}`);
 
     await prisma.standupResult.update({

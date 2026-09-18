@@ -9,7 +9,7 @@ export type StandupWithModel = StandupResult
 
 export async function getProjectStandupScore(
   standup: StandupWithModel,
-): Promise<number> {
+): Promise<number | null> {
   if (standup.text.length > 1000) return 3;
   try {
     const vague = await getCompletion(
@@ -25,5 +25,5 @@ export async function getProjectStandupScore(
       textToCompletionPrompt(ModelType.Workload, standup.text)
     );
     return workload === 'yes' ? 3 : 2;
-  } catch (ex) { return 2; }
+  } catch (ex) { return null; }
 }
