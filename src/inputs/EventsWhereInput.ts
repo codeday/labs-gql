@@ -65,9 +65,9 @@ export class EventsWhereInput {
         this.partnerCode ? { partners: { some: { partnerCode: { equals: this.partnerCode, mode: 'insensitive' } } } } : {},
         this.mine ? {
           OR: [
-            { mentors: { some: { username: auth.username || '' } } },
-            { mentors: { some: { managerUsername: auth.username || '' } } },
-            { students: { some: { username: auth.username || '' } } },
+            { mentors: { some: { OR: [{ id: auth.id }, { username: auth.username }] } } },
+            { students: { some: { OR: [{ id: auth.id }, { username: auth.username }] } } },
+            ...(auth.username ? [{ mentors: { some: { managerUsername: auth.username } } } as Prisma.EventWhereInput] : []),
           ],
         } : {},
       ],
