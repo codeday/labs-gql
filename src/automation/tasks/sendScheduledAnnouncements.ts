@@ -84,10 +84,10 @@ async function sendEmailAnnouncement(announcement: any): Promise<void> {
 
   switch (target) {
     case ScheduledAnnouncementTarget.MENTOR:
-      recipients = event.mentors.map((m: Mentor) => ({ To: m.email, Cc: [] }));
+      recipients = event.mentors.map((m: Mentor) => ({ To: [m.email], Cc: [] }));
       break;
     case ScheduledAnnouncementTarget.STUDENT:
-      recipients = event.students.map((s: Student) => ({ To: s.email, Cc: [] }));
+      recipients = event.students.map((s: Student) => ({ To: [s.email], Cc: [] }));
       break;
     case ScheduledAnnouncementTarget.TEAM:
         recipients = event.projects.map((p: Project & { mentors: Mentor[], students: Student[] }) => ({
@@ -97,6 +97,8 @@ async function sendEmailAnnouncement(announcement: any): Promise<void> {
       break;
   }
 
+  let failures = 0;
+  let lastError: unknown = undefined;
   for (const toSend of recipients) {
     try {
         DEBUG(`Sending announcement ${announcement.id} to [${toSend.To.join(', ')}] cc [${toSend.Cc.join(', ')}]`);
@@ -108,8 +110,16 @@ async function sendEmailAnnouncement(announcement: any): Promise<void> {
             html: body,
         });
     } catch (ex) {
+        failures += 1;
+        lastError = ex;
         DEBUG(ex);
     }
+  }
+
+  if (recipients.length > 0 && failures === recipients.length) {
+    throw new Error(
+      `Failed to send announcement ${announcement.id} to all ${recipients.length} recipient(s); last error: ${String(lastError)}`
+    );
   }
 }
 
