@@ -74,6 +74,11 @@ export class Mentor implements PrismaMentor {
 
   projectPreferences: string | null;
 
+  // The issued Shopify discount code for this mentor/event. Not exposed as a GraphQL field: the
+  // code is a redeemable store-discount liability, so it is kept as a DB-only audit value used to
+  // dedupe mentor gift-card issuance (see src/activities/tasks/issueMentorGiftcard.ts).
+  giftcardCode: string | null;
+
   @Authorized([AuthRole.ADMIN, AuthRole.MANAGER, AuthRole.MENTOR])
   @Field(() => String, { name: 'projectPreferences', nullable: true })
   fetchProjectPreferences(@Ctx() { auth }: Context ): string | null {
