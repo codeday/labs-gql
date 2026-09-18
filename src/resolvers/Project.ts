@@ -169,8 +169,10 @@ export class ProjectResolver {
 
     if (
       dbProject.status === ProjectStatus.MATCHED
-      && (data.description && dbProject.description !== data.description)
-      || (data.issueUrl && dbProject.issueUrl !== data.issueUrl)
+      && (
+        (data.description && dbProject.description !== data.description)
+        || (data.issueUrl && dbProject.issueUrl !== data.issueUrl)
+      )
     ) {
       const to = [
         ...dbProject.students.map(s => s.email),
