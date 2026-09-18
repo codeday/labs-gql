@@ -12,7 +12,7 @@ import { PersonNameStatus } from '../../attio/sync/readAttioState';
 import { projectParticipations } from '../../attio/sync/projectParticipations';
 import { readAttioState } from '../../attio/sync/readAttioState';
 import { writeChanges } from '../../attio/sync/writeChanges';
-import { createAttioClient, AttioApiError, AttioClient } from '../../attio/client';
+import { createAttioClient, AttioApiError, AttioClient, computeRetryDelayMs } from '../../attio/client';
 import { Participation, ExistingEntry } from '../../attio/sync/types';
 import { AttioListEntry, AttioPersonRecord } from '../../attio/types';
 
@@ -557,6 +557,55 @@ async function testRetryAfterDateIsRespected(): Promise<void> {
   assert(elapsed >= 800, 'The client actually waited for roughly the Retry-After duration');
 }
 
+// RFC 9110 §10.2.3 also allows Retry-After to be a non-negative integer count of seconds.
+// `new Date("<integer>")` parses bare numeric strings as valid *past* dates on V8, so the
+// previous implementation clamped these to 0 and retried immediately instead of waiting.
+// One value per V8 parse bucket that previously mis-parsed is pinned here to prevent a
+// regression to a `new Date()`-only implementation.
+function testRetryAfterIntegerSecondsTreatedAsSeconds(): void {
+  assertEqual(computeRetryDelayMs('0', 1), 0, 'retry-after "0" waits 0 ms');
+  // 1-12 parsed as a month (past date) -> was instant-retry; "2" is the reported bug value.
+  assertEqual(computeRetryDelayMs('2', 1), 2000, 'retry-after "2" waits 2000 ms (the reported bug value)');
+  // 13-31 were Invalid Date -> accidentally fell through to ~400-600 ms backoff; now honored.
+  assertEqual(computeRetryDelayMs('30', 1), 30000, 'retry-after "30" waits 30000 ms (previously accidental backoff)');
+  // 32+ parsed as a year (past date) -> was instant-retry.
+  assertEqual(computeRetryDelayMs('60', 1), 60000, 'retry-after "60" waits 60000 ms (previously instant-retry)');
+  assertEqual(computeRetryDelayMs('120', 1), 120000, 'retry-after "120" waits 120000 ms (previously instant-retry)');
+}
+
+function testRetryAfterHttpDateFormStillHonored(): void {
+  // The integer-seconds branch must not swallow legitimate HTTP-date values, and the
+  // existing date-branch semantics (including past-date clamp to 0) must be preserved.
+  const future = computeRetryDelayMs(new Date(Date.now() + 3000).toUTCString(), 1);
+  assert(future >= 1500 && future <= 3001, `HTTP-date ~3 s ahead yields a wait in [1500, 3001] ms, got ${future}`);
+  assertEqual(computeRetryDelayMs(new Date(Date.now() - 5000).toUTCString(), 1), 0, 'A past HTTP-date still clamps to 0 ms (existing behavior preserved)');
+}
+
+async function testRetryAfterIntegerSecondsIsRespected(): Promise<void> {
+  // End-to-end: a single 429 with integer-seconds Retry-After must delay the retry, not
+  // fire immediately. Before the fix this elapsed ~1-5 ms (the reported failure mode).
+  let callCount = 0;
+  const fetchStub = (async (_url: string) => {
+    callCount += 1;
+    if (callCount === 1) {
+      return new Response('{"message":"rate limited"}', {
+        status: 429,
+        headers: new Headers({ 'retry-after': '2' }),
+      });
+    }
+    return new Response('{"ok":true}', { status: 200 });
+  }) as unknown as typeof fetch;
+
+  const client = createAttioClient('fake-token', fetchStub);
+  const start = Date.now();
+  const result = await client.write<{ ok: boolean }>('POST', '/v2/some/path', { a: 1 });
+  const elapsed = Date.now() - start;
+
+  assertEqual(callCount, 2, 'Client retries once after a 429 with integer-seconds Retry-After');
+  assertEqual(result, { ok: true }, 'The retried request eventually succeeds (integer-seconds form)');
+  assert(elapsed >= 1900, `Client waited ~2 s for Retry-After "2" (was ~0 before fix), got ${elapsed} ms`);
+}
+
 // Note: the lock-held-skips-without-writing scenario (spec test #8) isn't covered here.
 // runAlumniInteractionsSync() acquires the advisory lock via a plain prisma.$queryRaw call
 // on the shared Container-managed PrismaClient, with no injection seam for stubbing it —
@@ -574,6 +623,10 @@ async function main(): Promise<void> {
   await testPeopleToFixNameIssuesPutWithNameAndCounts();
   await testSingleRowFailureDoesNotAbortRemainingPlan();
   await testRetryAfterDateIsRespected();
+  // --- Retry-After parsing (HTTP client): integer-seconds form + HTTP-date no-regression ---
+  testRetryAfterIntegerSecondsTreatedAsSeconds();
+  testRetryAfterHttpDateFormStillHonored();
+  await testRetryAfterIntegerSecondsIsRespected();
 
   if (failures > 0) {
     console.error(`\n${failures} test(s) failed.`);
