@@ -27,15 +27,27 @@ export function fileTypeToExt(fileType: FileTypeType): string {
   }
 }
 
+export function renderLayers(layers: unknown, context: object): unknown {
+  const renderCtx = { now: new Date(), ...context };
+  const render = (s: string): string => handlebars.compile(s, { noEscape: true })(renderCtx);
+  const walk = (value: unknown): unknown => {
+    if (Array.isArray(value)) return value.map((v) => walk(v));
+    if (value && typeof value === 'object') {
+      return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, walk(v)]));
+    }
+    if (typeof value === 'string') return render(value);
+    return value;
+  };
+  return walk(layers);
+}
+
 export async function generateMedia(
   templateId: string,
   type: FileTypeType,
   layers: object,
   context: object,
 ): Promise<string> {
-  const layersTpl = await handlebars.compile(JSON.stringify(layers, null, 2));
-  const renderedLayers = layersTpl({ now: new Date(), ...context });
-  const finalLayers = JSON.parse(renderedLayers);
+  const finalLayers = renderLayers(layers, context);
 
   let body: object = { template_uuid: templateId, layers: finalLayers };
   if (type === FileTypeType.VIDEO) body = { clips: [body] };
