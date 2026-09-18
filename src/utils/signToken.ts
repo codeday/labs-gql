@@ -3,14 +3,8 @@ import config from "../config";
 import { AuthByTarget, AuthRole, JwtToken } from "../context";
 import { sign } from "jsonwebtoken";
 
-function isMentor(sub: any): sub is Mentor {
-  return Boolean(sub.maxWeeks);
-}
-
-export function signTokenUser(sub: Mentor | Student) {
-  const payload: Partial<JwtToken> = { tgt: AuthByTarget.ID, sid: sub.id, evt: sub.eventId };
-  if (isMentor(sub)) payload.typ = AuthRole.MENTOR;
-  else payload.typ = AuthRole.STUDENT;
+export function signTokenUser(sub: Mentor | Student, role: AuthRole) {
+  const payload: Partial<JwtToken> = { tgt: AuthByTarget.ID, sid: sub.id, evt: sub.eventId, typ: role };
 
   return sign(payload, config.auth.secret, { audience: config.auth.audience, expiresIn: '24w', noTimestamp: true });
 }

@@ -8,7 +8,7 @@ import { DateTime } from 'luxon';
 import { diffChars, diffWords } from 'diff';
 
 function isMentor(sub: any): sub is Mentor {
-  return Boolean(sub.maxWeeks);
+  return 'maxWeeks' in sub && typeof sub.maxWeeks === 'number';
 }
 
 export function tokenFor(sub: Mentor | Student) {
