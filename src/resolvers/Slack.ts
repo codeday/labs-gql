@@ -18,9 +18,9 @@ export class SlackResolver {
     jwksUri: 'https://slack.com/openid/connect/keys'
   });
 
-  private getKey(header: any, callback: (err: any, key: string) => any){
-    this.client.getSigningKey(header.kid, function(err, key) {
-      if (err || !key) throw new Error('Key not found');
+  private getKey(header: any, callback: (err: any, key?: string) => any){
+    this.client.getSigningKey(header.kid, (err, key) => {
+      if (err || !key) return callback(err || new Error('Key not found'));
       callback(null, key.getPublicKey());
     });
   }
