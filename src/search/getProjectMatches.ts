@@ -136,7 +136,7 @@ async function buildQueryFor(
   const scoreTagsMatching = buildTagsScore(filteredTags);
 
   const partnerForceTags =
-    partner?.forceTags && partner.forbidTags.length > 0
+    partner?.forceTags && partner.forceTags.length > 0
       ? esb
           .boolQuery()
           .must(partner.forceTags.map(({ id }) => esb.termQuery("tags", id)))
