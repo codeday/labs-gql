@@ -117,8 +117,8 @@ export class AuthContext {
   }
 
   compareEditingTarget(other: { username?: string | null, id?: string | null }): boolean {
-    if (this.target === AuthByTarget.USERNAME) return other.username === this.target;
-    if (this.target === AuthByTarget.ID) return other.id === this.target;
+    if (this.target === AuthByTarget.USERNAME) return other.username === this.username;
+    if (this.target === AuthByTarget.ID) return other.id === this.id;
     return false;
   }
 
