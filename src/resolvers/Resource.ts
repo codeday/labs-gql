@@ -59,7 +59,7 @@ export class ResourceResolver {
   ): Promise<PrismaResource[]> {
     return this.prisma.resource.findMany({
       where: {
-        [WHERE_KEYS[auth.type!] as string]: true,
+        ...(auth.isAdmin ? {} : { [WHERE_KEYS[auth.type!] as string]: true }),
         eventId: auth.eventId,
       },
     });
