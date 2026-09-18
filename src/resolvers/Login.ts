@@ -7,6 +7,7 @@ import { EventToken } from "../types/EventToken";
 import {
   idOrUsernameOrAuthToUniqueWhere,
   signTokenAdmin,
+  signTokenManager,
   signTokenPartner,
   signTokenUser,
 } from "../utils";
@@ -47,9 +48,11 @@ export class LoginResolver {
         );
     else if (auth.isManager)
       return this.prisma.event
-        .findMany()
+        .findMany({
+          where: { mentors: { some: { managerUsername: auth.username || '' } } },
+        })
         .then((events) =>
-          events.map((event) => ({ event, token: signTokenAdmin(event) })),
+          events.map((event) => ({ event, token: signTokenManager(event, auth.username!) })),
         );
     else if (auth.isStudent) {
       const student = await this.prisma.student.findUnique({
