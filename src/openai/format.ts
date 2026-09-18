@@ -80,9 +80,9 @@ export function textToCompletionPrompt(
   let truncatedTextTokenLength = encode(truncatedText).length;
 
   while (truncatedTextTokenLength > MODEL_MAX_TOKENS) {
-    truncatedText = truncatedText
-      .split(' ')
-      .slice(0, truncatedText.length - Math.ceil((truncatedTextTokenLength - MODEL_MAX_TOKENS)/2))
+    const words = truncatedText.split(' ');
+    truncatedText = words
+      .slice(0, words.length - Math.ceil((truncatedTextTokenLength - MODEL_MAX_TOKENS) / 2))
       .join(' ');
 
     truncatedTextTokenLength = encode(truncatedText).length;
