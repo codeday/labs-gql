@@ -32,10 +32,11 @@ export class Emails {
     @Arg('where', () => StudentFilterInput, { nullable: true }) where?: StudentFilterInput,
     @Arg('dryRun', () => Boolean, { nullable: true, defaultValue: false }) dryRun?: boolean,
   ): Promise<number> {
+    if (!auth.eventId) throw new Error('Admin token must specify an event id to send bulk email.');
     const tos = await this.prisma.student.findMany({
       where: {
         ...(where ? where.toQuery() : { status: StudentStatus.ACCEPTED }),
-        eventId: auth.eventId!,
+        eventId: auth.eventId,
       },
       include: { projects: { include: { mentors: true } } },
     });
@@ -52,10 +53,11 @@ export class Emails {
     @Arg('where', () => MentorFilterInput, { nullable: true }) where?: MentorFilterInput,
     @Arg('dryRun', () => Boolean, { nullable: true, defaultValue: false }) dryRun?: boolean,
   ): Promise<number> {
+    if (!auth.eventId) throw new Error('Admin token must specify an event id to send bulk email.');
     const tos = await this.prisma.mentor.findMany({
       where: {
         ...(where ? where.toQuery() : { status: MentorStatus.ACCEPTED }),
-        eventId: auth.eventId!,
+        eventId: auth.eventId,
       },
       include: { projects: { include: { students: true } } },
     });
