@@ -511,10 +511,10 @@
   resolved "https://registry.npmjs.org/@types/long/-/long-4.0.2.tgz"
   integrity sha512-MqTGEo5bj5t157U6fA/BiDynNkn0YknVdh48CMPkTSpFTVmvao5UQmm7uEF6xBEo7qIMAlY/JSleYaE6VOdpaA==
 
-"@types/luxon@^1.26.5":
-  version "1.27.1"
-  resolved "https://registry.npmjs.org/@types/luxon/-/luxon-1.27.1.tgz"
-  integrity sha512-cPiXpOvPFDr2edMnOXlz3UBDApwUfR+cpizvxCy0n3vp9bz/qe8BWzHPIEFcy+ogUOyjKuCISgyq77ELZPmkkg==
+"@types/luxon@^3.7.5":
+  version "3.7.5"
+  resolved "https://registry.yarnpkg.com/@types/luxon/-/luxon-3.7.5.tgz#d223e1adfdadb140eca9c51647aba59b98508128"
+  integrity sha512-jJ41Q4z6ZVO260MNDdHfW7+7a5iMiX8Mr6ZJHcmgrvhZha6dz5704o/lF2kKl6URjH6ivEL97w9xS/MgpJEphg==
 
 "@types/luxon@~3.3.0":
   version "3.3.3"
@@ -571,6 +571,11 @@
   version "10.17.60"
   resolved "https://registry.npmjs.org/@types/node/-/node-10.17.60.tgz"
   integrity sha512-F0KIgDJfy2nA3zMLmWGKxcH2ZVEtCZXHHdOQs2gSaQ27+lNeEfGxzkIw90aXswATX7AZ33tahPbzy6KAfUreVw==
+
+"@types/node@^14.11.2":
+  version "14.18.63"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-14.18.63.tgz#1788fa8da838dbb5f9ea994b834278205db6ca2b"
+  integrity sha512-fAtCfv4jJg+ExtXhvCkCqUKZ+4ok/JQk01qDKhL5BDDoS3AxKXhV5/MAVUZyQnSEd2GT92fkgZl0pz0Q0AzcIQ==
 
 "@types/node@^18.11.18":
   version "18.19.6"
