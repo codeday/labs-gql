@@ -2,7 +2,7 @@ import { Resolver, Arg, Mutation, Authorized, Query, Ctx } from "type-graphql";
 import { PrismaClient } from "@prisma/client";
 import { Inject, Service } from "typedi";
 import { sendLoginLinks } from "../email";
-import { AuthContext, Context } from "../context";
+import { AuthContext, AuthRole, Context } from "../context";
 import { EventToken } from "../types/EventToken";
 import {
   idOrUsernameOrAuthToUniqueWhere,
@@ -69,7 +69,7 @@ export class LoginResolver {
         .then((students) =>
           students.map((student) => ({
             event: student.event,
-            token: signTokenUser(student),
+            token: signTokenUser(student, AuthRole.STUDENT),
           })),
         );
     } else if (auth.isMentor) {
@@ -90,7 +90,7 @@ export class LoginResolver {
         .then((mentors) =>
           mentors.map((mentor) => ({
             event: mentor.event,
-            token: signTokenUser(mentor),
+            token: signTokenUser(mentor, AuthRole.MENTOR),
           })),
         );
     } else if (auth.isPartner) {
