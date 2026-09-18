@@ -77,20 +77,33 @@ export default async function emailDueSurveysReminder(): Promise<void> {
     const subject = `[Action Required] ${visibleSurvey.survey.name} due ${friendlyDate}`;
     const template = visibleSurvey.sentVisibleReminder ? tplOverdue : tplDue;
 
-    await prisma.surveyOccurence.update({
-      where: { id: visibleSurvey.id },
-      data: (visibleSurvey.sentVisibleReminder ? { sentOverdueReminder: true } : { sentVisibleReminder: true }),
-    });
-
+    let sentAtLeastOne = false;
+    let sentAll = true;
     for (const target of targets) {
-      DEBUG(`Sending ${subject} to ${target.email}`);
-      const renderedTemplate = template({ surveyOccurence: visibleSurvey, survey: visibleSurvey.survey, to: target });
-      await email.sendMail({
-        to: `"${target.givenName} ${target.surname}" <${target.email}>`,
-        from: 'labs@codeday.org',
-        subject: subject,
-        text: renderedTemplate,
-        html: Marked.parse(renderedTemplate),
+      try {
+        DEBUG(`Sending ${subject} to ${target.email}`);
+        const renderedTemplate = template({ surveyOccurence: visibleSurvey, survey: visibleSurvey.survey, to: target });
+        await email.sendMail({
+          to: `"${target.givenName} ${target.surname}" <${target.email}>`,
+          from: 'labs@codeday.org',
+          subject: subject,
+          text: renderedTemplate,
+          html: Marked.parse(renderedTemplate),
+        });
+        sentAtLeastOne = true;
+      } catch (ex) {
+        DEBUG(ex);
+        sentAll = false;
+      }
+    }
+
+    const mark = visibleSurvey.sentVisibleReminder
+      ? sentAll
+      : (sentAtLeastOne || targets.length === 0);
+    if (mark) {
+      await prisma.surveyOccurence.update({
+        where: { id: visibleSurvey.id },
+        data: (visibleSurvey.sentVisibleReminder ? { sentOverdueReminder: true } : { sentVisibleReminder: true }),
       });
     }
   }
