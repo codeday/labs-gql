@@ -16,6 +16,7 @@ export async function getList(prisma: PrismaClient, event: PartialEvent): Promis
       event: { matchComplete: false, matchPreferenceSubmissionOpen: true },
       projectPreferences: { none: {} },
       projects: { none: {} },
+      skipPreferences: false,
       emailsSent: { some: { emailId: 'studentMatchPrefs', createdAt: { lt: yesterday } } },
       eventId: event.id,
     },
