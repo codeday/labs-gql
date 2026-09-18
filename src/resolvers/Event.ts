@@ -264,7 +264,7 @@ export class EventResolver {
           sentMeetingReminder: false,
           agendaStudentSchema: m.agendaStudentSchema as any || undefined,
           agendaStudentUi: m.agendaStudentUi as any || undefined,
-          notesStudentSchame: m.notesStudentSchema as any || undefined,
+          notesStudentSchema: m.notesStudentSchema as any || undefined,
           notesStudentUi: m.notesStudentUi as any || undefined,
           eventId: event.id,
         })),
