@@ -506,10 +506,11 @@ model Project {
   issueUrl       String?
   issueFetchedAt DateTime?
 
-  prUrl             String?
-  prStatus          PrStatus?
-  prFetchedAt       DateTime?
-  prStatusUpdatedAt DateTime?
+  prUrl              String?
+  prShortDescription String?   @db.Text
+  prStatus           PrStatus?
+  prFetchedAt        DateTime?
+  prStatusUpdatedAt  DateTime?
 
   complete Boolean @default(false)
 
@@ -589,10 +590,12 @@ model Repository {
   updatedAt DateTime @updatedAt
 
   // Data
-  logoUrl  String?
-  name     String
-  url      String
-  usersExp Int?
+  logoUrl           String?
+  name              String
+  url               String
+  usersExp          Int?
+  useDescription    String? @db.Text
+  impactDescription String? @db.Text
 
   // Relations
   projects Project[]

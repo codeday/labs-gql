@@ -1,0 +1,4 @@
+ALTER TABLE "Project" ADD COLUMN "prShortDescription" TEXT NULL DEFAULT NULL;
+
+ALTER TABLE "Repository" ADD COLUMN "useDescription" TEXT NULL DEFAULT NULL;
+ALTER TABLE "Repository" ADD COLUMN "impactDescription" TEXT NULL DEFAULT NULL;

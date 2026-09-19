@@ -18,6 +18,10 @@ export function registerDi(): void {
     organization: config.openAi.organization,
     apiKey: config.openAi.apiKey,
   }));
+  Container.set('openRouterAi', new OpenAIApi({
+    baseURL: 'https://openrouter.ai/api/v1',
+    apiKey: config.openRouter.apiKey,
+  }));
   Container.set(Uploader, new Uploader(config.uploader.base, config.uploader.secret));
   registerHandlebarsHelpers();
 }

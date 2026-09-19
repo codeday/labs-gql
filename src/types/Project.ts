@@ -214,6 +214,9 @@ export class Project implements PrismaProject {
   @Field(() => String, { nullable: true })
   prUrl: string | null
 
+  @Field(() => String, { nullable: true })
+  prShortDescription: string | null
+
   @Field(() => PrStatus, { nullable: true })
   prStatus: PrStatus | null
 

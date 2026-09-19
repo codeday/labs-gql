@@ -53,4 +53,10 @@ export class Repository implements PrismaRepository {
 
   @Field(() => Int, { nullable: true })
   usersExp: number | null
+
+  @Field(() => String, { nullable: true })
+  useDescription: string | null
+
+  @Field(() => String, { nullable: true })
+  impactDescription: string | null
 }

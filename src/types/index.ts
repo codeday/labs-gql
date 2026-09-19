@@ -17,3 +17,4 @@ export * from './ArtifactType';
 export * from './File';
 export * from './FileType';
 export * from './ScheduledAnnouncement';
+export * from './Contribution';

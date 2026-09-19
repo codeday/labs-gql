@@ -35,6 +35,8 @@ loadEnv();
   'PLACID_API_TOKEN',
   'ATTIO_API_TOKEN',
   'ATTIO_ALUMNI_LIST',
+  'GITHUB_TOKEN',
+  'OPENROUTER_API_KEY',
 ].forEach((req) => { if (!process.env[req]) throw Error(`The ${req} environment variable is required.`); });
 
 const secondaryRegion = process.env.PRIMARY_REGION
@@ -81,6 +83,12 @@ const config = {
   attio: {
     apiToken: process.env.ATTIO_API_TOKEN!,
     alumniListId: process.env.ATTIO_ALUMNI_LIST!,
+  },
+  github: {
+    token: process.env.GITHUB_TOKEN!,
+  },
+  openRouter: {
+    apiKey: process.env.OPENROUTER_API_KEY!,
   },
   app: {
     emailTemplateDir: path.join(__dirname, 'email', 'templates'),
