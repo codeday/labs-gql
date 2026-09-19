@@ -59,4 +59,6 @@ export class Repository implements PrismaRepository {
 
   @Field(() => String, { nullable: true })
   impactDescription: string | null
+
+  descriptionsFetchedAt: Date | null
 }

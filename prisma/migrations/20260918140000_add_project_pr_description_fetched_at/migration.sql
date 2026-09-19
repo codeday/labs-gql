@@ -1,0 +1,1 @@
+ALTER TABLE "Project" ADD COLUMN "prDescriptionFetchedAt" TIMESTAMP(3) NULL DEFAULT NULL;

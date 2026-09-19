@@ -63,17 +63,28 @@ export default async function generatePrDescriptions(): Promise<void> {
   const openRouter = Container.get<OpenAIApi>('openRouterAi');
 
   const projects = await prisma.project.findMany({
-    where: { prUrl: { not: null, notIn: [''] }, prShortDescription: null },
+    where: {
+      prUrl: { not: null, notIn: [''] },
+      prDescriptionFetchedAt: null,
+      AND: [
+        { prUrl: { contains: 'github.com' } },
+        { prUrl: { contains: '/pull/' } },
+      ],
+    },
     select: { id: true, prUrl: true },
     take: 5,
   });
 
-  DEBUG(`Found ${projects.length} project(s) with a PR but no short description.`);
+  DEBUG(`Found ${projects.length} project(s) with a PR that hasn't been summarized yet.`);
 
   for (const project of projects) {
     const ref = parseGithubPullRequestUrl(project.prUrl!);
     if (!ref) {
       DEBUG(`Skipping project ${project.id}: PR URL "${project.prUrl}" is not a recognizable GitHub pull request URL.`);
+      // A malformed URL will never become parseable, so mark it as attempted to avoid
+      // retrying it forever.
+      // eslint-disable-next-line no-await-in-loop
+      await prisma.project.update({ where: { id: project.id }, data: { prDescriptionFetchedAt: new Date() } });
       // eslint-disable-next-line no-continue
       continue;
     }
@@ -85,18 +96,19 @@ export default async function generatePrDescriptions(): Promise<void> {
       const description = await summarizePullRequest(openRouter, pr);
       DEBUG(`${project.prUrl} -> ${description ?? '(no usable summary)'}`);
 
-      if (!description) {
-        // eslint-disable-next-line no-continue
-        continue;
-      }
-
+      // Mark it as attempted even if the AI returned nothing usable, so we don't keep
+      // re-running (and re-billing for) a PR that will never summarize successfully.
       // eslint-disable-next-line no-await-in-loop
       await prisma.project.update({
         where: { id: project.id },
-        data: { prShortDescription: description, prFetchedAt: new Date() },
+        data: {
+          prDescriptionFetchedAt: new Date(),
+          ...(description ? { prShortDescription: description, prFetchedAt: new Date() } : {}),
+        },
       });
-      DEBUG(`Set prShortDescription for project ${project.id}.`);
+      if (description) DEBUG(`Set prShortDescription for project ${project.id}.`);
     } catch (ex) {
+      // Leave prDescriptionFetchedAt unset on a genuine error (e.g. GitHub/OpenAI outage), so it's retried next run.
       DEBUG(`Failed to summarize PR for project ${project.id}:`, ex);
     }
 

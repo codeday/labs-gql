@@ -45,12 +45,19 @@ const MAX_SENTENCE_WORDS = 20;
 // reject anything that looks like this instead of saving it.
 const NON_ANSWER_RE = /^(i (confirm|have completed|have executed)|task (complete|completed|has been completed)|(the )?(command|action|request) (has been|was) (executed|completed|performed)|done\.?$)/i;
 
+// When research (e.g. a web-search-grounded model call) comes up empty, the model is
+// still forced to call the tool, and some models satisfy that by submitting a stand-in
+// string instead of admitting they found nothing. Reject these the same way as a
+// non-answer, rather than saving them as if they were a real result.
+const PLACEHOLDER_RE = /placeholder|^(no|not) (specific |concrete |publicly )?(information|data|details) (is |was |)?(available|found)|^(i )?(could not|couldn't|was unable to) find/i;
+
 /**
  * Requests a single short sentence from a chat model, forcing the answer through a
  * tool call rather than trusting free-form text to come back clean. Returns null if
  * the model didn't call the tool, returned unparsable arguments, returned a
- * "sentence" that's suspiciously long, or returned a generic task-completion remark
- * instead of substantive content.
+ * "sentence" that's suspiciously long, returned a generic task-completion remark
+ * instead of substantive content, or admitted (via a placeholder/"couldn't find"
+ * style answer) that it doesn't actually have one.
  */
 export async function requestSentence(
   client: OpenAIApi,
@@ -76,6 +83,7 @@ export async function requestSentence(
   if (!sentence) return null;
   if (sentence.split(/\s+/).length > MAX_SENTENCE_WORDS) return null;
   if (NON_ANSWER_RE.test(sentence)) return null;
+  if (PLACEHOLDER_RE.test(sentence)) return null;
 
   return sentence;
 }

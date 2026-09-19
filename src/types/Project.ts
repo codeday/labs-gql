@@ -210,6 +210,7 @@ export class Project implements PrismaProject {
   issueFetchedAt: Date | null
   prFetchedAt: Date | null
   prStatusUpdatedAt: Date | null
+  prDescriptionFetchedAt: Date | null
 
   @Field(() => String, { nullable: true })
   prUrl: string | null

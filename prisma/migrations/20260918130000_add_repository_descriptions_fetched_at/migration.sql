@@ -1,0 +1,1 @@
+ALTER TABLE "Repository" ADD COLUMN "descriptionsFetchedAt" TIMESTAMP(3) NULL DEFAULT NULL;

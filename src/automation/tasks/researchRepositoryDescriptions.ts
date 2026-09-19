@@ -71,17 +71,21 @@ export default async function researchRepositoryDescriptions(): Promise<void> {
   const openRouter = Container.get<OpenAIApi>('openRouterAi');
 
   const repositories = await prisma.repository.findMany({
-    where: { OR: [{ useDescription: null }, { impactDescription: null }] },
+    where: { descriptionsFetchedAt: null },
     select: {
       id: true, name: true, url: true, useDescription: true, impactDescription: true,
     },
     take: 5,
   });
 
-  DEBUG(`Found ${repositories.length} repositor${repositories.length === 1 ? 'y' : 'ies'} missing a use or impact description.`);
+  DEBUG(`Found ${repositories.length} repositor${repositories.length === 1 ? 'y' : 'ies'} that haven't been researched yet.`);
 
   for (const repository of repositories) {
-    const data: { useDescription?: string, impactDescription?: string } = {};
+    // Set unconditionally (even if the AI returns nothing usable below), so we don't
+    // keep re-running (and re-billing for) a repository the AI can't describe.
+    const data: { useDescription?: string, impactDescription?: string, descriptionsFetchedAt: Date } = {
+      descriptionsFetchedAt: new Date(),
+    };
 
     if (!repository.useDescription) {
       try {
@@ -105,10 +109,8 @@ export default async function researchRepositoryDescriptions(): Promise<void> {
       }
     }
 
-    if (Object.keys(data).length > 0) {
-      // eslint-disable-next-line no-await-in-loop
-      await prisma.repository.update({ where: { id: repository.id }, data });
-      DEBUG(`Updated repository ${repository.id} with: ${Object.keys(data).join(', ')}.`);
-    }
+    // eslint-disable-next-line no-await-in-loop
+    await prisma.repository.update({ where: { id: repository.id }, data });
+    DEBUG(`Updated repository ${repository.id} with: ${Object.keys(data).join(', ')}.`);
   }
 }

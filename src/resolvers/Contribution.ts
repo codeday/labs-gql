@@ -1,4 +1,4 @@
-import { Resolver, Query } from 'type-graphql';
+import { Resolver, Query, Arg } from 'type-graphql';
 import { PrismaClient } from '@prisma/client';
 import { Inject, Service } from 'typedi';
 import { Contribution } from '../types';
@@ -10,7 +10,9 @@ export class ContributionResolver {
   private readonly prisma: PrismaClient;
 
   @Query(() => [Contribution])
-  async contributions(): Promise<Contribution[]> {
+  async contributions(
+    @Arg('take', () => Number, { nullable: true }) take?: number,
+  ): Promise<Contribution[]> {
     return this.prisma.project.findMany({
       where: { prShortDescription: { not: null } },
       select: {
@@ -21,6 +23,7 @@ export class ContributionResolver {
         prStatus: true,
         repositoryId: true,
       },
+      take,
     }) as unknown as Promise<Contribution[]>;
   }
 }
