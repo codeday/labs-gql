@@ -19,9 +19,6 @@ export class Event {
   updatedAt: Date;
 
   @Field(() => String)
-  slug: string
-
-  @Field(() => String)
   name: string;
 
   @Field(() => Int)
@@ -71,15 +68,6 @@ export class Event {
 
   @Field(() => Date, { nullable: true })
   projectWorkStartsAt?: Date;
-
-
-  @Authorized([AuthRole.ADMIN])
-  @Field(() => String)
-  matchingAlgorithm: string;
-
-  @Authorized([AuthRole.ADMIN])
-  @Field(() => String)
-  emailTemplate: string;
 
   @Field(() => Boolean)
   isActive: boolean;
