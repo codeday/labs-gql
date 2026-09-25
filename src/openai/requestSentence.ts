@@ -49,7 +49,7 @@ const NON_ANSWER_RE = /^(i (confirm|have completed|have executed)|task (complete
 // still forced to call the tool, and some models satisfy that by submitting a stand-in
 // string instead of admitting they found nothing. Reject these the same way as a
 // non-answer, rather than saving them as if they were a real result.
-const PLACEHOLDER_RE = /placeholder|^(no|not) (specific |concrete |publicly )?(information|data|details) (is |was |)?(available|found)|^(i )?(could not|couldn't|was unable to) find/i;
+const PLACEHOLDER_RE = /^placeholder\b|^(no|not) (specific |concrete |publicly )?(information|data|details) (is |was |)?(available|found)|^(i )?(could not|couldn't|was unable to) find/i;
 
 /**
  * Requests a single short sentence from a chat model, forcing the answer through a
