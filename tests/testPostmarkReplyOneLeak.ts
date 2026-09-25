@@ -1,3 +1,4 @@
+import './_setupEnv';
 import 'reflect-metadata';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -5,7 +6,7 @@ import Container from 'typedi';
 import { PrismaClient } from '@prisma/client';
 import { processPostmarkInboundEmail } from '../src/email/postmark';
 
-const INBOUND_DOMAIN = 'labs.example';
+const INBOUND_DOMAIN = 'test.local';
 const TRACKING_ADDR = `cid12345+es_abc123@${INBOUND_DOMAIN}`;
 
 function mockRes() {
