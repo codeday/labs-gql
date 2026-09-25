@@ -99,6 +99,73 @@ function runWithinBudget<T>(fn: () => T, message: string): T {
   );
 })();
 
+// Guards the truncation loop against collapsing the user slot to the empty
+// string for token-dense, space-sparse input. The word-count formula computes
+// `end = words.length - Math.ceil((tokens - MAX)/2)`; when the overage-per-2 is
+// greater than or equal to the word count, `Array.prototype.slice(0, end)`
+// clamps to `[]` and the user message becomes `""`. Compact JSON (the default
+// output of `JSON.stringify`, with no inter-token whitespace) hits this path
+// because a large blob encodes to thousands of tokens but splits into only a
+// handful of space-delimited words.
+(function testTokenDenseSpaceSparseInputDoesNotCollapseToEmpty() {
+  const jsonError = JSON.stringify({
+    error: 'InternalServerError',
+    code: 500,
+    message: 'DB pool exhausted',
+    stack: Array.from({ length: 120 }, (_, i) => ({
+      file: `/app/src/modules/mod${i}/service${i}.ts`,
+      line: i * 50,
+      col: i,
+      fn: `handleRequest${i}`,
+      err: `ECONNREFUSED:${i}`,
+    })),
+  });
+  const text = [
+    `What did you do yesterday?\nI hit a 500 error and captured the response:\n${jsonError}`,
+    'What will you do today?\nDebug the API error.',
+    'Any blockers?\nDB pool issue.',
+  ].join('\n\n');
+  assert(encode(text).length > MODEL_MAX_TOKENS, 'compact-JSON input is over the token budget before truncation');
+  assert(
+    text.split(' ').length < Math.ceil((encode(text).length - MODEL_MAX_TOKENS) / 2),
+    'compact-JSON input is in the single-step collapse region (C >= W)',
+  );
+
+  const messages = runWithinBudget(
+    () => textToCompletionPrompt(ModelType.Vague, text),
+    'compact-JSON input does not infinite-loop',
+  );
+
+  const userContent = userContentOf(messages);
+  assert(userContent.length > 0, 'compact-JSON input does not collapse the user slot to the empty string');
+  const finalTokens = encode(userContent).length;
+  assert(
+    finalTokens <= MODEL_MAX_TOKENS,
+    `compact-JSON user content fits the token budget (final=${finalTokens}, budget=${MODEL_MAX_TOKENS})`,
+  );
+})();
+
+// Guards the single-word over-budget edge case: when the entire over-budget
+// input is one whitespace-free token, the keep-count clamps to 1 and
+// `slice(0, 1)` returns the same word, so the `next >= truncatedTextTokenLength`
+// guard must break out of the loop rather than spinning forever. The result
+// stays non-empty (the whole word is preserved since it cannot be split), even
+// though it remains over the model's token budget.
+(function testSingleOverBudgetWordTerminatesAndStaysNonEmpty() {
+  const text = 'A'.repeat(20000); // ~2500 tokens, single whitespace-free "word"
+  assert(encode(text).length > MODEL_MAX_TOKENS, 'single-word input is over the token budget before truncation');
+  assert(text.split(' ').length === 1, 'single-word input has exactly one space-delimited word');
+
+  const messages = runWithinBudget(
+    () => textToCompletionPrompt(ModelType.Vague, text),
+    'single over-budget word does not infinite-loop',
+  );
+
+  const userContent = userContentOf(messages);
+  assert(userContent.length > 0, 'single over-budget word does not collapse the user slot to the empty string');
+  assertEqual(userContent, text, 'single over-budget word is preserved verbatim (cannot be sub-word split)');
+})();
+
 // Guards against over-truncation: input already within the budget must be
 // passed through verbatim.
 (function testUnderlimitInputPassedThroughUnchanged() {
