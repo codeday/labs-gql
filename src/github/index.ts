@@ -1,7 +1,7 @@
 import fetch from 'node-fetch';
 import config from '../config';
 
-const GITHUB_URL_RE = /^https?:\/\/(?:www\.)?github\.com\/([^/\s]+)\/([^/\s#?]+?)(?:\.git)?(?:\/(issues|pull)\/(\d+))?\/?(?:[?#].*)?$/i;
+const GITHUB_URL_RE = /^https?:\/\/(?:www\.)?github\.com\/([^/\s]+)\/([^/\s#?]+?)(?:\.git)?(?:\/(issues|pull)\/(\d+)(?:\/[^/?#]+)*?)?\/?(?:[?#].*)?$/i;
 
 export interface GithubRepoRef {
   owner: string;
