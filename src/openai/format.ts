@@ -81,11 +81,13 @@ export function textToCompletionPrompt(
 
   while (truncatedTextTokenLength > MODEL_MAX_TOKENS) {
     const words = truncatedText.split(' ');
-    truncatedText = words
-      .slice(0, words.length - Math.ceil((truncatedTextTokenLength - MODEL_MAX_TOKENS) / 2))
-      .join(' ');
-
-    truncatedTextTokenLength = encode(truncatedText).length;
+    let keep = words.length - Math.ceil((truncatedTextTokenLength - MODEL_MAX_TOKENS) / 2);
+    if (keep < 1) keep = 1;
+    if (keep > words.length) keep = words.length;
+    truncatedText = words.slice(0, keep).join(' ');
+    const next = encode(truncatedText).length;
+    if (next >= truncatedTextTokenLength) break;
+    truncatedTextTokenLength = next;
   }
 
   return [
