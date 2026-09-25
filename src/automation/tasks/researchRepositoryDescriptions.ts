@@ -81,11 +81,15 @@ export default async function researchRepositoryDescriptions(): Promise<void> {
   DEBUG(`Found ${repositories.length} repositor${repositories.length === 1 ? 'y' : 'ies'} that haven't been researched yet.`);
 
   for (const repository of repositories) {
-    // Set unconditionally (even if the AI returns nothing usable below), so we don't
-    // keep re-running (and re-billing for) a repository the AI can't describe.
+    // Stamp the timestamp on a completed pass — even a soft-null, where the AI
+    // returned nothing usable — so we don't keep re-running (and re-billing for) a
+    // repository the AI can't describe. On a genuine exception (auth/credits/model
+    // access/outage) we skip the update below, leaving descriptionsFetchedAt unset so
+    // the repository is retried on the next run (matching generatePrDescriptions).
     const data: { useDescription?: string, impactDescription?: string, descriptionsFetchedAt: Date } = {
       descriptionsFetchedAt: new Date(),
     };
+    let failed = false;
 
     if (!repository.useDescription) {
       try {
@@ -94,20 +98,26 @@ export default async function researchRepositoryDescriptions(): Promise<void> {
         DEBUG(`${repository.url} (use) -> ${useDescription ?? '(no usable answer)'}`);
         if (useDescription) data.useDescription = useDescription;
       } catch (ex) {
+        failed = true;
         DEBUG(`Failed to research use description for repository ${repository.id}:`, ex);
       }
     }
 
-    if (!repository.impactDescription) {
+    if (!failed && !repository.impactDescription) {
       try {
         // eslint-disable-next-line no-await-in-loop
         const impactDescription = await research(openRouter, impactPrompt(repository.name, repository.url));
         DEBUG(`${repository.url} (impact) -> ${impactDescription ?? '(no usable answer)'}`);
         if (impactDescription) data.impactDescription = impactDescription;
       } catch (ex) {
+        failed = true;
         DEBUG(`Failed to research impact description for repository ${repository.id}:`, ex);
       }
     }
+
+    // On a genuine error, leave descriptionsFetchedAt unset so it's retried next run.
+    // eslint-disable-next-line no-continue
+    if (failed) continue;
 
     // eslint-disable-next-line no-await-in-loop
     await prisma.repository.update({ where: { id: repository.id }, data });
