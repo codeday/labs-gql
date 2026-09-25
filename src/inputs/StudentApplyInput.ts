@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 import { GraphQLJSONObject } from "graphql-type-json";
 import { GraphQLUpload, FileUpload } from "graphql-upload";
 import { StudentStatus, Track } from "../enums";
-import { uploadResume } from "../utils";
+import { uploadResume, normalizeGithubUsername } from "../utils";
 
 @InputType()
 export class StudentApplyInput {
@@ -43,11 +43,6 @@ export class StudentApplyInput {
 
   async toQuery(): Promise<Omit<Prisma.StudentCreateInput, "username">> {
     const resumeUrl = this.resume ? await uploadResume(this.resume) : null;
-    const githubUsername = this.githubUsername.match(
-      /https?:\/\/(www\.)?github.com\//,
-    )
-      ? this.githubUsername.split("github.com/", 2)[1].split(/\W/, 1)[0]
-      : this.githubUsername;
 
     return {
       givenName: this.givenName,
@@ -59,7 +54,7 @@ export class StudentApplyInput {
       minHours: this.minHours,
       partnerCode: this.partnerCode,
       timezone: this.timezone,
-      githubUsername: this.githubUsername,
+      githubUsername: normalizeGithubUsername(this.githubUsername),
       tags: this.tags
         ? {
             connect: this.tags.map(

@@ -20,6 +20,7 @@ export * from './ArrayElement';
 export * from './makeDebug';
 export * from './timezoneFriendlyNames';
 export * from './nameToSlug';
+export * from './normalizeGithubUsername';
 export * from './streamToBuffer';
 export * from './uploadResume';
 export * from './uploadToBuffer';
