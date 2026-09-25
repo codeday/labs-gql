@@ -55,12 +55,38 @@ export class StatsResolver {
     return this.getCachedStatOutcomesByYear();
   }
 
+  // Per-year project counts and fractional prCount. Shared by the global and
+  // per-year endpoints so both round prCount at the SAME boundary: each
+  // pre-2025 year-group contributes round(0.71 * matched) independently, and
+  // the global total is the sum of those rounded per-year values. Rounding the
+  // global aggregate once (round(sum(f_i))) can disagree with summing the
+  // rounded per-year values (sum(round(f_i))) because PRE_2025_PR_RATE is
+  // fractional, so both views must round per year-group.
+  private projectsByYearQuery() {
+    return this.prisma.$queryRaw<{ year: number, projectCount: number, prCount: number }[]>`
+      select
+        extract(year from e."startsAt")::int as year,
+        count(*)::int as "projectCount",
+        coalesce(sum(
+          case
+            when extract(year from e."startsAt") >= ${PR_TRACKING_START_YEAR}::int then
+              case when p."prUrl" is not null then 1 else 0 end
+            else ${PRE_2025_PR_RATE}::float
+          end
+        ), 0)::float as "prCount"
+      from "Project" p
+      join "Event" e on e.id = p."eventId"
+      where p.status = 'MATCHED'
+      group by 1;
+    `;
+  }
+
   private async computeStatOutcomes(): Promise<StatOutcomes> {
     const [
       studentCount,
       volunteerCount,
       projectCount,
-      prCount,
+      projectsByYear,
       studentHours,
       volunteerHours,
     ] = await Promise.all([
@@ -68,18 +94,7 @@ export class StatsResolver {
       this.prisma.mentor.count({ where: { status: 'ACCEPTED' } }),
       this.prisma.project.count({ where: { status: 'MATCHED' } }),
 
-      this.prisma.$queryRaw<{ prCount: number }[]>`
-        select coalesce(sum(
-          case
-            when extract(year from e."startsAt") >= ${PR_TRACKING_START_YEAR}::int then
-              case when p."prUrl" is not null then 1 else 0 end
-            else ${PRE_2025_PR_RATE}::float
-          end
-        ), 0)::float as "prCount"
-        from "Project" p
-        join "Event" e on e.id = p."eventId"
-        where p.status = 'MATCHED';
-      `,
+      this.projectsByYearQuery(),
 
       this.prisma.$queryRaw<{ studentHours: number }[]>`
         select coalesce(sum(("minHours" + 6) * weeks), 0)::float as "studentHours"
@@ -96,12 +111,16 @@ export class StatsResolver {
 
     const studentHoursValue = Math.round(studentHours[0].studentHours);
     const volunteerHoursValue = Math.round(volunteerHours[0].volunteerHours);
+    const prCountValue = projectsByYear.reduce(
+      (acc, y) => acc + Math.round(y.prCount),
+      0,
+    );
 
     return {
       studentCount,
       volunteerCount,
       projectCount,
-      prCount: Math.round(prCount[0].prCount),
+      prCount: prCountValue,
       studentHours: studentHoursValue,
       volunteerHours: volunteerHoursValue,
       hours: studentHoursValue + volunteerHoursValue,
@@ -132,22 +151,7 @@ export class StatsResolver {
         group by 1;
       `,
 
-      this.prisma.$queryRaw<{ year: number, projectCount: number, prCount: number }[]>`
-        select
-          extract(year from e."startsAt")::int as year,
-          count(*)::int as "projectCount",
-          coalesce(sum(
-            case
-              when extract(year from e."startsAt") >= ${PR_TRACKING_START_YEAR}::int then
-                case when p."prUrl" is not null then 1 else 0 end
-              else ${PRE_2025_PR_RATE}::float
-            end
-          ), 0)::float as "prCount"
-        from "Project" p
-        join "Event" e on e.id = p."eventId"
-        where p.status = 'MATCHED'
-        group by 1;
-      `,
+      this.projectsByYearQuery(),
     ]);
 
     const byYear = new Map<number, StatOutcomes>();
