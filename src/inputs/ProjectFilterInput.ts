@@ -27,7 +27,7 @@ export class ProjectFilterInput {
     return {
       ...(this.id ? { id: this.id } : {}),
       ...(this.status ? { status: this.status } : {}),
-      ...(this.studentWeeks ? { students: { some: { weeks: this.studentWeeks } } } : {}),
+      ...(this.studentWeeks ? { students: { some: { weeks: this.studentWeeks.toQuery() } } } : {}),
       ...(this.track ? { track: this.track } : {}),
       ...((this.weeksGte || this.assignedToManager)
         ? { mentors: { some: {

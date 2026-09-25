@@ -29,7 +29,7 @@ export class MentorFilterInput {
       status: this.inStatus,
       projects: (this.withProjects || this.studentWeeks || this.track) ? {
         some: {
-          ...(this.studentWeeks ? { students: { some: { weeks: this.studentWeeks } } } : {}),
+          ...(this.studentWeeks ? { students: { some: { weeks: this.studentWeeks.toQuery() } } } : {}),
           ...(this.track ? { track: this.track } : {}),
         },
       } : undefined,

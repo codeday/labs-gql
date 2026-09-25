@@ -41,7 +41,7 @@ export class StudentFilterInput {
       givenName: this.givenName,
       surname: this.surname,
       email: this.email,
-      weeks: this.weeks,
+      weeks: this.weeks ? this.weeks.toQuery() : undefined,
       track: this.track,
       id: this.id,
     };
