@@ -82,11 +82,26 @@ async function testSubstantiveSentencesMentioningPlaceholderAreKept(): Promise<v
 }
 
 // Regression guard: leading stand-ins that start with "placeholder" (the genuine
-// target of the first alternative) are still rejected after anchoring it.
+// target of the first alternative) are still rejected — but only when they're a bare
+// token or a one-word label, not a full sentence (see the test below).
 async function testLeadingPlaceholderStandInsAreRejected(): Promise<void> {
-  const cases = ['placeholder', 'Placeholder', 'Placeholder description', 'placeholder, not a real answer'];
+  const cases = ['placeholder', 'Placeholder', 'Placeholder description', 'placeholder text'];
   for (const c of cases) {
     assertEqual(await requestWith(c), null, `leading stand-in rejected: "${c}"`);
+  }
+}
+
+// The case the follow-up review raised: a substantive 5-10-word summary that starts with
+// "placeholder" (as a regular word, e.g. describing a stand-in that was replaced) is a
+// real answer, not a stand-in token, and must be kept — both callers mark the row
+// fetched without retrying, so dropping it would lose it permanently.
+async function testSubstantiveSentencesStartingWithPlaceholderAreKept(): Promise<void> {
+  const cases = [
+    'Placeholder logo was replaced with a real project image',
+    'Placeholder text swapped for finalized copy on the homepage',
+  ];
+  for (const c of cases) {
+    assertEqual(await requestWith(c), c, `substantive sentence starting with placeholder is kept: "${c}"`);
   }
 }
 
@@ -135,6 +150,7 @@ async function testPluralPlaceholderPrefixedWordIsKeptByAnchor(): Promise<void> 
 
 async function main(): Promise<void> {
   await testSubstantiveSentencesMentioningPlaceholderAreKept();
+  await testSubstantiveSentencesStartingWithPlaceholderAreKept();
   await testLeadingPlaceholderStandInsAreRejected();
   await testCouldNotFindAndNoInformationBranchesReject();
   await testNonAnswerReRejects();
