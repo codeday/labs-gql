@@ -49,7 +49,16 @@ const NON_ANSWER_RE = /^(i (confirm|have completed|have executed)|task (complete
 // still forced to call the tool, and some models satisfy that by submitting a stand-in
 // string instead of admitting they found nothing. Reject these the same way as a
 // non-answer, rather than saving them as if they were a real result.
-const PLACEHOLDER_RE = /placeholder|^(no|not) (specific |concrete |publicly )?(information|data|details) (is |was |)?(available|found)|^(i )?(could not|couldn't|was unable to) find/i;
+//
+// The `placeholder` stand-in is matched only as a bare token or a one-word label
+// (`^placeholder\b(\s+\w+)?\W*$`): a substantive sentence that merely starts with the
+// word "placeholder" (e.g. "Placeholder logo was replaced with a real project image")
+// is a real summary, not a stand-in, and is kept. Matching the bare word alone would
+// drop it, and both callers mark the row fetched without retrying, so the loss would be
+// permanent. Explicit disclaimers longer than a bare label can't be told apart from a
+// real sentence by shape alone, so they're let through rather than risk dropping a real
+// summary.
+const PLACEHOLDER_RE = /^placeholder\b(\s+\w+)?\W*$|^(no|not) (specific |concrete |publicly )?(information|data|details) (is |was |)?(available|found)|^(i )?(could not|couldn't|was unable to) find/i;
 
 /**
  * Requests a single short sentence from a chat model, forcing the answer through a
