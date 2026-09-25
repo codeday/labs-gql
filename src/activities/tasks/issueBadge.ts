@@ -1,4 +1,4 @@
-import { Event, PrStatus, PrismaClient } from "@prisma/client";
+import { Event, PrStatus, PrismaClient, Prisma } from "@prisma/client";
 import Container from "typedi";
 import { Badgr, badgrLogin } from '../../badgr';
 import { Context } from '../../context';
@@ -51,6 +51,19 @@ export const SCHEMA = {
   },
 }
 
+export const HAS_PR_URL: Prisma.ProjectWhereInput = {
+  AND: [
+    { prUrl: { not: null } },
+    { prUrl: { not: '' } },
+  ],
+};
+
+export function buildEvidence(projects: { prUrl: string | null }[]): { url: string }[] {
+  return projects
+    .filter((p): p is { prUrl: string } => p.prUrl !== null && p.prUrl !== '')
+    .map(p => ({ url: p.prUrl }));
+}
+
 export default async function issueBadge({ auth }: Context, args: Partial<IssueBadgeArgs> | undefined): Promise<void> {
   const prisma = Container.get(PrismaClient);
 
@@ -72,12 +85,12 @@ export default async function issueBadge({ auth }: Context, args: Partial<IssueB
             status: 'MATCHED',
             ...(target !== 'studentWithPr'
               ? {}
-              : { prUrl: { not: null } }
+              : HAS_PR_URL
             ),
           },
         },
       },
-      include: { projects: { where: { prUrl: { not: null } } } },
+      include: { projects: { where: HAS_PR_URL } },
     });
 
     for (const student of students) {
@@ -102,7 +115,7 @@ export default async function issueBadge({ auth }: Context, args: Partial<IssueB
                 type: ['Extension', 'extensions:RecipientProfile']
               }
             } as unknown as string,
-            evidence: student.projects.map(p => ({ url: p.prUrl! })),
+            evidence: buildEvidence(student.projects),
         });
       } catch (ex) { DEBUG(ex); }
     }
