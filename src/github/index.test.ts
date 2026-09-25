@@ -58,9 +58,24 @@ function assertEqual<T>(actual: T, expected: T, message: string): void {
     'parses owner/repo/number from a pull request URL',
   );
   assertEqual(
+    parseGithubPullRequestUrl('https://github.com/codeday/labs-gql/pull/42/files'),
+    { owner: 'codeday', repo: 'labs-gql', number: 42 },
+    'parses a PR URL with a trailing tab segment (e.g. /files)',
+  );
+  assertEqual(
+    parseGithubPullRequestUrl('https://github.com/codeday/labs-gql/pull/42/files/diff/abc123'),
+    { owner: 'codeday', repo: 'labs-gql', number: 42 },
+    'parses a PR URL with multiple trailing path segments (deep link)',
+  );
+  assertEqual(
     parseGithubPullRequestUrl('https://github.com/codeday/labs-gql/issues/42'),
     null,
     'rejects an issue URL',
+  );
+  assertEqual(
+    parseGithubPullRequestUrl('https://github.com/codeday/labs-gql/issues/42/files'),
+    null,
+    'rejects an issue URL with a trailing segment',
   );
   assertEqual(
     parseGithubPullRequestUrl('https://github.com/codeday/labs-gql'),
