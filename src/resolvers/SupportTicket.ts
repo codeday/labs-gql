@@ -44,7 +44,9 @@ export class SupportTicketResolver {
     });
 
     if (preventingProgress) {
-      description = "***PROGRESS IS BEING PREVENTED***\n" + description
+      description = description
+        ? "***PROGRESS IS BEING PREVENTED***\n" + description
+        : "***PROGRESS IS BEING PREVENTED***";
     }
 
     await createSupportTicket(type, project, null, description, reporter, preventingProgress);
