@@ -32,8 +32,8 @@ export function getTimezoneOffset (_timeZone: string): number | null{
 
   const [, sign, hour, minute] = matchData;
   let result = parseInt(hour) * 60;
-  if (sign === "+") result *= -1;
   if (minute) result += parseInt(minute);
+  if (sign === "-") result *= -1;
 
   return result / 60;
 };
