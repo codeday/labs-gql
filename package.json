@@ -74,7 +74,7 @@
     "@types/graphql-upload": "^8.0.4",
     "@types/jsonwebtoken": "^8.5.1",
     "@types/knuth-shuffle-seeded": "^1.0.2",
-    "@types/luxon": "^1.26.5",
+    "@types/luxon": "^3.7.5",
     "@types/node": "^15.3.0",
     "@types/node-fetch": "2",
     "@types/nodemailer": "^6.4.1",
