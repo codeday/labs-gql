@@ -27,9 +27,17 @@ export async function findSlackChannelByName(
   ));
 }
 
+/**
+ * Returns the channel ID to use for reporting: the already-configured ID if
+ * one is set, otherwise looks up `channelName` in the workspace by name.
+ */
 export async function resolveSlackChannelId(
-  _slack: Pick<WebClient, 'paginate'>,
+  slack: Pick<WebClient, 'paginate'>,
   configuredChannelId: string | null,
+  channelName: string,
 ): Promise<string | null> {
-  return configuredChannelId;
+  if (configuredChannelId) return configuredChannelId;
+
+  const channel = await findSlackChannelByName(slack, channelName);
+  return channel?.id ?? null;
 }
