@@ -380,6 +380,7 @@ model Mentor {
   timezone           String?
   slackId            String?
   projectPreferences String?
+  giftcardCode       String?
 
   // Relations
   projects                Project[]
