@@ -24,10 +24,10 @@ export async function addMissingSlackChannelMembers(
       const existingMentorIds = (existingMentors?.members || []);
       const missingMentorIds = mentorIds.filter(id => !existingMentorIds.includes(id));
       if (missingMentorIds.length > 0) {
-        DEBUG(`Adding ${mentorIds.length} mentors to slack mentor channel.`);
+        DEBUG(`Adding ${missingMentorIds.length} mentors to slack mentor channel.`);
         await slack.conversations.invite({
           channel: event.slackMentorChannelId!,
-          users: mentorIds.join(','),
+          users: missingMentorIds.join(','),
         });
       }
     } catch (ex) {
