@@ -33,19 +33,19 @@ function recordReferenceIds(values: Record<string, unknown[]>, slug: string): st
 }
 
 /**
- * relatedPersonEmails is compared as emails, not record ids (see types.ts), so an existing
- * entry's related_people record ids are resolved back to emails here using the same People
- * read this run already did — every id an entry can reference must belong to someone that
- * read turned up, since Attio has no other way to have created the reference.
+ * Related people is kept on the existing-entry side as Attio record ids — the exact form
+ * Attio stores in entry_values.related_people — rather than being resolved back to emails.
+ * Stage D resolves the projection's relatedPersonEmails forward to record ids via
+ * peopleByEmail and compares the two record-id sets (see diff.ts). Doing the comparison in
+ * record-id space avoids the ambiguity of "which email stands for this multi-email person"
+ * that a record_id -> email reverse map would introduce (the last-iterated email would win,
+ * which is not necessarily the email the projection uses for the same person).
  */
-function entryToFields(entry: AttioListEntry, emailByRecordId: Map<string, string>): EntryFields | null {
+function entryToFields(entry: AttioListEntry): EntryFields | null {
   const interactionId = textValue(entry.entry_values, 'interaction_id');
   if (!interactionId) return null;
 
-  const relatedPersonEmails = recordReferenceIds(entry.entry_values, 'related_people')
-    .map((id) => emailByRecordId.get(id))
-    .filter((email): email is string => Boolean(email))
-    .sort();
+  const relatedPersonRecordIds = recordReferenceIds(entry.entry_values, 'related_people').sort();
 
   return {
     interactionId,
@@ -53,7 +53,7 @@ function entryToFields(entry: AttioListEntry, emailByRecordId: Map<string, strin
     eventType: selectValue(entry.entry_values, 'event_type') as EventType,
     event: textValue(entry.entry_values, 'event') ?? '',
     participatedAt: textValue(entry.entry_values, 'participated_at'),
-    relatedPersonEmails,
+    relatedPersonRecordIds,
   };
 }
 
@@ -122,17 +122,18 @@ export async function readAttioState(client: AttioClient, listId: string): Promi
   ]);
 
   const peopleByEmail = new Map<string, string>();
-  const emailByRecordId = new Map<string, string>();
   const personNameStatusByRecordId = new Map<string, PersonNameStatus>();
   for (const person of people) {
     const emailValues = (person.values.email_addresses ?? []) as { email_address?: string }[];
     for (const emailValue of emailValues) {
       const email = emailValue.email_address?.trim().toLowerCase();
       if (email) {
+        // Every email of a person maps to the same record id. The forward map is the only
+        // one we keep: Stage D resolves the projection's emails through it (so a multi-email
+        // person is found regardless of which of their emails the projection named), and no
+        // record_id -> email reverse map is built — that would collapse a multi-email person
+        // to a single arbitrarily-chosen email and re-introduce the spurious-diff bug.
         peopleByEmail.set(email, person.id.record_id);
-        // Multiple emails can map to the same record id; any one of them is a fine reverse
-        // lookup since we only use this to detect *which* people are already referenced.
-        emailByRecordId.set(person.id.record_id, email);
       }
     }
 
@@ -146,7 +147,7 @@ export async function readAttioState(client: AttioClient, listId: string): Promi
   const entriesByInteractionId = new Map<string, ExistingEntry>();
   let orphanEntryCount = 0;
   for (const entry of entries) {
-    const fields = entryToFields(entry, emailByRecordId);
+    const fields = entryToFields(entry);
     if (!fields) {
       orphanEntryCount += 1;
       DEBUG(`Orphan list entry with no interaction_id: ${entry.id.entry_id}`);

@@ -16,11 +16,14 @@ export interface Participation {
 }
 
 /**
- * The list-entry attribute values we sync, in a flat shape shared by both "what the
- * projection wants" and "what Attio currently has" so Stage D can diff them directly.
- * relatedPersonEmails is compared as emails on both sides (see readAttioState.ts) even
- * though Attio itself stores record references, so no record-id resolution is needed
- * until Stage E actually writes a change.
+ * The list-entry attribute values we sync, in a flat shape shared by "what the projection
+ * wants" (Participation) and "what Attio currently has" (the existing entry) so Stage D
+ * can diff them. relatedPeople is stored here as Attio record ids — the same identity space
+ * Stage E writes — so Stage D resolves the projection's relatedPersonEmails to record ids
+ * via peopleByEmail before comparing (see diff.ts). Comparing in record-id space (rather
+ * than email-string space) means a multi-email Attio person doesn't spuriously diff just
+ * because the projection named a different one of their emails than the one a last-wins
+ * reverse map happened to pick.
  */
 export interface EntryFields {
   interactionId: string;
@@ -28,7 +31,7 @@ export interface EntryFields {
   eventType: EventType;
   event: string;
   participatedAt: string | null;
-  relatedPersonEmails: string[];
+  relatedPersonRecordIds: string[];
 }
 
 export interface ExistingEntry {

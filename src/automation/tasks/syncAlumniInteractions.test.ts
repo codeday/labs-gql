@@ -53,7 +53,15 @@ function participation(overrides: Partial<Participation> = {}): Participation {
   };
 }
 
-function existingEntryFor(p: Participation, entryId = 'entry-1'): ExistingEntry {
+function existingEntryFor(
+  p: Participation,
+  entryId = 'entry-1',
+  peopleByEmail: Map<string, string> = new Map(),
+): ExistingEntry {
+  // Mirrors readAttioState.entryToFields: the existing entry stores related people as the
+  // Attio record ids it references, resolved from the participation's emails through the
+  // forward map. A "steady-state" existing entry (one that already matches the projection)
+  // therefore resolves to exactly the record ids the projection's emails map to.
   return {
     entryId,
     fields: {
@@ -62,7 +70,10 @@ function existingEntryFor(p: Participation, entryId = 'entry-1'): ExistingEntry 
       eventType: p.eventType,
       event: p.event,
       participatedAt: p.participatedAt,
-      relatedPersonEmails: p.relatedPersonEmails,
+      relatedPersonRecordIds: p.relatedPersonEmails
+        .map((e) => peopleByEmail.get(e))
+        .filter((id): id is string => Boolean(id))
+        .sort(),
     },
   };
 }
@@ -115,17 +126,25 @@ function existingEntryFor(p: Participation, entryId = 'entry-1'): ExistingEntry 
   const p = participation({ interactionId: 'backfill-1', relatedPersonEmails: ['mentor@example.com'] });
   const existing = existingEntryFor(participation({ interactionId: 'backfill-1', relatedPersonEmails: [] }));
   const entries = new Map([[p.interactionId, existing]]);
-  const people = new Map([[p.email, 'person-1']]);
+  // The related person is a real Attio person (so the diff can resolve the projection's
+  // email to a record id and notice the entry references nobody yet).
+  const people = new Map([[p.email, 'person-1'], ['mentor@example.com', 'person-mentor']]);
 
   const plan = buildDiffPlan([p], entries, people, new Map(), new Map());
   assertEqual(plan.entriesToUpdate.length, 1, 'A pre-existing entry with no related_people is queued for update once the projection has one');
-  assertEqual(plan.entriesToUpdate[0].changedFields, ['relatedPersonEmails'], 'Only relatedPersonEmails is flagged as changed');
+  assertEqual(plan.entriesToUpdate[0].changedFields, ['relatedPersonRecordIds'], 'Only relatedPersonRecordIds is flagged as changed');
 })();
 
 (function testMatchingRelatedPeopleIsNotAnUpdate() {
   const p = participation({ interactionId: 'stable-1', relatedPersonEmails: ['a@example.com', 'b@example.com'] });
-  const entries = new Map([[p.interactionId, existingEntryFor(p)]]);
-  const people = new Map([[p.email, 'person-1']]);
+  // Both related people are real Attio people, and the existing entry references exactly
+  // their record ids — the steady state in record-id space, not just email-string space.
+  const people = new Map([
+    [p.email, 'person-1'],
+    ['a@example.com', 'person-a'],
+    ['b@example.com', 'person-b'],
+  ]);
+  const entries = new Map([[p.interactionId, existingEntryFor(p, 'entry-1', people)]]);
 
   const plan = buildDiffPlan([p], entries, people, new Map(), new Map());
   assertEqual(plan.entriesToUpdate, [], 'Identical related-people sets do not trigger an update');
@@ -403,11 +422,164 @@ async function testExistingRelatedPeopleResolvedFromRecordIds(): Promise<void> {
   const state = await readAttioState(stubClient, 'list-1');
   const existing = state.entriesByInteractionId.get('m1');
   assertEqual(
-    existing?.fields.relatedPersonEmails,
-    ['student@example.com'],
-    "An existing entry's related_people record id resolves back to an email for diffing",
+    existing?.fields.relatedPersonRecordIds,
+    ['student-record'],
+    "An existing entry's related_people record id is kept as a record id for record-id-space diffing",
   );
 }
+
+// Regression test for the multi-email spurious-PATCH bug. A multi-email Attio person is
+// referenced by an existing entry; the projection names one of that person's emails that a
+// last-wins record_id -> email reverse map would NOT have picked. The diff must be computed
+// in record-id space so the steady-state row is unchanged (the documented invariant in
+// diff.ts: a steady-state run produces an empty plan). Promoted from the standalone repro
+// described in the bug report, through the readAttioState -> buildDiffPlan seam the suite
+// previously bypassed by hand-building ExistingEntry objects.
+async function testMultiEmailRelatedPersonSteadyStateIsNotAnUpdate(): Promise<void> {
+  const student: AttioPersonRecord = {
+    id: { workspace_id: 'w', object_id: 'o', record_id: 'student-record' },
+    created_at: '2024-01-01T00:00:00Z',
+    values: {
+      email_addresses: [
+        { email_address: 'student@example.com' },
+        { email_address: 'student-personal@example.com' },
+      ],
+      name: [{ first_name: 'Stu', last_name: 'Dent' }],
+    },
+  } as AttioPersonRecord;
+  const mentor: AttioPersonRecord = {
+    id: { workspace_id: 'w', object_id: 'o', record_id: 'mentor-record' },
+    created_at: '2024-01-01T00:00:00Z',
+    values: { email_addresses: [{ email_address: 'mentor@example.com' }] },
+  } as AttioPersonRecord;
+  // The entry's related_people already references the student by record id — the canonical,
+  // correct link Attio itself stores.
+  const entry = {
+    id: { workspace_id: 'w', list_id: 'list-1', entry_id: 'entry-1' },
+    parent_record_id: 'mentor-record',
+    parent_object: 'people',
+    created_at: '2024-01-01T00:00:00Z',
+    entry_values: {
+      interaction_id: [{ value: 'm1' }],
+      participation_type: [{ option: { title: 'Mentor' } }],
+      event_type: [{ option: { title: 'Labs' } }],
+      event: [{ value: 'CodeDay Labs Summer 2024' }],
+      participated_at: [{ value: '2024-06-01' }],
+      related_people: [{ target_object: 'people', target_record_id: 'student-record' }],
+    },
+  } as AttioListEntry;
+
+  const stubClient: AttioClient = {
+    get: async () => { throw new Error('not used'); },
+    read: (async (path: string) => {
+      if (path.includes('/entries/query')) return { data: [entry] };
+      return { data: [mentor, student] };
+    }) as AttioClient['read'],
+    write: async () => { throw new Error('not used'); },
+  };
+
+  const state = await readAttioState(stubClient, 'list-1');
+
+  // The forward map keeps BOTH emails — this is what lets the record-id-space fix identify
+  // the right person regardless of which email the projection named.
+  assertEqual(state.peopleByEmail.get('student@example.com'), 'student-record', 'forward map keeps the DB email');
+  assertEqual(state.peopleByEmail.get('student-personal@example.com'), 'student-record', 'forward map keeps the personal email');
+  // The existing entry's related people is stored as the referenced record id, NOT resolved
+  // to an arbitrary (last-iterated) email.
+  assertEqual(
+    state.entriesByInteractionId.get('m1')?.fields.relatedPersonRecordIds,
+    ['student-record'],
+    'existing entry stores the referenced record id, not a last-wins email',
+  );
+
+  const nameStatus = new Map<string, PersonNameStatus>([
+    ['mentor-record', { hasFirstName: true, hasLastName: true }],
+    ['student-record', { hasFirstName: true, hasLastName: true }],
+  ]);
+  const canonicalNameByEmail = new Map([
+    ['mentor@example.com', { givenName: 'M', surname: 'One' }],
+  ]);
+
+  // The projection uses the FIRST of the student's two emails. A last-wins reverse map would
+  // have collapsed this person to 'student-personal@example.com' (the second), producing a
+  // spurious diff; record-id space must instead see the steady state.
+  const desiredParticipation: Participation = {
+    interactionId: 'm1',
+    participationType: 'Mentor',
+    eventType: 'Labs',
+    event: 'CodeDay Labs Summer 2024',
+    email: 'mentor@example.com',
+    givenName: 'M',
+    surname: 'One',
+    participatedAt: '2024-06-01',
+    relatedPersonEmails: ['student@example.com'],
+  };
+  const plan = buildDiffPlan(
+    [desiredParticipation],
+    state.entriesByInteractionId,
+    state.peopleByEmail,
+    nameStatus,
+    canonicalNameByEmail,
+  );
+  assertEqual(plan.entriesToCreate, [], 'steady-state multi-email row is not a create');
+  assertEqual(plan.entriesToUpdate, [], 'steady-state multi-email row does not trigger a spurious update (no no-op PATCH)');
+  assertEqual(plan.unchangedCount, 1, 'steady-state multi-email row is counted unchanged (invariant restored)');
+
+  // The same steady state holds when the projection names the OTHER email of this multi-email
+  // person (the one a last-wins map would have happened to pick) — the fix is order-invariant.
+  const desiredPersonal: Participation = { ...desiredParticipation, relatedPersonEmails: ['student-personal@example.com'] };
+  const planPersonal = buildDiffPlan([desiredPersonal], state.entriesByInteractionId, state.peopleByEmail, nameStatus, canonicalNameByEmail);
+  assertEqual(planPersonal.entriesToUpdate, [], 'steady-state holds whichever email the projection names');
+  assertEqual(planPersonal.unchangedCount, 1, 'unchanged regardless of which email the projection names');
+
+  // At write time, the projection's email resolves back to the SAME record id the entry
+  // already references — i.e. a PATCH here would be a no-op. Confirming this resolution
+  // proves the diff and the writer agree on identity (Stage D and Stage E aligned).
+  assertEqual(
+    state.peopleByEmail.get('student@example.com'),
+    'student-record',
+    'write-time: projection email resolves to the already-referenced record id',
+  );
+
+  // A genuine field change on the same multi-email row is still flagged (the record-id-space
+  // comparison doesn't mask real changes), and it carries ONLY the genuinely-changed field.
+  const desiredChanged: Participation = { ...desiredParticipation, participatedAt: '2024-07-01' };
+  const plan2 = buildDiffPlan([desiredChanged], state.entriesByInteractionId, state.peopleByEmail, nameStatus, canonicalNameByEmail);
+  assertEqual(plan2.entriesToUpdate.length, 1, 'a genuine change on a multi-email row is still flagged');
+  assertEqual(plan2.entriesToUpdate[0].changedFields, ['participatedAt'], 'only the genuinely-changed field is flagged (no spurious relatedPersonRecordIds)');
+}
+
+// Guards the fresh-onboarding path: a related person who is being created THIS run (in
+// peopleToUpsert, not yet in peopleByEmail) must still be flagged as a genuine change, not
+// dropped as "unresolvable". A naive "resolve via peopleByEmail, drop the rest" fix would
+// silently lose the new related person and never write them onto the entry.
+(function testNewRelatedPersonCreatedThisRunStillFlagsUpdate() {
+  const mentorEntry = existingEntryFor(participation({
+    interactionId: 'm1',
+    email: 'mentor@example.com',
+    relatedPersonEmails: [],
+  }));
+  const entries = new Map([['m1', mentorEntry]]);
+  // The mentor already exists; the student does not yet exist in Attio and has their own row.
+  const people = new Map([['mentor@example.com', 'mentor-record']]);
+  const mentorP = participation({
+    interactionId: 'm1',
+    email: 'mentor@example.com',
+    relatedPersonEmails: ['student-new@example.com'],
+  });
+  const studentP = participation({
+    interactionId: 's1',
+    email: 'student-new@example.com',
+    relatedPersonEmails: [],
+  });
+
+  const plan = buildDiffPlan([mentorP, studentP], entries, people, new Map(), new Map());
+  const mentorUpdate = plan.entriesToUpdate.find((u) => u.entryId === 'entry-1');
+  assert(Boolean(mentorUpdate), 'A related person being created this run still flags the mentor row for update');
+  assertEqual(mentorUpdate?.changedFields, ['relatedPersonRecordIds'], 'relatedPersonRecordIds is the changed field for the new related person');
+  assertEqual(plan.entriesToCreate.length, 1, 'The new student participation is a create');
+  assertEqual(plan.peopleToUpsert.length, 1, 'The new student person is queued for upsert so Stage E can later resolve them');
+})();
 
 // --- Stage E: uniqueness conflict, retry, and row-failure isolation -----------------------
 
@@ -569,6 +741,7 @@ async function main(): Promise<void> {
   await testCanonicalNamePicksMostRecentParticipation();
   await testPersonResolvesFromAnyEmail();
   await testExistingRelatedPeopleResolvedFromRecordIds();
+  await testMultiEmailRelatedPersonSteadyStateIsNotAnUpdate();
   await testUniquenessConflictTreatedAsSuccess();
   await testRelatedPeopleResolvedAtWriteTimeAndUnresolvableDropped();
   await testPeopleToFixNameIssuesPutWithNameAndCounts();
