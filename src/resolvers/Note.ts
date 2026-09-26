@@ -8,6 +8,7 @@ import { Note } from '../types/Note';
 import { IdOrUsernameOrEmailInput } from '../inputs';
 import { SupportTicketType } from '../enums';
 import { createSupportTicket } from '../linear/createSupportTicket';
+import { selectProjectForSupportTicket } from '../linear/selectProjectForSupportTicket';
 
 @Service()
 @Resolver(Note)
@@ -23,6 +24,7 @@ export class NoteResolver {
     @Arg('note', () => String) note: string,
     @Arg('caution', () => Float) caution: number,
     @Arg('supportTicketType', () => SupportTicketType, { nullable: true }) supportTicketType?: SupportTicketType,
+    @Arg('projectId', () => String, { nullable: true }) projectId?: string,
   ): Promise<PrismaNote> {
     const student = await this.prisma.student.findFirst({
       where: {
@@ -34,9 +36,10 @@ export class NoteResolver {
     });
 
     if (supportTicketType && student.projects.length > 0) {
+      const project = selectProjectForSupportTicket(student.projects, projectId);
       await createSupportTicket(
         supportTicketType,
-        student.projects[0],
+        project,
         [student],
         note,
         auth.username!
