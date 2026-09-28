@@ -61,45 +61,6 @@ async function generateFileForIndividuals(
   }
 }
 
-async function generateFileForProjects(
-    fileType: FileType,
-    event: Event,
-    projects: DeepProject[],
-    existingFiles: File[]
-): Promise<void> {
-  const prisma = Container.get(PrismaClient);
-  const now = DateTime.now();
-
-  for (const project of projects) {
-    // Check if the event is over if the condition is Completed
-    const weeks = Math.max(0, ...project.students.map(s => s.weeks));
-    if (
-      fileType.generationCondition === FileTypeGenerationCondition.COMPLETED
-      && now < DateTime.fromJSDate(event.startsAt).plus({ weeks: weeks || event.defaultWeeks || 4 })
-    ) { continue; }
-
-    // Check if the file has already been created
-    if (existingFiles.some(f => f.projectId === project.id)) { continue; }
-
-    DEBUG(`Creating file ${fileType.id} for project ${project.id}`);
-
-    const pollingUrl = await generateMedia(
-      fileType.templateId,
-      fileType.type,
-      fileType.layers as object,
-      { project, event }
-    );
-
-    await prisma.file.create({
-      data: {
-        pollingUrl,
-        projectId: project.id,
-        fileTypeId: fileType.id,
-      }
-    });
-  }
-}
-
 export default async function fileGenerate(): Promise<void> {
   const prisma = Container.get(PrismaClient);
   const now = new Date();
